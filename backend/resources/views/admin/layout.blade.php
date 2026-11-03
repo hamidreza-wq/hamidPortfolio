@@ -113,7 +113,7 @@
   </aside>
   <div class="main">
     <header class="topbar">
-      <div style="display:flex;align-items:center;gap:12px"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open dashboard navigation" aria-expanded="false">☰</button><div class="breadcrumbs">Studio <span aria-hidden="true">/</span> <strong>@yield('breadcrumb', 'Overview')</strong></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open dashboard navigation" aria-controls="admin-sidebar" aria-expanded="false">☰</button><div class="breadcrumbs">Studio <span aria-hidden="true">/</span> <strong>@yield('breadcrumb', 'Overview')</strong></div></div>
       <div class="top-actions">
         <a class="button button-quiet" href="{{ route('portfolio.home') }}" target="_blank" rel="noreferrer">View live site <span aria-hidden="true">↗</span></a>
         <a class="button" href="{{ route('admin.site-editor.edit') }}">Edit portfolio</a>
@@ -132,11 +132,32 @@
 <script>
   const menuToggle = document.querySelector('#menu-toggle');
   const sidebar = document.querySelector('#admin-sidebar');
+  const mobileNavigation = window.matchMedia('(max-width: 800px)');
+  const syncNavigation = () => {
+    if (!sidebar || !menuToggle) return;
+    const expanded = mobileNavigation.matches && sidebar.classList.contains('open');
+    const hidden = mobileNavigation.matches && !expanded;
+    if (hidden && sidebar.contains(document.activeElement)) menuToggle.focus();
+    sidebar.inert = hidden;
+    sidebar.setAttribute('aria-hidden', String(hidden));
+    menuToggle.setAttribute('aria-expanded', String(expanded));
+    menuToggle.setAttribute('aria-label', expanded ? 'Close dashboard navigation' : 'Open dashboard navigation');
+  };
   menuToggle?.addEventListener('click', () => {
-    const expanded = menuToggle.getAttribute('aria-expanded') === 'true';
-    menuToggle.setAttribute('aria-expanded', String(!expanded));
-    sidebar.classList.toggle('open', !expanded);
+    sidebar.classList.toggle('open');
+    syncNavigation();
   });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !mobileNavigation.matches || !sidebar?.classList.contains('open')) return;
+    sidebar.classList.remove('open');
+    syncNavigation();
+    menuToggle.focus();
+  });
+  mobileNavigation.addEventListener('change', () => {
+    sidebar?.classList.remove('open');
+    syncNavigation();
+  });
+  syncNavigation();
   document.querySelectorAll('form[data-confirm]').forEach((form) => form.addEventListener('submit', (event) => {
     if (!window.confirm(form.dataset.confirm)) event.preventDefault();
   }));

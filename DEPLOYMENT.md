@@ -2,6 +2,7 @@
 
 ## Release gates
 
+- Review the latest [QA functionality](docs/qa/FUNCTIONALITY-AUDIT.md), [security](docs/qa/SECURITY-AUDIT.md) and [test evidence](docs/qa/TEST-RESULTS.md). Local Composer/npm audits and builds passed, but Oracle MySQL and real hosting/integration/restore gates remain unverified.
 - Read [the current platform report](PLATFORM-REPORT.md), including its database incident disclosure, and [platform operations](backend/docs/platform-operations.md). The update centre does not deploy or create verified backups. Hosting/Actions activation remains disabled by explicit owner decision.
 - Enable PHP sodium and ZIP for signed release inspection, and cURL/DOM for public-site monitoring. Configure only the trusted release **public** key; signing private keys stay outside production.
 
@@ -14,6 +15,7 @@
 ## Server configuration
 
 - The only web document root is `backend/public`, never the repository root. Preserve root portfolio assets beside `backend`; Laravel delivers the allowlisted files.
+- Route `/robots.txt` to Laravel. Do not add a static robots file or CDN override that bypasses the dashboard's indexing/maintenance policy; verify actual HTTP robots/sitemap responses after deployment.
 - Deny dotfiles and prohibit PHP/CGI execution in `/storage`, `/media` and `/fonts`. Do not serve private storage, logs, dumps, Composer credentials, Git metadata or test configuration.
 - Use HTTPS. Set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://your-domain`, `SESSION_SECURE_COOKIE=true`, `SESSION_HTTP_ONLY=true`, `SESSION_SAME_SITE=lax` and a suitable `SESSION_LIFETIME`. Generate `APP_KEY` once and preserve it across releases.
 - Set database credentials outside Git. Grant write access only to `storage` and `bootstrap/cache`; do not make application source writable by the web server.

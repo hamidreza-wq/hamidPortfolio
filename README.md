@@ -92,6 +92,10 @@ php -d extension=gd -d extension=sodium vendor\bin\phpunit
 
 ## Production and operations
 
+The latest [local functionality audit](docs/qa/FUNCTIONALITY-AUDIT.md), [test results](docs/qa/TEST-RESULTS.md), [security audit](docs/qa/SECURITY-AUDIT.md), [link audit](docs/qa/LINK-AUDIT.md), [responsive evidence](docs/qa/RESPONSIVE-AUDIT.md) and [fix report](docs/qa/BUG-FIX-REPORT.md) distinguish passed checks from configuration blockers and untested production conditions. Local database verification used MariaDB, not Oracle MySQL.
+
+The npm lockfile is now included. From `backend`, use `npm ci`, `npm audit` and `npm run build` for reproducible scaffold validation. `npm run test:browser` uses installed Microsoft Edge and requires the explicitly isolated QA server/database and private credential-file environment variables documented in the test report. It must not target an owner's installation. Repeated runs may hit the real login rate limit; wait for its window rather than disabling protection.
+
 Follow the [deployment, backup and rollback checklist](DEPLOYMENT.md) and review the [hardening verification report](HARDENING-REPORT.md) before deployment.
 The [platform operations guide](backend/docs/platform-operations.md) documents signed manifests, schema changes, scheduler/queue/mail setup, public GitHub review, monitoring limits and the deliberately disabled deployment boundary.
 
@@ -117,3 +121,5 @@ The frontend includes a keyboard skip link, visible focus states, semantic secti
 ## Verified project content
 
 Project descriptions are based on the public READMEs for `Bible`, `officeConverters`, `myAccountingHome`, `interpurting-laravel`, and `meisaPortfolio`. OnePrayer is labeled as an early build because native device testing and mobile product screens are incomplete. No live demo URLs or screenshots are claimed without verification.
+
+That describes the original content research, not guaranteed current repository availability. The latest anonymous link audit returned 404 for four of these repository URLs; they need owner review for renamed/private/unavailable sources. No replacement repository, ownership claim or feature description was fabricated.

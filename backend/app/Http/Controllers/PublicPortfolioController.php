@@ -166,6 +166,7 @@ class PublicPortfolioController extends Controller
             'fonts' => app(FontLibrary::class)->payload(),
             'media' => $isPreview ? app(MediaLibrary::class)->options()->map(fn ($media) => app(MediaLibrary::class)->publicPayload($media->id))->filter()->values()->all() : [],
             'sections' => PortfolioSection::query()
+                ->when(! $isPreview, fn ($query) => $query->where('is_visible', true))
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get()

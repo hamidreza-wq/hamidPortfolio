@@ -37,6 +37,7 @@ function escapeHTML(value) {
 }
 
 function renderProjects() {
+  if (!projectGrid || !searchInput || !emptyState) return;
   const query = searchInput.value.trim().toLowerCase();
   const visibleProjects = projects.filter((project) => {
     const matchesFilter = activeFilter === "all" || project.category === activeFilter;
@@ -75,7 +76,9 @@ function renderProjects() {
 }
 
 function renderCraft() {
-  document.querySelector("#craft-groups").innerHTML = craft.map((group, index) => `
+  const craftGroups = document.querySelector("#craft-groups");
+  if (!craftGroups) return;
+  craftGroups.innerHTML = craft.map((group, index) => `
     <section class="craft-group reveal is-visible" style="--group-index:${index}">
       <h3><span>0${index + 1}</span>${escapeHTML(group.title)}</h3>
       <ul>${group.items.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
@@ -84,7 +87,9 @@ function renderCraft() {
 }
 
 function renderContact() {
-  document.querySelector("#contact-actions").innerHTML = `
+  const contactActions = document.querySelector("#contact-actions");
+  if (!contactActions) return;
+  contactActions.innerHTML = `
     ${profile.email ? `<a class="button button-primary" href="mailto:${encodeURIComponent(profile.email)}">Email me <span aria-hidden="true">↗</span></a>` : ""}
     <a class="button ${profile.email ? "button-quiet" : "button-primary"}" href="${escapeHTML(profile.github)}" target="_blank" rel="noreferrer">
       Connect on GitHub <span aria-hidden="true">↗</span>
@@ -204,6 +209,7 @@ function applyPortfolioData(data) {
   if (Number.isFinite(Number(theme.border_radius))) root.style.setProperty("--card-radius", `${Math.min(32, Math.max(0, Number(theme.border_radius)))}px`);
   document.body.dataset.motion = theme.animations_enabled === false || theme.animations_enabled === 0 ? "off" : "on";
   document.querySelector(".particle-field").hidden = theme.particles_enabled === false || theme.particles_enabled === 0;
+  document.dispatchEvent(new Event("portfolio:motionchange"));
 
   const sectionElements = {
     home: document.querySelector("#home"),
@@ -305,8 +311,8 @@ document.querySelectorAll(".filter-button").forEach((button) => {
   });
 });
 
-searchInput.addEventListener("input", renderProjects);
-projectGrid.addEventListener("click", (event) => {
+searchInput?.addEventListener("input", renderProjects);
+projectGrid?.addEventListener("click", (event) => {
   const trigger = event.target.closest("[data-project]");
   if (!trigger) return;
   const project = projects.find((item) => (item.slug || item.repo) === trigger.dataset.project);
@@ -408,14 +414,14 @@ function resizeCanvas() {
     drift: (Math.random() - 0.5) * 0.12,
     phase: Math.random() * Math.PI * 2,
   }));
-  if (reducedMotion) drawParticles(0);
+  syncParticleAnimation();
 }
 
 function drawParticles(time) {
   pointer.x += (pointer.targetX - pointer.x) * 0.04;
   pointer.y += (pointer.targetY - pointer.y) * 0.04;
-  scene.style.setProperty("--pointer-x", `${pointer.x.toFixed(3)}`);
-  scene.style.setProperty("--pointer-y", `${pointer.y.toFixed(3)}`);
+  scene?.style.setProperty("--pointer-x", `${pointer.x.toFixed(3)}`);
+  scene?.style.setProperty("--pointer-y", `${pointer.y.toFixed(3)}`);
   context.clearRect(0, 0, width, height);
   particles.forEach((particle, index) => {
     const shimmer = reducedMotion ? 1 : 0.72 + Math.sin(time / 1300 + particle.phase) * 0.28;
@@ -429,7 +435,17 @@ function drawParticles(time) {
     context.arc(particle.x + shiftX, particle.y + shiftY, particle.radius, 0, Math.PI * 2);
     context.fill();
   });
-  if (!reducedMotion && !document.hidden) animationFrame = requestAnimationFrame(drawParticles);
+  if (shouldAnimateParticles()) animationFrame = requestAnimationFrame(drawParticles);
+}
+
+function shouldAnimateParticles() {
+  return !reducedMotion && !document.hidden && !canvas.hidden && document.body.dataset.motion !== "off";
+}
+
+function syncParticleAnimation() {
+  cancelAnimationFrame(animationFrame);
+  if (shouldAnimateParticles()) animationFrame = requestAnimationFrame(drawParticles);
+  else if (!canvas.hidden && !document.hidden) drawParticles(0);
 }
 
 function setPointer(event) {
@@ -439,11 +455,8 @@ function setPointer(event) {
 
 if (context) {
   resizeCanvas();
-  if (!reducedMotion) animationFrame = requestAnimationFrame(drawParticles);
   window.addEventListener("resize", resizeCanvas, { passive: true });
   window.addEventListener("pointermove", setPointer, { passive: true });
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) cancelAnimationFrame(animationFrame);
-    else if (!reducedMotion) animationFrame = requestAnimationFrame(drawParticles);
-  });
+  document.addEventListener("visibilitychange", syncParticleAnimation);
+  document.addEventListener("portfolio:motionchange", syncParticleAnimation);
 }

@@ -75,6 +75,7 @@ class ContentSeoTest extends TestCase
 
     public function test_indexing_preferences_apply_to_home_projects_robots_and_sitemap(): void
     {
+        $this->assertFileDoesNotExist(public_path('robots.txt'), 'A static robots file bypasses the dynamic indexing policy on real web servers.');
         $settings = PortfolioSetting::findOrFail(1);
         $settings->update(['indexing_enabled' => false, 'robots_follow' => false, 'canonical_url' => 'https://portfolio.example/']);
         $project = Project::firstOrFail();
@@ -181,6 +182,41 @@ class ContentSeoTest extends TestCase
         $document = $this->document($response->getContent());
         $this->assertNotNull($document->getElementById('about'));
         $this->assertSame(0, (new \DOMXPath($document))->query('//*[@id="primary-navigation"]//a[@href="#about"]')->length);
+    }
+
+    public function test_unpublished_section_content_is_private_in_html_and_serialized_payload(): void
+    {
+        PortfolioSection::where('key', 'about')->update([
+            'is_visible' => false,
+            'title' => 'Private built-in heading',
+            'body' => 'Private built-in body',
+            'items' => [['title' => 'Private structured item', 'body' => 'Private item body']],
+        ]);
+        $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->post('/admin/sections', $this->sectionFields([
+                'is_visible' => 0,
+                'title' => 'Private custom heading',
+                'body' => 'Private custom body',
+                'items_json' => '[{"title":"Private custom item","body":"Private custom item body"}]',
+            ]))->assertSessionHasNoErrors();
+        $response = $this->get('/')->assertOk();
+        foreach (['Private built-in', 'Private structured item', 'Private item body', 'Private custom'] as $privateText) {
+            $response->assertDontSee($privateText, false);
+        }
+        $this->assertNull($this->document($response->getContent())->getElementById('about'));
+        $this->get('/preview')->assertOk()->assertSee('Private built-in heading')->assertSee('Private custom heading');
+    }
+
+    public function test_all_builtin_sections_can_be_unpublished_without_leaking_static_fallback_content(): void
+    {
+        PortfolioSection::query()->update(['is_visible' => false]);
+        $response = $this->get('/')->assertOk();
+        $document = $this->document($response->getContent());
+        foreach (PortfolioSection::BUILT_IN_KEYS as $key) {
+            $this->assertNull($document->getElementById($key));
+        }
+        $this->assertSame(0, (new \DOMXPath($document))->query('//*[contains(@class,"intro-strip")]')->length);
+        $response->assertSee('"sections":[]', false)->assertDontSee('A universe of', false)->assertDontSee('href="#home"', false);
     }
 
     public function test_preview_is_private_noindex_and_draft_posts_do_not_modify_published_content(): void

@@ -21,6 +21,29 @@ class PortfolioRenderer
                 }
             }
             $xpath = new DOMXPath($document);
+            $sectionKeys = array_column($payload['sections'], 'key');
+            foreach (PortfolioSection::BUILT_IN_KEYS as $key) {
+                if (! in_array($key, $sectionKeys, true)) {
+                    $element = $document->getElementById($key);
+                    $element?->parentNode?->removeChild($element);
+                }
+            }
+            if (! in_array('home', $sectionKeys, true)) {
+                foreach (iterator_to_array($xpath->query('//*[contains(concat(" ",normalize-space(@class)," ")," intro-strip ")]')) as $strip) {
+                    $strip->parentNode->removeChild($strip);
+                }
+            }
+            foreach (iterator_to_array($xpath->query('//a[starts-with(@href,"#")]')) as $link) {
+                $target = substr($link->getAttribute('href'), 1);
+                if (! in_array($target, PortfolioSection::BUILT_IN_KEYS, true) || in_array($target, $sectionKeys, true)) {
+                    continue;
+                }
+                if ($target === 'home') {
+                    $link->setAttribute('href', '#main');
+                } else {
+                    $link->parentNode->removeChild($link);
+                }
+            }
             $values = [
                 'profile.name' => $payload['profile']['name'],
                 'profile.title' => $payload['profile']['title'],
