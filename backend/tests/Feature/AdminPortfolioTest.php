@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContactMessage;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
@@ -75,6 +76,24 @@ class AdminPortfolioTest extends TestCase
         $this->actingAs($admin)->get('/admin/inbox')
             ->assertOk()
             ->assertSee('Contact inbox');
+    }
+
+    public function test_inbox_wraps_unbroken_message_content(): void
+    {
+        $message = str_repeat('testing', 100);
+        ContactMessage::create([
+            'name' => 'Test Visitor',
+            'email' => 'visitor@example.test',
+            'subject' => 'A collaboration',
+            'message' => $message,
+        ]);
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->get('/admin/inbox')
+            ->assertOk()
+            ->assertSee('class="inbox-message"', false)
+            ->assertSee('overflow-wrap: anywhere;', false)
+            ->assertSee($message);
     }
 
     public function test_editor_publishes_content_and_theme_to_the_public_portfolio(): void

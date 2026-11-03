@@ -16,12 +16,12 @@
   @else
     <div class="grid" style="gap:12px">
       @foreach($messages as $message)
-        <article class="editor-card" style="padding:14px">
-          <div class="panel-head">
+        <article class="editor-card inbox-card" style="padding:14px">
+          <div class="panel-head inbox-message-head">
             <div><h2>{{ $message->subject }}</h2><p style="margin:5px 0 0;color:#858294;font-size:9px">{{ $message->name }} · <a href="mailto:{{ $message->email }}" style="color:#b69bff">{{ $message->email }}</a> · {{ $message->created_at->format('M j, Y · g:i a') }}</p></div>
             <span class="status-pill {{ $message->status === 'unread' ? 'off' : '' }}">{{ ucfirst($message->status) }}</span>
           </div>
-          <p style="margin:0 0 13px;color:#c3bfce;font-size:10px;line-height:1.75;white-space:pre-wrap">{{ $message->message }}</p>
+          <p class="inbox-message" style="margin:0 0 13px;color:#c3bfce;font-size:10px;line-height:1.75;white-space:pre-wrap">{{ $message->message }}</p>
           <form method="post" action="{{ route('admin.inbox.update', $message) }}" class="form-inline" style="align-items:end">
             @csrf
             @method('patch')

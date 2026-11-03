@@ -14,6 +14,31 @@
     @media(max-width:520px){.content{padding-inline:15px}.topbar{height:58px;padding-inline:15px}.top-actions .button-quiet{display:none}.page-head{align-items:flex-start;flex-direction:column}.stats{gap:9px}.stat-card{padding:13px}.stat-number{font-size:24px}.dashboard-columns{grid-template-columns:1fr}.field-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.project-editor{grid-template-columns:1fr}.project-editor-actions{flex-direction:row;flex-wrap:wrap}.project-editor-actions .button{width:auto}.media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.upload-form{grid-template-columns:1fr}.preview-frame{height:540px}.activity-time{display:none}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
+  <style>
+    .field input[type="checkbox"],
+    .field input[type="radio"],
+    .checkbox-row input[type="checkbox"],
+    .checkbox-row input[type="radio"] {
+      width: 14px;
+      height: 14px;
+      min-height: 14px;
+      flex: 0 0 14px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 2px;
+      background: transparent;
+      accent-color: #a98cea;
+    }
+    .inbox-card,
+    .inbox-message-head > div {
+      min-width: 0;
+    }
+    .inbox-message-head > div,
+    .inbox-message {
+      overflow-wrap: anywhere;
+    }
+  </style>
 </head>
 <body>
 @if(auth()->check())
