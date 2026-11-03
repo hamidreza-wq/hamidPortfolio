@@ -1,0 +1,15 @@
+# Managed fonts and images
+
+Image uploads require PHP `ext-gd` with JPEG, PNG and WebP support; `fileinfo` is also required. Missing GD causes a clear validation error, not an unchecked upload. On the provided Windows runtime, run `php -d extension=gd artisan serve` and `php -d extension=gd vendor\bin\phpunit --filter=AssetManagementTest` without changing the shared php.ini. Use the direct PHPUnit invocation so the extension flag is not lost when a wrapper spawns another PHP process.
+
+Apply the additive managed-assets migration with `php artisan migrate` after backing up production data. Never run `migrate:fresh` against the application database.
+
+Fonts accept WOFF2, WOFF, TTF and OTF up to 2 MB with matching binary headers/container bounds. Uploaders must provide an HTTP(S) source, license details and affirmative redistribution/web-embedding rights confirmation. This is an attestation, not legal license verification or a complete font-engine security audit. Use fonts from trusted sources. Uploaded fonts receive generated CSS aliases, are selected independently for heading/body text, and are served by the same frontend/preview font payload.
+
+Images accept JPEG, PNG and WebP up to 5 MB, 8192 pixels per side and 20 million pixels. GD decoding/re-encoding strips appended content and metadata. Public filenames are random, not derived from upload names. Library URLs use `/media/{id}` and remain stable after replacement; replacements update existing references. Replacement is refused while current content or saved history refers directly to an old storage path, preventing broken legacy links. Convert those references to the library selector/stable URL first.
+
+The library supports label/alt-text editing, optional image replacement, search and usage display. Assets referenced by settings, sections, projects, theme presets or saved content revisions cannot be deleted. Referenced fonts cannot be deactivated. History is retained indefinitely: there is no automatic pruning or implemented pruning UI. Assets referenced only by saved history may therefore remain undeletable until a reviewed retention maintenance procedure removes those historical references. Back up and review restoration requirements before any such maintenance.
+
+Database/audit failures restore quarantined original files and remove new uploads. Failed post-commit quarantine cleanup is reported for operational recovery. Back up both MySQL and `storage/app/public`; the database cannot replace missing files. Application-level checks cover JSON references; database foreign keys additionally protect direct image references. Concurrent publishers must use the same asset validation/locking convention.
+
+`FontLibrary::activeOptions()`, `validateSelection($value, $field)`, `payload()` and `css()` are the editor/public integration API. `MediaLibrary::selectionRules()`, `options()` and `publicPayload($id)` are the image integration API. `admin.partials.font-select` and `admin.partials.media-select` take `id`, `name`, `value`, and optional `label`.

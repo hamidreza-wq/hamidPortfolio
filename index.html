@@ -33,9 +33,9 @@
     <div class="scroll-progress" aria-hidden="true"></div>
 
     <header class="site-header">
-      <a class="brand" href="#home" aria-label="Hamid Reza Bayat, home">
-        <span class="brand-mark" aria-hidden="true">H<span>.</span></span>
-        <span class="brand-name">Hamid Reza Bayat</span>
+      <a class="brand" href="#home" aria-label="Hamid Reza Bayat, home" data-managed-label="profile.name">
+        <span class="brand-mark" aria-hidden="true"><span data-managed-initial="profile.name">H</span><span>.</span></span>
+        <span class="brand-name" data-managed="profile.name">Hamid Reza Bayat</span>
       </a>
       <button
         class="menu-toggle"
@@ -168,10 +168,10 @@
           </label>
         </div>
         <div class="project-grid" id="project-grid" aria-live="polite"></div>
-        <p class="empty-state" hidden>No projects match that search. Try another term.</p>
+        <p class="empty-state" role="status" hidden>No projects match that search. Try another term.</p>
         <div class="work-foot reveal">
           <span>MORE PROJECTS, OPENLY SHARED</span>
-          <a class="text-link" href="https://github.com/hamidreza-wq?tab=repositories" target="_blank" rel="noreferrer">
+          <a class="text-link" href="https://github.com/hamidreza-wq?tab=repositories" data-managed-href="profile.github.repositories" target="_blank" rel="noreferrer">
             Explore all repositories <span aria-hidden="true">↗</span>
           </a>
         </div>
@@ -229,7 +229,7 @@
     </main>
 
     <footer class="site-footer section-shell">
-      <a class="brand brand-footer" href="#home"><span class="brand-mark" aria-hidden="true">H<span>.</span></span><span class="brand-name">Hamid Reza Bayat</span></a>
+      <a class="brand brand-footer" href="#home" aria-label="Hamid Reza Bayat, home" data-managed-label="profile.name"><span class="brand-mark" aria-hidden="true"><span data-managed-initial="profile.name">H</span><span>.</span></span><span class="brand-name" data-managed="profile.name">Hamid Reza Bayat</span></a>
       <p data-managed="profile.footer">Made with curiosity, somewhere on Earth.</p>
       <a class="back-to-top" href="#home">BACK TO TOP <span aria-hidden="true">↑</span></a>
     </footer>

@@ -11,6 +11,7 @@ class Project extends Model
         'live_url', 'description', 'details', 'technologies', 'features',
         'visual', 'visual_label', 'status', 'is_featured', 'is_published',
         'sort_order', 'seo_title', 'seo_description', 'created_by',
+        'media_asset_id', 'gallery_media_ids',
     ];
 
     protected function casts(): array
@@ -18,9 +19,15 @@ class Project extends Model
         return [
             'technologies' => 'array',
             'features' => 'array',
+            'gallery_media_ids' => 'array',
             'is_featured' => 'boolean',
             'is_published' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function mediaAsset()
+    {
+        return $this->belongsTo(MediaAsset::class);
     }
 }

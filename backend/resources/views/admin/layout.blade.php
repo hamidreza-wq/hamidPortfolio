@@ -38,6 +38,40 @@
     .inbox-message {
       overflow-wrap: anywhere;
     }
+    .sidebar {
+      overflow-y: auto;
+    }
+    .form-inline {
+      flex-wrap: wrap;
+    }
+    .panel,
+    .editor-card {
+      min-width: 0;
+    }
+    .project-editor-main,
+    .project-title-row h2 {
+      min-width: 0;
+    }
+    .project-title-row h2 {
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 1100px) {
+      .editor-layout,
+      .project-editor {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .preview-card {
+        position: relative;
+        top: auto;
+      }
+      .project-editor-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .project-editor-actions .button {
+        width: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -52,8 +86,11 @@
     <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><span class="nav-icon">◈</span>Overview</a>
     <a class="nav-link {{ request()->routeIs('admin.site-editor.*') ? 'active' : '' }}" href="{{ route('admin.site-editor.edit') }}"><span class="nav-icon">◉</span>Live site editor</a>
     <a class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}" href="{{ route('admin.projects.index') }}"><span class="nav-icon">▧</span>Projects</a>
+    <a class="nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}" href="{{ route('admin.sections.index') }}"><span class="nav-icon">+</span>Sections</a>
+    <a class="nav-link {{ request()->routeIs('admin.revisions.*') ? 'active' : '' }}" href="{{ route('admin.revisions.index') }}"><span class="nav-icon">↶</span>Content history</a>
     <p class="nav-label">LIBRARY</p>
     <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" href="{{ route('admin.media.index') }}"><span class="nav-icon">▤</span>Media library</a>
+    <a class="nav-link {{ request()->routeIs('admin.fonts.*') ? 'active' : '' }}" href="{{ route('admin.fonts.index') }}"><span class="nav-icon">Aa</span>Fonts</a>
     <a class="nav-link {{ request()->routeIs('admin.inbox.*') ? 'active' : '' }}" href="{{ route('admin.inbox.index') }}"><span class="nav-icon">✉</span>Contact inbox</a>
     <div class="sidebar-bottom">
       <div class="sidebar-note"><strong>Private studio</strong><br>Changes publish to the live portfolio only when you choose to save them.</div>

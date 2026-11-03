@@ -2,20 +2,30 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\ContentRevisionController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FontController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SiteEditorController;
+use App\Http\Controllers\Admin\ThemePresetController;
+use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\PublicContactController;
 use App\Http\Controllers\PublicPortfolioController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicPortfolioController::class, 'index'])->name('portfolio.home');
+Route::get('/projects/{slug}', [ProjectDetailController::class, 'show'])->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')->name('portfolio.projects.show');
+Route::get('/sitemap.xml', [ProjectDetailController::class, 'sitemap'])->name('portfolio.sitemap');
+Route::get('/robots.txt', [ProjectDetailController::class, 'robots'])->name('portfolio.robots');
+Route::get('/fonts/{fontAsset}', [FontController::class, 'show'])->name('fonts.show');
+Route::get('/media/{mediaAsset}', [MediaController::class, 'show'])->name('media.show');
 Route::post('/contact', [PublicContactController::class, 'store'])
     ->middleware('throttle:3,10')
     ->name('contact.store');
 Route::get('/preview', [PublicPortfolioController::class, 'preview'])
-    ->middleware(['auth', 'admin'])
+    ->middleware(['auth', 'auth.session', 'admin'])
     ->name('portfolio.preview');
 Route::get('/{asset}', [PublicPortfolioController::class, 'asset'])
     ->where('asset', 'styles\\.css|app\\.mjs|portfolio-data\\.mjs|favicon\\.svg');
@@ -25,18 +35,31 @@ Route::middleware('guest')->group(function () {
     Route::post('/admin/login', [AuthController::class, 'store'])->middleware('throttle:5,1')->name('admin.login');
 });
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/site-editor', [SiteEditorController::class, 'edit'])->name('site-editor.edit');
     Route::put('/site-editor', [SiteEditorController::class, 'update'])->name('site-editor.update');
+    Route::post('/themes', [ThemePresetController::class, 'store'])->name('themes.store');
+    Route::delete('/themes/{themePreset}', [ThemePresetController::class, 'destroy'])->name('themes.destroy');
+    Route::get('/sections', [SectionController::class, 'index'])->name('sections.index');
+    Route::post('/sections', [SectionController::class, 'store'])->name('sections.store');
+    Route::put('/sections/{portfolioSection}', [SectionController::class, 'update'])->name('sections.update');
+    Route::delete('/sections/{portfolioSection}', [SectionController::class, 'destroy'])->name('sections.destroy');
+    Route::get('/revisions', [ContentRevisionController::class, 'index'])->name('revisions.index');
+    Route::post('/revisions/{contentRevision}/restore', [ContentRevisionController::class, 'restore'])->name('revisions.restore');
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::get('/media', [MediaController::class, 'index'])->name('media.index');
     Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+    Route::put('/media/{mediaAsset}', [MediaController::class, 'update'])->name('media.update');
     Route::delete('/media/{mediaAsset}', [MediaController::class, 'destroy'])->name('media.destroy');
+    Route::get('/fonts', [FontController::class, 'index'])->name('fonts.index');
+    Route::post('/fonts', [FontController::class, 'store'])->name('fonts.store');
+    Route::put('/fonts/{fontAsset}', [FontController::class, 'update'])->name('fonts.update');
+    Route::delete('/fonts/{fontAsset}', [FontController::class, 'destroy'])->name('fonts.destroy');
     Route::get('/inbox', [ContactMessageController::class, 'index'])->name('inbox.index');
     Route::patch('/inbox/{contactMessage}', [ContactMessageController::class, 'update'])->name('inbox.update');
     Route::delete('/inbox/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('inbox.destroy');

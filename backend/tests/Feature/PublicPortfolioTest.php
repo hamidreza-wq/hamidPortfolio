@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\ContactMessage;
+use App\Models\PortfolioSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
 use Tests\TestCase;
 
 class PublicPortfolioTest extends TestCase
@@ -36,6 +38,7 @@ class PublicPortfolioTest extends TestCase
             'email' => 'visitor@example.test',
             'subject' => 'A collaboration',
             'message' => 'I would like to discuss a project.',
+            'submission_token' => Crypt::encryptString((string) (time() - 5)),
         ])->assertRedirect('/#contact')
             ->assertSessionHas('contact_status');
 
@@ -84,7 +87,7 @@ class PublicPortfolioTest extends TestCase
 
     public function test_maintenance_mode_hides_only_the_public_portfolio(): void
     {
-        \App\Models\PortfolioSetting::whereKey(1)->update(['maintenance_mode' => true]);
+        PortfolioSetting::whereKey(1)->update(['maintenance_mode' => true]);
 
         $this->get('/')->assertStatus(503)->assertSee('A small update is underway.');
         $this->get('/admin/login')->assertOk();

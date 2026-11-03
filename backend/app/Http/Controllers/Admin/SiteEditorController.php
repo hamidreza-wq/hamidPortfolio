@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PublicPortfolioController;
 use App\Models\AuditLog;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
-use App\Models\SkillCategory;
 use App\Models\Skill;
+use App\Models\SkillCategory;
+use App\Services\ContentHistory;
+use App\Services\FontLibrary;
+use App\Services\MediaLibrary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +23,7 @@ class SiteEditorController extends Controller
             'settings' => PortfolioSetting::findOrFail(1),
             'sections' => PortfolioSection::orderBy('sort_order')->get(),
             'skillCategories' => SkillCategory::with('skills')->orderBy('sort_order')->get(),
-            'previewPayload' => app(\App\Http\Controllers\PublicPortfolioController::class)
+            'previewPayload' => app(PublicPortfolioController::class)
                 ->previewPayloadForAdmin(),
         ]);
     }
@@ -31,10 +35,17 @@ class SiteEditorController extends Controller
             'settings.professional_title' => ['required', 'string', 'max:120'],
             'settings.github_url' => ['required', 'url', 'max:255', 'regex:/^https:\/\/github\.com\//i'],
             'settings.email' => ['nullable', 'email', 'max:255'],
-            'settings.linkedin_url' => ['nullable', 'url', 'max:255'],
+            'settings.linkedin_url' => ['nullable', 'url:http,https', 'max:255'],
             'settings.site_title' => ['required', 'string', 'max:255'],
             'settings.site_description' => ['required', 'string', 'max:320'],
-            'settings.canonical_url' => ['nullable', 'url', 'max:255'],
+            'settings.canonical_url' => ['nullable', 'url:http,https', 'max:255', 'regex:/^https?:\\/\\/[^\\/?#@]+(?:\\/[^?#]*)?$/i'],
+            'settings.og_image' => ['nullable', 'url:http,https', 'max:255'],
+            'settings.og_image_media_id' => app(MediaLibrary::class)->selectionRules(),
+            'settings.og_title' => ['nullable', 'string', 'max:255'],
+            'settings.og_description' => ['nullable', 'string', 'max:320'],
+            'settings.language' => ['sometimes', 'required', 'regex:/^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$/', 'max:35'],
+            'settings.indexing_enabled' => ['sometimes', 'required', 'boolean'],
+            'settings.robots_follow' => ['sometimes', 'required', 'boolean'],
             'settings.maintenance_mode' => ['required', 'boolean'],
             'settings.color_background' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'settings.color_foreground' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
@@ -49,7 +60,15 @@ class SiteEditorController extends Controller
             'settings.animations_enabled' => ['required', 'boolean'],
             'settings.particles_enabled' => ['required', 'boolean'],
             'settings.footer_text' => ['nullable', 'string', 'max:255'],
-            'sections' => ['required', 'array:home,about,work,craft,journey,contact', 'size:6'],
+            'sections' => ['required', 'array', 'min:6', 'max:36'],
+            'sections.*' => ['array:title,subtitle,body,is_visible,sort_order,label,show_in_navigation,spacing_top,spacing_bottom,background_effect,image_media_id,background_media_id'],
+            'sections.*.label' => ['sometimes', 'required', 'string', 'max:60'],
+            'sections.*.show_in_navigation' => ['sometimes', 'required', 'boolean'],
+            'sections.*.spacing_top' => ['sometimes', 'required', 'integer', 'between:0,240'],
+            'sections.*.spacing_bottom' => ['sometimes', 'required', 'integer', 'between:0,240'],
+            'sections.*.background_effect' => ['sometimes', 'required', 'in:cosmic,none'],
+            'sections.*.image_media_id' => app(MediaLibrary::class)->selectionRules(),
+            'sections.*.background_media_id' => app(MediaLibrary::class)->selectionRules(),
             'sections.*.title' => ['required', 'string', 'max:180'],
             'sections.*.subtitle' => ['nullable', 'string', 'max:180'],
             'sections.*.body' => ['nullable', 'string', 'max:3000'],
@@ -61,9 +80,12 @@ class SiteEditorController extends Controller
             'skill_categories.*.is_visible' => ['required', 'boolean'],
             'skill_categories.*.sort_order' => ['required', 'integer', 'between:0,100'],
         ]);
+        app(FontLibrary::class)->validateSelection($validated['settings']['font_body'], 'settings.font_body');
+        app(FontLibrary::class)->validateSelection($validated['settings']['font_heading'], 'settings.font_heading');
 
         DB::transaction(function () use ($validated, $request): void {
             $settings = PortfolioSetting::query()->lockForUpdate()->findOrFail(1);
+            app(ContentHistory::class)->site('Before publishing site changes', $request->user()->id);
             $settings->fill($validated['settings']);
             $settings->save();
 
