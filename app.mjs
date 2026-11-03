@@ -1,4 +1,12 @@
-import { craft, profile, projects } from "./portfolio-data.mjs";
+import {
+  craft as fallbackCraft,
+  profile as fallbackProfile,
+  projects as fallbackProjects,
+} from "./portfolio-data.mjs";
+
+let profile = window.portfolioPayload?.profile ?? fallbackProfile;
+let projects = window.portfolioPayload?.projects ?? fallbackProjects;
+let craft = window.portfolioPayload?.craft ?? fallbackCraft;
 
 const projectGrid = document.querySelector("#project-grid");
 const searchInput = document.querySelector(".project-search input");
@@ -54,6 +62,129 @@ function renderProjects() {
   projectGrid.hidden = visibleProjects.length === 0;
 }
 
+function renderCraft() {
+  document.querySelector("#craft-groups").innerHTML = craft.map((group, index) => `
+    <section class="craft-group reveal is-visible" style="--group-index:${index}">
+      <h3><span>0${index + 1}</span>${escapeHTML(group.title)}</h3>
+      <ul>${group.items.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+    </section>
+  `).join("");
+}
+
+function renderContact() {
+  document.querySelector("#contact-actions").innerHTML = `
+    ${profile.email ? `<a class="button button-primary" href="mailto:${encodeURIComponent(profile.email)}">Email me <span aria-hidden="true">↗</span></a>` : ""}
+    <a class="button ${profile.email ? "button-quiet" : "button-primary"}" href="${escapeHTML(profile.github)}" target="_blank" rel="noreferrer">
+      Connect on GitHub <span aria-hidden="true">↗</span>
+    </a>
+    ${profile.linkedin ? `<a class="button button-quiet" href="${escapeHTML(profile.linkedin)}" target="_blank" rel="noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>` : ""}
+  `;
+  const contactSlot = document.querySelector("#contact-form-slot");
+  const actionUrl = window.portfolioPayload?.settings?.contact_action_url;
+  const token = window.portfolioPayload?.settings?.csrf_token;
+  if (!contactSlot || !actionUrl || !token) return;
+  const feedback = window.portfolioPayload?.settings?.contact_feedback;
+  contactSlot.innerHTML = `
+    <form class="portfolio-contact-form" method="post" action="${escapeHTML(actionUrl)}">
+      <input type="hidden" name="_token" value="${escapeHTML(token)}">
+      <div class="contact-form-heading"><strong>Send a note</strong><span>Private · goes directly to the studio inbox</span></div>
+      <div class="contact-form-grid">
+        <label>Your name<input name="name" autocomplete="name" maxlength="120" required></label>
+        <label>Email address<input name="email" type="email" autocomplete="email" maxlength="255" required></label>
+        <label class="contact-form-wide">Subject<input name="subject" maxlength="150" required></label>
+        <label class="contact-form-wide">Message<textarea name="message" rows="4" maxlength="5000" required></textarea></label>
+      </div>
+      <div class="contact-form-submit"><button class="button button-primary" type="submit">Send message <span aria-hidden="true">↗</span></button><span class="contact-form-feedback" role="status" aria-live="polite">${feedback ? escapeHTML(feedback) : ""}</span></div>
+    </form>
+  `;
+  if (window.portfolioPreview === true) {
+    contactSlot.querySelector("form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      contactSlot.querySelector(".contact-form-feedback").textContent = "Preview only — publishing the page will not send a message.";
+    });
+  }
+}
+
+function applyPortfolioData(data) {
+  profile = data.profile ?? profile;
+  projects = data.projects ?? projects;
+  craft = data.craft ?? craft;
+
+  const managedValues = {
+    "profile.name": profile.name,
+    "profile.title": profile.title,
+    "profile.footer": data.settings?.footer_text,
+  };
+  for (const section of data.sections ?? []) {
+    managedValues[`section.${section.key}.title`] = section.title;
+    managedValues[`section.${section.key}.subtitle`] = section.subtitle;
+    managedValues[`section.${section.key}.body`] = section.body;
+  }
+
+  document.querySelectorAll("[data-managed]").forEach((element) => {
+    const value = managedValues[element.dataset.managed];
+    if (typeof value !== "string") return;
+    if (element.textContent.trim().replace(/\s+/g, " ") === value.trim().replace(/\s+/g, " ")) return;
+    element.textContent = value;
+  });
+  document.querySelectorAll('[data-managed-href="profile.github"]').forEach((element) => {
+    if (profile.github) element.href = profile.github;
+  });
+
+  const theme = data.theme ?? {};
+  const root = document.documentElement;
+  const colorProperties = {
+    background: "--night",
+    foreground: "--ink",
+    primary: "--violet",
+    accent: "--accent",
+    cyan: "--cyan",
+  };
+  Object.entries(colorProperties).forEach(([key, property]) => {
+    if (/^#[0-9a-f]{6}$/i.test(theme[key] ?? "")) root.style.setProperty(property, theme[key]);
+  });
+  if (/^[\w ,_-]{1,60}$/.test(theme.font_body ?? "")) root.style.setProperty("--sans", `${theme.font_body}, system-ui, sans-serif`);
+  if (/^[\w ,_-]{1,60}$/.test(theme.font_heading ?? "")) root.style.setProperty("--heading", `${theme.font_heading}, system-ui, sans-serif`);
+  if (Number.isFinite(Number(theme.max_width))) root.style.setProperty("--content-width", `${Math.min(1600, Math.max(720, Number(theme.max_width)))}px`);
+  if (Number.isFinite(Number(theme.section_spacing))) root.style.setProperty("--section-spacing", `${Math.min(240, Math.max(48, Number(theme.section_spacing)))}px`);
+  if (Number.isFinite(Number(theme.border_radius))) root.style.setProperty("--card-radius", `${Math.min(32, Math.max(0, Number(theme.border_radius)))}px`);
+  document.body.dataset.motion = theme.animations_enabled === false || theme.animations_enabled === 0 ? "off" : "on";
+  document.querySelector(".particle-field").hidden = theme.particles_enabled === false || theme.particles_enabled === 0;
+
+  const sectionElements = {
+    home: document.querySelector("#home"),
+    about: document.querySelector("#about"),
+    work: document.querySelector("#work"),
+    craft: document.querySelector("#craft"),
+    journey: document.querySelector("#journey"),
+    contact: document.querySelector("#contact"),
+  };
+  if (Array.isArray(data.sections) && data.sections.length) {
+    const main = document.querySelector("#main");
+    const home = sectionElements.home;
+    const strip = main.querySelector(".intro-strip");
+    const activeSections = data.sections
+      .filter((section) => sectionElements[section.key])
+      .sort((left, right) => left.sort_order - right.sort_order);
+    Object.values(sectionElements).forEach((element) => {
+      if (element) element.hidden = true;
+    });
+    activeSections.forEach((section) => {
+      const element = sectionElements[section.key];
+      element.hidden = section.is_visible === false || section.is_visible === 0;
+    });
+    main.prepend(home);
+    if (strip) home.after(strip);
+    activeSections
+      .filter((section) => section.key !== "home")
+      .forEach((section) => main.append(sectionElements[section.key]));
+  }
+
+  renderProjects();
+  renderCraft();
+  renderContact();
+}
+
 function showProject(project) {
   dialogContent.innerHTML = `
     <p class="eyebrow">${escapeHTML(project.categoryLabel)} <span class="dialog-index">/ REPOSITORY NOTES</span></p>
@@ -63,7 +194,7 @@ function showProject(project) {
     <ul class="dialog-tags">${project.technologies.map((tech) => `<li>${escapeHTML(tech)}</li>`).join("")}</ul>
     <h3>Inside the project</h3>
     <ul class="dialog-features">${project.features.map((feature) => `<li>${escapeHTML(feature)}</li>`).join("")}</ul>
-    <a class="button button-primary dialog-repo" href="https://github.com/hamidreza-wq/${encodeURIComponent(project.repo)}" target="_blank" rel="noreferrer">
+    <a class="button button-primary dialog-repo" href="${escapeHTML(project.repositoryUrl ?? `https://github.com/hamidreza-wq/${encodeURIComponent(project.repo)}`)}" target="_blank" rel="noreferrer">
       View repository <span aria-hidden="true">↗</span>
     </a>
   `;
@@ -100,23 +231,20 @@ dialog.addEventListener("click", (event) => {
   if (event.target === dialog) dialog.close();
 });
 
-document.querySelector("#craft-groups").innerHTML = craft.map((group, index) => `
-  <section class="craft-group reveal" style="--group-index:${index}">
-    <h3><span>0${index + 1}</span>${escapeHTML(group.title)}</h3>
-    <ul>${group.items.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
-  </section>
-`).join("");
+if (window.portfolioPayload) applyPortfolioData(window.portfolioPayload);
+else {
+  renderProjects();
+  renderCraft();
+  renderContact();
+}
 
-const contactActions = document.querySelector("#contact-actions");
-contactActions.innerHTML = `
-  ${profile.email ? `<a class="button button-primary" href="mailto:${encodeURIComponent(profile.email)}">Email me <span aria-hidden="true">↗</span></a>` : ""}
-  <a class="button ${profile.email ? "button-quiet" : "button-primary"}" href="${escapeHTML(profile.github)}" target="_blank" rel="noreferrer">
-    Connect on GitHub <span aria-hidden="true">↗</span>
-  </a>
-  ${profile.linkedin ? `<a class="button button-quiet" href="${escapeHTML(profile.linkedin)}" target="_blank" rel="noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>` : ""}
-`;
-
-renderProjects();
+if (window.portfolioPreview === true) {
+  window.addEventListener("message", (event) => {
+    if (event.source !== window.parent || event.origin !== window.location.origin) return;
+    if (event.data?.type !== "portfolio:preview" || !event.data.payload) return;
+    applyPortfolioData(event.data.payload);
+  });
+}
 
 const menuToggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".primary-navigation");

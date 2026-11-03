@@ -106,7 +106,7 @@ export const craft = [
   },
   {
     title: "Backend & data",
-    items: ["PHP", "Laravel", "MySQL", "MariaDB", "SQLite"],
+    items: ["PHP", "Laravel", "MySQL", "MariaDB"],
   },
   {
     title: "Desktop & document tools",
