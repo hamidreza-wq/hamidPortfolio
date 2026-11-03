@@ -37,7 +37,9 @@ class PortfolioSeo
                 'name' => $project->name,
                 'description' => $description,
                 'url' => $canonical,
-                'author' => ['@type' => 'Person', 'name' => $settings->name],
+                ...($project->rights_confirmed_at && $project->author_name ? ['author' => ['@type' => 'Person', 'name' => $project->author_name]] : []),
+                ...($project->license_name ? ['license' => $project->license_name] : []),
+                ...($project->rights_confirmed_at && $project->copyright_holder ? ['copyrightHolder' => ['@type' => 'Person', 'name' => $project->copyright_holder]] : []),
                 'keywords' => implode(', ', $project->technologies ?? []),
                 ...($image ? ['image' => $image] : []),
             ] : [

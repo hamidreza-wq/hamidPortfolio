@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PublicPortfolioController;
 use App\Models\AuditLog;
+use App\Models\GithubRepository;
 use App\Models\Project;
 use App\Services\ContentHistory;
 use App\Services\MediaLibrary;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProjectController extends Controller
 {
@@ -106,11 +108,32 @@ class ProjectController extends Controller
             'sort_order' => ['required', 'integer', 'between:0,1000'],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:320'],
+            'author_name' => ['nullable', 'string', 'max:120'],
+            'maintainer_name' => ['nullable', 'string', 'max:120'],
+            'license_name' => ['nullable', 'string', 'max:160'],
+            'attribution' => ['nullable', 'string', 'max:3000'],
+            'copyright_holder' => ['nullable', 'string', 'max:120'],
+            'rights_confirmed' => ['sometimes', 'boolean'],
         ]);
     }
 
     private function projectAttributes(array $validated, Request $request, ?Project $project = null): array
     {
+        if ($project && $validated['is_published'] && GithubRepository::where('project_id', $project->id)
+            ->where(fn ($query) => $query->whereNull('publication_approved_at')
+                ->orWhereNotIn('state', ['approved', 'linked', 'changes']))->exists()) {
+            throw ValidationException::withMessages(['is_published' => 'Review and approve this GitHub candidate before publishing.']);
+        }
+        $confirmed = array_key_exists('rights_confirmed', $validated)
+            ? (bool) $validated['rights_confirmed'] : (bool) $project?->rights_confirmed_at;
+        if (! $confirmed && (! empty($validated['author_name']) || ! empty($validated['copyright_holder']))) {
+            throw ValidationException::withMessages(['rights_confirmed' => 'Confirm authorship/ownership and preserve contributor and licence rights before making an author or copyright claim.']);
+        }
+        unset($validated['rights_confirmed']);
+        if (! $confirmed) {
+            $validated['author_name'] = null;
+            $validated['copyright_holder'] = null;
+        }
         $name = $validated['name'];
         $slug = $validated['slug'] ?? $project?->slug ?? (Str::slug($name) ?: 'project');
         $existing = Project::where('slug', $slug)->when($project, fn ($query) => $query->whereKeyNot($project->id))->exists()
@@ -121,6 +144,7 @@ class ProjectController extends Controller
 
         return [
             ...$validated,
+            'rights_confirmed_at' => $confirmed ? ($project?->rights_confirmed_at ?? now()) : null,
             'slug' => $slug,
             'gallery_media_ids' => array_map('intval', $validated['gallery_media_ids'] ?? []),
             'technologies' => collect(preg_split('/\R/', $validated['technologies']) ?: [])

@@ -15,6 +15,11 @@
     <p class="dialog-description">{{ $project->description }}</p>
     @if($image)<img class="project-featured-image" src="{{ $image['url'] }}" alt="{{ $image['alt'] }}">@endif
     <div class="project-long-description">{{ $project->details }}</div>
+    @if($project->rights_confirmed_at && $project->author_name)<p>Author: {{ $project->author_name }}</p>@endif
+    @if($project->maintainer_name)<p>Maintainer: {{ $project->maintainer_name }}</p>@endif
+    @if($project->license_name)<p>Repository licence: {{ $project->license_name }}. See the repository for the full licence and notices.</p>@endif
+    @if($project->attribution)<p class="project-long-description">{{ $project->attribution }}</p>@endif
+    @if($project->rights_confirmed_at && $project->copyright_holder)<p>Copyright holder: {{ $project->copyright_holder }}. Existing licences and contributor rights remain in effect.</p>@endif
     <h2>Built with</h2>
     <ul class="dialog-tags">@foreach($project->technologies ?? [] as $technology)<li>{{ $technology }}</li>@endforeach</ul>
     <h2>Inside the project</h2>

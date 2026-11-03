@@ -57,6 +57,10 @@ The Laravel document root must be `backend/public`. Keep the root portfolio file
 - **Contact inbox:** the public contact form validates and rate-limits submissions; messages are stored in MySQL with a keyed hash of the submitter IP rather than the raw IP address.
 - **Audit trail:** publishing and administrative content actions record the authenticated administrator and action details.
 - **SEO:** global metadata is rendered in HTML; published projects have server-rendered detail pages, sitemap entries and social metadata. Draft projects are not public pages.
+- **Software updates:** discover official GitHub Releases and verify trusted Ed25519 manifests, GitHub/SHA-256 digests and ZIP contents before password-confirmed review. Deployment remains disabled until hosting and protected GitHub Actions are configured.
+- **GitHub projects:** automatic public-only read-only discovery creates real draft projects with a review queue. Existing edits and third-party rights are preserved; private repository authentication is not implemented.
+- **SEO monitoring:** bounded, DNS-pinned scans of the configured public site produce actionable findings and notifications. Search Console remains explicitly disconnected.
+- **Notifications:** deduplicated in-app history, priority/read/dismiss/snooze and category preferences, with opt-in daily/weekly email digests through a configured mail transport.
 
 ## Request protection
 
@@ -78,15 +82,18 @@ php artisan test
 
 The test suite uses Laravel's database refresh behavior. Never point `DB_DATABASE` in `.env.testing` at a database containing data you need to keep. A runtime guard requires MySQL and an effective database name ending in `_test` before refresh operations.
 
+`--env=testing` alone does not select a test database when `.env.testing` is absent. Destructive Artisan reset/wipe/rollback commands are now blocked outside a verified `*_test` connection and the testing environment. Use a test-only database account. See the [database incident disclosure and current verification report](PLATFORM-REPORT.md).
+
 If GD is installed but not enabled in the local PHP configuration, you can run the PHP tests without changing the shared configuration:
 
 ```powershell
-php -d extension=gd vendor\bin\phpunit
+php -d extension=gd -d extension=sodium vendor\bin\phpunit
 ```
 
 ## Production and operations
 
 Follow the [deployment, backup and rollback checklist](DEPLOYMENT.md) and review the [hardening verification report](HARDENING-REPORT.md) before deployment.
+The [platform operations guide](backend/docs/platform-operations.md) documents signed manifests, schema changes, scheduler/queue/mail setup, public GitHub review, monitoring limits and the deliberately disabled deployment boundary.
 
 - Set `APP_ENV=production`, `APP_DEBUG=false`, a strong `APP_KEY`, and production MySQL credentials in the deployment environment. Do not commit `.env` files.
 - Point the web server at `backend/public`; ensure the parent repository files remain readable by the PHP application.

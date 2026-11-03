@@ -2,6 +2,9 @@
 
 ## Release gates
 
+- Read [the current platform report](PLATFORM-REPORT.md), including its database incident disclosure, and [platform operations](backend/docs/platform-operations.md). The update centre does not deploy or create verified backups. Hosting/Actions activation remains disabled by explicit owner decision.
+- Enable PHP sodium and ZIP for signed release inspection, and cURL/DOM for public-site monitoring. Configure only the trusted release **public** key; signing private keys stay outside production.
+
 - Review `HARDENING-REPORT.md` for actual verification results and unresolved limitations. A successful build alone is not a deployment approval.
 - Use PHP 8.3+ with PDO MySQL, Fileinfo and GD. Enable GD before accepting image uploads. Install Composer dependencies with `composer install --no-dev --optimize-autoloader` from `backend`.
 - Use a dedicated MySQL application account with access only to the application database. Use a different database and account for tests. Tests require a database name ending in `_test`.
@@ -33,6 +36,7 @@
 
 - If smoke tests fail, stop publishing and roll back the release to the previously verified application version.
 - Do not blindly run `migrate:rollback`: removing columns can destroy content. Use the reviewed database backup and matching application release if the schema is incompatible.
+- Destructive Artisan reset/wipe/rollback commands are blocked outside verified `*_test` databases in the testing environment. A destructive command is not a recovery procedure. Never restore an old backup over newer user data.
 - Restore MySQL to an isolated database first, then switch application configuration under maintenance control. Restore media/fonts from the matching backup. Preserve `APP_KEY`.
 - Clear/rebuild configuration and view caches; restart processes and repeat smoke tests.
 - Content revisions are not substitutes for MySQL/asset backups.

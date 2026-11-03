@@ -1,0 +1,315 @@
+# Platform operations
+
+## Status and deployment boundary
+
+This is development software, not a production deployment approval. The update
+centre implements discovery, cryptographic verification, archive inspection and
+recorded administrator review. **Staging, verified backups, activation, Actions
+dispatch, post-deployment checks and automated rollback are disabled/not
+implemented.** The owner chose to leave activation disabled until hosting is
+decided, with protected GitHub Actions environment approval required later.
+There is no web endpoint that runs shell commands or executes downloaded PHP.
+
+Read [the development report](../../PLATFORM-REPORT.md), including its database
+incident disclosure, before using these changes. Back up the database before
+applying the additive migrations. A default seed is not a data recovery.
+
+The only document root remains `backend/public`. Private ZIPs, logs, configuration
+and backups must never be exposed by a web server. The root HTML/CSS/ES modules
+remain the actual public frontend and preview.
+
+## Schema and existing installations
+
+Review these migrations, then apply them explicitly using a deployment account:
+
+- `2026_11_04_010000_add_platform_monitoring`: run history, notifications,
+  release candidates, repository review records, SEO findings and nullable
+  project attribution fields. Existing projects are not republished or replaced.
+- `2026_11_04_010100_add_notification_preferences`: per-administrator category and
+  digest choices; email is disabled by default.
+
+```powershell
+Set-Location E:\hamidPortfolio\backend
+php artisan migrate:status
+# Only after reviewing pending migrations and verifying an independent backup:
+php artisan migrate --force
+```
+
+The first migration preserves a `platform_runs` table left behind by its known
+initial failed DDL attempt. It does not erase it. Do not repair migration failures
+by wiping a database or rerunning the default seeder over edited content.
+
+Destructive Artisan commands (`db:wipe`, `migrate:fresh`, `migrate:refresh`,
+`migrate:reset`, `migrate:rollback`) are now blocked outside the testing
+environment and an actual MySQL-protocol database whose name ends in `_test`.
+The guard checks both the configured and effective `SELECT DATABASE()` name,
+including an explicit `--database` connection. This is a safety barrier, not a
+replacement for least-privilege accounts and backups. It cannot stop raw SQL,
+database administration tools or custom migration code.
+
+`--env=testing` **does not select a test database** when no `.env.testing` exists.
+Use a separate test account with access only to disposable test databases:
+
+```powershell
+Set-Location E:\hamidPortfolio\backend
+$env:APP_ENV = 'testing'
+$env:DB_CONNECTION = 'mysql'
+$env:DB_DATABASE = 'hamid_portfolio_test'
+$env:DB_URL = ''
+php -d extension=gd -d extension=sodium vendor\bin\phpunit
+```
+
+Set test credentials through your private environment or `.env.testing`; never
+copy production credentials into test commands. The local verification server
+is MariaDB 10.4.32 through Laravel's `mysql` driver, not Oracle MySQL 8.
+Oracle MySQL verification remains outstanding.
+
+## Official releases and trust
+
+Source is fixed in code:
+`https://api.github.com/repos/hamidreza-wq/hamidPortfolio/releases/latest`.
+Anonymous API requests cannot discover private releases. Stable `vMAJOR.MINOR.PATCH`
+tags only; drafts, prereleases, wrong repository links and downgrade/equal
+version verification are rejected. `VERSION` describes this checkout's
+development version, not a claim that a signed release has been published.
+
+A published release must contain:
+
+1. `portfolio-manifest.json`, at most 64 KiB, signed as **exact raw bytes**.
+2. `portfolio-manifest.sig`, the base64-encoded 64-byte detached Ed25519 signature
+   over those bytes (optional terminal newline is allowed).
+3. The ZIP named by the signed manifest, at most 50 MiB, with GitHub's
+   `sha256:<hex>` release-asset digest.
+
+Example manifest shape (replace every example value with reviewed release data):
+
+```json
+{
+  "repository": "hamidreza-wq/hamidPortfolio",
+  "version": "1.0.0",
+  "tag": "v1.0.0",
+  "notes": "Human-reviewed release notes",
+  "released_at": "2026-11-01T00:00:00Z",
+  "asset": {
+    "name": "portfolio.zip",
+    "sha256": "<64 lowercase hexadecimal SHA-256 characters>"
+  },
+  "minimum_php": "8.3.0",
+  "required_extensions": ["pdo_mysql", "fileinfo", "gd", "sodium", "zip"],
+  "database_engine": "mysql",
+  "mysql_min": "8.0.0",
+  "mysql_max_exclusive": "9.0.0",
+  "schema_from": 3,
+  "schema_to": 4
+}
+```
+
+`database_engine` must match the actual server family (`mysql` or `mariadb`).
+The compatibility bounds apply to that family's reported version. Never reuse
+MySQL version bounds as proof of MariaDB compatibility. `schema_from` must equal
+the installed code's `platform.schema_version`; bump that constant deliberately
+with reviewed releases, not through an editable dashboard field.
+
+Generate and retain the Ed25519 private key in a protected signing environment
+outside the application. In trusted PHP signing automation use
+`sodium_crypto_sign_detached($exactManifestBytes, $privateKey)` and base64-encode
+the resulting signature. Configure **only** the base64-encoded 32-byte public key
+as `RELEASE_PUBLIC_KEY` in server secrets. Never download the trust key from the
+release being verified. Key rotation invalidates prior review eligibility and
+requires reverification. Private keys must not be copied to production or Git.
+
+The dashboard's verify action requires password reauthentication and a throttled
+POST. It verifies the signature first, signed metadata/runtime/schema, the
+GitHub digest, downloaded SHA-256, private write/readback and free disk space.
+It then inspects ZIP entries without extracting/executing them: path traversal,
+absolute/Windows paths, reserved names, case-insensitive duplicates, symlinks,
+special files, encryption and expansion limits are rejected; file streams are
+checked against declared size and CRC. Limits: 10,000 entries, 50 MiB per file,
+200 MiB expanded total and at least 256 MiB private-storage free space.
+
+Verification downloads use official asset IDs and accept a single HTTPS redirect
+only to GitHub's exact allowlisted asset hosts. Responses have size/time limits.
+Artifacts are randomly named on Laravel's private `local` disk under
+`platform/releases`. Failed inspections can leave quarantined private artifacts;
+there is no automatic deletion/retention job.
+
+Potentially destructive migration patterns are flagged heuristically. This is
+**not a PHP sandbox or a proof migrations are safe**. Review every migration,
+including `up`/`down`, data effects, runtime requirements and backward
+compatibility. Approval rechecks stored artifact bytes and trust-key identity.
+It records `manual_action_required`, never `applied` or deployment success.
+Neither verification nor approval creates a database/media backup.
+
+If GitHub has no release, or a key/signature/digest is unavailable, the UI records
+a clear setup/failure state. Do not loosen verification to make an update appear.
+
+## GitHub discovery and editorial review
+
+Public-only anonymous discovery is intentionally selected. No OAuth, GitHub App,
+classic PAT or fine-grained PAT is accepted/stored, and no credentials are sent.
+Private repositories are **disabled**. If private access is implemented later,
+use a separately reviewed GitHub App with selected repositories and read-only
+metadata permissions, explicit owner authorization, encrypted credentials,
+rotation/revocation and verified account identity. Do not paste broad `repo`
+tokens into configuration or invent an OAuth success state.
+
+The fixed account endpoint verifies `hamidreza-wq` and obtains its numeric owner
+ID; every owned repository must have the same login and ID. Discovery requests
+only `/users/hamidreza-wq` and its owned public `/repos` pages; 100 per page,
+10 pages maximum. A malformed page, API failure, rate limit or time budget stops
+the scan before any database import. No README, code, homepage, archive or remote
+script is fetched/executed.
+
+Repository ID, not name, is the primary key. Forks/archives default to excluded.
+Existing projects with a matching GitHub URL are linked, not duplicated.
+New eligible repositories create **actual unpublished Project rows**. Imported
+descriptions are bounded plain text; language/licence metadata is a review aid,
+not inferred authorship or invented product features.
+
+Later scans update review metadata and a previous snapshot only. Renames,
+archives and unavailable/deleted/now-private sources are surfaced for review.
+They never change manually edited project copy, slug, media, visibility or
+attribution and never automatically delete projects. Rejected candidates are
+retained to avoid rediscovery duplicates.
+
+Approve/reject in GitHub Projects, then use the existing project editor to
+complete content, media, SEO and publication. Approval itself does not publish.
+Unreviewed/rejected imports cannot be published through that editor. Deleting a
+project leaves the source review record with a null project reference; no
+automatic reimport occurs. Reimport of deleted/rejected sources requires manual
+operator review; there is no one-click destructive reset.
+
+Account identity is not proof of personal identity or copyright. Project author
+and copyright claims require an explicit rights attestation. Default imports
+have no author/copyright claim. Confirmed fields appear on the real detail page
+and in JSON-LD; unconfirmed claims are omitted. Preserve licence text, contributor
+rights, attribution and notices. A licence identifier does not replace the
+repository's complete licence. The CMS does not rewrite licences or claim every
+repository belongs exclusively to the portfolio owner.
+
+## SEO monitoring
+
+Set `SEO_MONITOR_ORIGIN=https://your-public-domain` on the server, without
+credentials, path, query, fragment or port. It must equal the canonical origin
+configured in the site editor. Administrators cannot turn arbitrary form input
+into scanner URLs.
+
+The scanner resolves public IPv4 addresses, rejects non-global/private/loopback/
+metadata/shared ranges, pins the selected address with cURL while keeping TLS
+hostname verification, disables proxy routing and never follows redirects.
+Direct outbound HTTPS, PHP cURL and DOM are required. IPv6-only sites are not
+supported. It never requests admin, preview, arbitrary links or external sites.
+
+It requests only `/`, up to 50 current published `/projects/{slug}` pages,
+`/robots.txt` and `/sitemap.xml`, with 1 MiB per-response and a total time budget.
+More than 50 published projects fails explicitly instead of claiming full
+coverage. It checks observed status, title/description presence and exact
+duplicates, canonical URL, noindex conflicts, basic OG, image-alt hints,
+one h1, basic JSON-LD, viewport, known project-link consistency, thin-content
+review hints, response time, sitemap membership/draft exclusion and robots.
+It records recommendations/history, resolves issues after a completed clean
+rescan, and never rewrites or publishes content. Failed/incomplete scans do not
+falsely resolve earlier findings.
+
+Limits: not a full crawler or Google validator; it does not fetch external
+links/images, detect all broken assets, validate full schema semantics, render
+JavaScript for scans, measure Core Web Vitals, certify accessibility/mobile
+layouts, analyse keywords, guarantee indexing or promise rankings. Content
+length is a Unicode-aware review hint, not a ranking target.
+
+Search Console is explicitly **disconnected and not implemented**. There are no
+fabricated clicks/impressions/indexing claims. Future integration requires
+read-only OAuth, verified property access, encrypted credentials and real API
+responses, independently tested before it is represented as connected.
+
+## Notifications and email
+
+The private centre has fingerprint-deduplicated updates/GitHub/SEO notices,
+priority, history, editor links, read, dismiss and 24-hour snooze. Repeated
+identical issues preserve read/dismissal; changed or resolved-then-recurring
+issues reopen. A fresh issue's severity does not imply a proven exploit.
+
+Read/dismiss/snooze are shared in this single-owner studio. Each administrator
+can select categories for their badge and optional daily/weekly summaries.
+Email is disabled by default. Configure a real SMTP mailer, sender and scheduler.
+`log`/`array` mailers do not deliver email; submitted history is not proof of inbox
+receipt. Digests go only to the opted-in administrator account address, contain
+at most 50 current unread, unsnoozed notices, and exclude private contact messages
+and credentials. Transport errors are recorded without secrets or a false sent
+timestamp. Verify a real mailbox separately before relying on mail.
+
+## Scheduler, queues and dependency checks
+
+Example private environment:
+
+```dotenv
+QUEUE_CONNECTION=database
+DB_QUEUE_RETRY_AFTER=240
+RELEASE_CHECK_CRON="0 */6 * * *"
+GITHUB_SCAN_CRON="15 */6 * * *"
+SEO_SCAN_CRON="30 3 * * *"
+```
+
+Run Laravel `schedule:run` each minute through the host's scheduler, from
+`backend`, as a restricted maintenance account; use Task Scheduler on Windows
+or cron on Linux. Start a supervised queue worker:
+
+```powershell
+php artisan queue:work --queue=default --timeout=150 --tries=1
+```
+
+Use a shared database/Redis cache for multi-server locks and keep queue
+`retry_after` greater than the worker timeout. Jobs have uniqueness and runtime
+locks; scans do not automatically retry rate-limit responses. `sync` runs manual
+checks in the request and is intended only for local use. Without a real
+scheduler/worker, an enabled schedule is not evidence that checks are executing.
+Abrupt process termination can leave `running` history; investigate the worker
+logs and expired locks before retrying.
+
+Read-only checks, with real failure exit status:
+
+```powershell
+php artisan platform:check releases
+php artisan platform:check github
+php artisan platform:check seo
+php artisan platform:audit
+php artisan platform:digest
+php artisan schedule:list
+```
+
+Audit runs only in trusted CLI/scheduler, not via a web action. It invokes fixed
+argument lists for Composer validation/audit/direct outdated and npm audit/
+outdated, with time limits; it does not install/update packages, run migrations,
+rotate keys or make application source writable. Results, exit codes and
+dependency/advisory relationships appear in Updates history. Composer package
+errors and npm `ENOLOCK` are failures/unknown status, not clean audits. Direct
+version reports do not prove compatibility or assess every breaking change.
+Review lockfile diffs and major upgrades in an isolated branch; never blanket
+`composer update` in production.
+
+## Future protected Actions activation (not configured)
+
+Before enabling any deploy action:
+
+1. Decide the hosting OS, SSH/self-hosted runner boundary, exact release layout,
+   web identity and independently protected deployment identity.
+2. Create a protected `production` environment requiring human reviewers and
+   restrict tags/workflow permissions. Keep signing keys separate from deploy
+   credentials; do not grant the web user Actions write/deploy permissions.
+3. Independently reverify official release, trusted signature and digest in
+   CI/worker. Never trust a dashboard boolean as authorization to execute bytes.
+4. Build/test in isolation against a dedicated Oracle MySQL test server; resolve
+   npm lock/build/audit failures and verify compatible runtime versions.
+5. Create verified database, media and configuration backups with private
+   credentials files; restore to an isolated staging database and verify assets.
+6. Stage a new immutable release; review and apply only backward-compatible
+   migrations during a controlled maintenance window.
+7. Activate atomically where supported; verify HTTPS, public/admin/project/
+   preview/contact/asset health before marking success.
+8. If health fails, switch the application release back only when schema
+   compatible. Never restore an old database over newer user writes.
+9. Test recovery/failure/concurrency scenarios on the chosen host before
+   enabling approval-to-deploy integration. Keep old releases/backups until a
+   reviewed retention policy explicitly removes them.
+
+These are deployment requirements, not implemented or tested activation claims.

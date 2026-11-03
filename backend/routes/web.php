@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ContentRevisionController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FontController;
 use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SiteEditorController;
@@ -38,6 +39,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/updates', [PlatformController::class, 'updates'])->name('platform.updates');
+    Route::get('/github-projects', [PlatformController::class, 'github'])->name('platform.github');
+    Route::get('/seo-monitor', [PlatformController::class, 'seo'])->name('platform.seo');
+    Route::get('/notifications', [PlatformController::class, 'notifications'])->name('platform.notifications');
+    Route::put('/notification-preferences', [PlatformController::class, 'preferences'])->name('platform.preferences');
+    Route::post('/platform/check/{kind}', [PlatformController::class, 'scan'])->middleware('throttle:6,1')->name('platform.scan');
+    Route::post('/updates/{releaseCandidate}/verify', [PlatformController::class, 'prepare'])->middleware('throttle:3,1')->name('platform.prepare');
+    Route::post('/updates/{releaseCandidate}/approve', [PlatformController::class, 'approve'])->middleware('throttle:3,1')->name('platform.approve');
+    Route::post('/github-projects/{githubRepository}/review', [PlatformController::class, 'review'])->name('platform.review');
+    Route::patch('/notifications/{platformNotice}', [PlatformController::class, 'notice'])->name('platform.notice');
     Route::get('/site-editor', [SiteEditorController::class, 'edit'])->name('site-editor.edit');
     Route::put('/site-editor', [SiteEditorController::class, 'update'])->name('site-editor.update');
     Route::post('/themes', [ThemePresetController::class, 'store'])->name('themes.store');

@@ -12,6 +12,8 @@ class Project extends Model
         'visual', 'visual_label', 'status', 'is_featured', 'is_published',
         'sort_order', 'seo_title', 'seo_description', 'created_by',
         'media_asset_id', 'gallery_media_ids',
+        'author_name', 'maintainer_name', 'license_name', 'attribution',
+        'copyright_holder', 'rights_confirmed_at',
     ];
 
     protected function casts(): array
@@ -23,6 +25,7 @@ class Project extends Model
             'is_featured' => 'boolean',
             'is_published' => 'boolean',
             'sort_order' => 'integer',
+            'rights_confirmed_at' => 'datetime',
         ];
     }
 
