@@ -9,11 +9,13 @@ test('public semantics, private sources, forced colours and 200 percent scaling'
     const scan = await new AxeBuilder({ page }).analyze();
     expect(scan.violations.filter(item => ['serious', 'critical'].includes(item.impact))).toEqual([]);
     await page.keyboard.press('Tab');
-    if (browserName === 'webkit') {
+    const skipLink = page.getByRole('link', { name: 'Skip to content' });
+    const skipLinkFocused = await skipLink.evaluate(link => link === document.activeElement);
+    if (browserName === 'webkit' && !skipLinkFocused) {
         await expect(page.getByRole('button', { name: 'All work', exact: true })).toBeFocused();
-        await page.getByRole('link', { name: 'Skip to content' }).focus();
+        await skipLink.focus();
     } else {
-        await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+        await expect(skipLink).toBeFocused();
     }
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/#main$/);
