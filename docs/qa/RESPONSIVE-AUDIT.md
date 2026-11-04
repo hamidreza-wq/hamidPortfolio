@@ -1,5 +1,36 @@
 # Responsive and accessibility audit
 
+## Current verification: 2026-11-04
+
+Branch `copilot/final-security-deployment-hardening`; application source
+`95ef441f2f524f5796ce3aabfa873bbf06246385`.
+**Fixed and verified:** all **11 combined browser cases passed** in 2.2 minutes.
+Edge runs the full suite, including admin axe checks; Chromium, Firefox and
+WebKit additionally run the public accessibility regression.
+
+Fresh evidence covers keyboard skip/dialog Escape/focus return, mobile admin
+inertness, form labels/accessible-name checks, responsive public/control bounds,
+reduced motion, forced colors and 200% CSS scaling. Axe found visible-label
+mismatches in brand/scroll/project controls; actual markup was fixed without
+rule exclusions. Firefox exposed 200%-scaled overflow from body's 320px
+minimum width; changed the actual CSS to zero and retested all four engines.
+No serious/critical axe violations remain in exercised states.
+
+**Known limitation:** CSS scaling is not native browser UI zoom; WebKit's
+Windows Tab configuration skips links whereas Linux includes them. An actual
+CI failure exposed the platform-specific assumption; the corrected test accepts
+only those known first targets and still verifies skip-link activation.
+All four public engines passed again locally. No screen-reader quality, physical-device/touch-target lab,
+full contrast/WCAG certification or production performance audit is claimed.
+The historical 120-admin-combination sweep below was not repeated in full.
+Current screenshots are private, credential/message-free session evidence;
+older linked screenshots remain dated evidence.
+See [final release readiness](FINAL-RELEASE-READINESS.md) for actual CI status.
+The corrected-source CI run passed all 11 browser cases, including Linux WebKit;
+the exact run and successful jobs are linked there.
+
+## Historical geometry sweep and screenshots (superseded where noted)
+
 Original audit: 2026-11-03. A fresh six-test Edge run on 2026-11-04 passed, including public viewport checks and exact-size screenshot assertions. The earlier full 120-admin-page geometry sweep was not repeated.
 
 ## Viewport matrix

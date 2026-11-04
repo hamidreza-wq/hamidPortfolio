@@ -1,5 +1,56 @@
 # Test results
 
+## Current evidence: 2026-11-04 final verification
+
+Branch `copilot/final-security-deployment-hardening`; application source
+`95ef441f2f524f5796ce3aabfa873bbf06246385`.
+The [canonical final evidence matrix](FINAL-RELEASE-READINESS.md) records actual
+CI conclusions and classifies unresolved production gates. This section
+supersedes the historical counts and uncommitted/CI statements below.
+
+- Full direct PHPUnit, sodium enabled: **150 tests, 934 assertions, 149 passed,
+  one GD-absence-only skip**, PHP 8.5.11/MariaDB 10.4.32.
+- All **11 browser cases passed** in 2.2 minutes: Edge full suite plus public
+  Chromium/Firefox/WebKit. Explicit browser schema:
+  `hamid_portfolio_browser_20261104_test`; session-private storage/credentials.
+- Strict Composer validation, actual platform requirements, Composer/npm audits,
+  Pint, root module syntax, Vite build and isolated Blade compile passed.
+- Fresh install and two upgrade baselines retain synthetic content. Restored
+  snapshot has 29 tables/81 rows, per-table checksums and three matching assets.
+- Actual CI exposed PHP 8.3 lockfile incompatibility and MySQL JSON-key ordering;
+  both root causes were fixed without suppressing tests. See linked run history
+  and final verdict in the canonical report.
+- Both backend jobs then passed on Oracle MySQL 8.4.13; Linux WebKit exposed
+  an OS-specific Tab-traversal test assumption. The corrected test still
+  requires keyboard skip-link activation; four public engines passed locally
+  again. Final combined CI conclusions are recorded in the canonical report.
+- Corrected source [GitHub CI passed](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/41874142601):
+  both PHP 8.3/8.5 jobs succeeded against Oracle MySQL 8.4.13; 11 browser cases
+  passed in 59.7 seconds on the PHP 8.3 job. One GD-absence-only skip is explained
+  above. Source is **READY FOR STAGING**, not production approval.
+
+Reproduce local PHP validation from the backend using a pre-created, disposable
+schema/account, never the owner's application credentials:
+
+```powershell
+$env:APP_ENV = 'testing'
+$env:DB_CONNECTION = 'mysql'
+$env:DB_DATABASE = 'hamid_portfolio_final_test'
+$env:DB_URL = ''
+php -d extension=sodium artisan portfolio:test-database:verify
+if ($LASTEXITCODE -ne 0) { throw 'Unsafe test database configuration' }
+php -d extension=sodium vendor\bin\phpunit --display-skipped
+```
+
+Direct PHPUnit retains the local sodium flag; `artisan test` starts another
+PHP process. CI enables sodium in its runtime and runs `artisan test`.
+Browser command below now selects the new browser schema; it runs Edge plus
+the public cross-engine subset, not a full admin suite on every engine.
+Native UI zoom/screen-reader/physical-device/performance certification remains
+a **Known limitation**. Intended-host smoke tests are **Owner configuration required**.
+
+## Historical verification stage (superseded)
+
 Date: 2026-11-04. Current work is on `copilot/final-security-deployment-hardening`, based on `12f1fa6`; changes remain uncommitted. No push or deployment was performed.
 
 ## Environment and isolation

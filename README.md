@@ -23,7 +23,7 @@ Requirements: PHP 8.3+, Composer, and MySQL 8.0+ (or a compatible MySQL server).
    Copy-Item .env.example .env
    ```
 
-3. Install dependencies, migrate and seed the verified portfolio content, and link public media storage:
+3. For a **new empty installation only**, install dependencies, migrate and seed the verified portfolio content, and link public media storage:
 
    ```powershell
    composer install
@@ -33,6 +33,11 @@ Requirements: PHP 8.3+, Composer, and MySQL 8.0+ (or a compatible MySQL server).
    ```
 
    Generate the key only on a new installation with an empty `APP_KEY`. Preserve the existing key on upgrades. Composer setup does not rotate keys or run database migrations.
+
+   For an existing installation, first back up and verify an isolated SQL/assets
+   restore, review `php artisan migrate:status`, then apply `php artisan migrate`
+   as an explicitly approved operation. Do not run `--seed`, `migrate:fresh`,
+   reset/wipe or key generation over existing data.
 
 4. Create the single administrator interactively and start the Laravel server:
 
@@ -48,7 +53,7 @@ The Laravel document root must be `backend/public`. Keep the root portfolio file
 ## Dashboard and publishing
 
 - **Live site editor:** edits profile links, SEO metadata, theme colors/fonts/layout/motion, section copy/order/visibility, and skill groups. The embedded preview loads the public portfolio and receives same-origin draft updates; publishing submits validated values to MySQL.
-- **Projects:** manage verified project details, GitHub links, visibility, SEO fields, and display order. Drafts are excluded from the public page.
+- **Projects:** manage verified project details, GitHub links, visibility, SEO fields, and display order. Drafts are excluded from the public page. Repository links appear only when marked public; otherwise public surfaces say "Private source code". Demo links require explicit verification. Unknown links default withheld.
 - **Media library:** upload JPG, PNG, or WebP images up to 5 MB. Configure the public disk and ensure `storage:link` is available in production.
 - **Fonts:** upload licensed WOFF2, WOFF, TTF or OTF files, record family/weight/style and source/license information, then select an active font in the live editor. The actual portfolio receives generated `@font-face` rules; built-in system stacks remain available.
 - **Sections:** manage controlled plain-text content blocks, ordering, visibility and media without injecting arbitrary HTML. Existing canonical portfolio sections remain protected from deletion.
@@ -78,6 +83,11 @@ Tests use MySQL, not SQLite. Create a separate test database and least-privilege
 ```powershell
 cd backend
 Copy-Item .env.testing.example .env.testing
+$env:APP_ENV = 'testing'
+$env:DB_CONNECTION = 'mysql'
+$env:DB_DATABASE = 'hamid_portfolio_test'
+$env:DB_URL = ''
+php artisan portfolio:test-database:verify
 php artisan test
 ```
 
@@ -93,9 +103,10 @@ php -d extension=gd -d extension=sodium vendor\bin\phpunit
 
 ## Production and operations
 
-The latest [local functionality audit](docs/qa/FUNCTIONALITY-AUDIT.md), [test results](docs/qa/TEST-RESULTS.md), [security audit](docs/qa/SECURITY-AUDIT.md), [link audit](docs/qa/LINK-AUDIT.md), [responsive evidence](docs/qa/RESPONSIVE-AUDIT.md) and [fix report](docs/qa/BUG-FIX-REPORT.md) distinguish passed checks from configuration blockers and untested production conditions. Local database verification used MariaDB, not Oracle MySQL.
+Start with the [final release evidence and safe owner checklist](docs/qa/FINAL-RELEASE-READINESS.md).
+The [functionality audit](docs/qa/FUNCTIONALITY-AUDIT.md), [test results](docs/qa/TEST-RESULTS.md), [security audit](docs/qa/SECURITY-AUDIT.md), [link audit](docs/qa/LINK-AUDIT.md), [responsive evidence](docs/qa/RESPONSIVE-AUDIT.md) and [fix report](docs/qa/BUG-FIX-REPORT.md) preserve dated historical stages separately from current results. Local database verification used MariaDB; Oracle MySQL acceptance is a separate GitHub CI gate.
 
-The npm lockfile is now included. From `backend`, use `npm ci`, `npm audit` and `npm run build` for reproducible scaffold validation. `npm run test:browser` uses installed Microsoft Edge and requires the explicitly isolated QA server/database and private credential-file environment variables documented in the test report. It must not target an owner's installation. Repeated runs may hit the real login rate limit; wait for its window rather than disabling protection.
+The npm lockfile is included. From `backend`, use `npm ci`, `npm audit` and `npm run build` for reproducible scaffold validation. `npm run test:browser` uses installed Edge plus public Chromium/Firefox/WebKit coverage and requires the explicitly isolated QA server/database and private credential-file environment variables documented in the test report. It must not target an owner's installation. Repeated runs may hit the real login rate limit; wait for its window rather than disabling protection.
 
 Follow the [deployment, backup and rollback checklist](DEPLOYMENT.md) and review the [hardening verification report](HARDENING-REPORT.md) before deployment.
 The [platform operations guide](backend/docs/platform-operations.md) documents signed manifests, schema changes, scheduler/queue/mail setup, public GitHub review, monitoring limits and the deliberately disabled deployment boundary.
@@ -123,4 +134,4 @@ The frontend includes a keyboard skip link, visible focus states, semantic secti
 
 Project descriptions are based on the public READMEs for `Bible`, `officeConverters`, `myAccountingHome`, `interpurting-laravel`, and `meisaPortfolio`. OnePrayer is labeled as an early build because native device testing and mobile product screens are incomplete. No live demo URLs or screenshots are claimed without verification.
 
-That describes the original content research, not guaranteed current repository availability. The latest anonymous link audit returned 404 for four of these repository URLs; they need owner review for renamed/private/unavailable sources. No replacement repository, ownership claim or feature description was fabricated.
+That describes the original content research, not guaranteed current repository availability. Four sources were subsequently owner-confirmed private and are now labelled "Private source code" rather than linked publicly. Office Converters remains public; no live demo is published without verification. See the [current link disposition](docs/qa/LINK-AUDIT.md). No replacement repository, ownership claim or feature description was fabricated.

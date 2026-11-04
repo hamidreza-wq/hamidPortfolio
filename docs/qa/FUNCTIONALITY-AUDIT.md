@@ -1,5 +1,37 @@
 # Functionality audit
 
+## Current verification: 2026-11-04 final pass
+
+Branch `copilot/final-security-deployment-hardening`; application source
+`95ef441f2f524f5796ce3aabfa873bbf06246385`.
+[Final release readiness](FINAL-RELEASE-READINESS.md) is the authoritative current
+matrix; the inventory and execution tables below are historical baseline
+coverage, not a claim that the latest tree still has exactly those file counts.
+
+**Fixed and verified:** private-source labels across card/dialog/detail/editor
+preview; public/demo publication flags; no constructed private fallback URLs;
+guarded effective test DB verification; fresh/two-baseline upgrade preservation;
+isolated SQL/assets restore; accessible-name and Firefox scaling fixes; safe
+queue visibility timeout; strict order-independent GitHub metadata comparison.
+Local full PHPUnit: 150 tests/934 assertions, one explained GD skip.
+Combined browser run: 11 passed, including public four-engine coverage.
+Actual CI evidence and failed-then-corrected runs are linked in the final report.
+The corrected PHP 8.3/8.5 MySQL 8.4.13 matrix and all 11 browser cases passed:
+**READY FOR STAGING**, not permission to merge or deploy.
+
+Search Console is **implemented**, optional and separate from first-party
+traffic. Mocked tests cover read-only scope, encrypted refresh tokens, property
+denial, invalid state and disconnect without pageview loss; missing credentials
+keep the dashboard useful and make connect fail clearly.
+**Owner configuration required:** live OAuth callback/property verification.
+**External service unavailable:** SMTP credentials/public SEO origin absent;
+mail is locally `log`, no successful real delivery/scan claimed.
+**Owner configuration required:** host scheduler/worker/log rotation and staging
+HTTPS smoke tests. **Known limitation:** private GitHub authentication,
+full accessibility certification and production performance are not established.
+
+## Historical baseline inventory and execution evidence
+
 ## Scope and evidence policy
 
 QA started 2026-11-03 at commit `ce7787c`; the full PHP/Edge regression suite was rerun on 2026-11-04 on `copilot/final-security-deployment-hardening`. Owner database and port 8000 are not test targets. Fresh tests used `hamid_portfolio_final_test` and `hamid_portfolio_final_qa_test`, both isolated `_test` schemas, plus session-private storage on port 8147. Local server is MariaDB 10.4.32 via PDO MySQL, **not Oracle MySQL**. Do not interpret pending checks as passed.

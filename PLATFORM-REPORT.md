@@ -44,7 +44,8 @@ Corrective measures:
   from the known partial failed migration to be preserved on retry.
 - After the owner reported missing dashboard tables and explicitly approved
   the repair, a private SQL backup was saved and checked for expected schema,
-  data and completion markers. Restore of that backup has not been tested.
+  data and completion markers. At that stage restore had not been tested;
+  subsequent isolated SQL/assets restore evidence is linked below.
   Only the two reviewed additive platform migrations were then applied.
   User, project, settings, inbox and audit record counts were unchanged.
   Dashboard, Updates, GitHub Projects, SEO Monitor and Notifications all
@@ -53,7 +54,41 @@ Corrective measures:
   server on port 8000 with the correct local database explicitly selected.
   The owner confirmed successful login; credentials were not changed.
 
-## Overall outcome
+## Current final verification (2026-11-04)
+
+The current application source is
+`95ef441f2f524f5796ce3aabfa873bbf06246385` on
+`copilot/final-security-deployment-hardening`, committed/pushed in draft
+[PR #1](https://github.com/hamidreza-wq/hamidPortfolio/pull/1).
+See [final release readiness](docs/qa/FINAL-RELEASE-READINESS.md) for the actual
+CI matrix conclusion, failures/root-cause fixes, current status and exact owner
+checklist. No merge/deployment/DNS/hosting change is authorized by local results.
+
+Fresh local evidence: **150 tests, 934 assertions, one GD-absence-only skip**;
+**11 browser cases passed** (Edge full suite/public Chromium, Firefox, WebKit);
+Composer/npm audits, strict validation, build, Pint and view compilation pass.
+Corrected-source GitHub CI passed PHP 8.3/8.5 against Oracle MySQL 8.4.13,
+including all 11 browser cases. Status: **READY FOR STAGING**, not production.
+Private project links now say "Private source code"; unverified demos are withheld.
+Search Console is implemented separately from first-party analytics, with
+negative/disconnect tests; production OAuth is not configured.
+
+Backup assurance is no longer merely backup creation: a fresh isolated restore
+matched 29 tables/81 rows and each table checksum, restored three asset hashes,
+accepted additive migrations and rendered the homepage. SQL SHA-256:
+`6aeacddaab93a67a3045cda80c3e22fd8354fd60872ab9bcdc5ca9fe9e8b160f`.
+This corrects an invalid 63-character earlier checkpoint transcription.
+It is a **post-incident snapshot**, not recovery of pre-incident data or a full
+production disaster-recovery rehearsal. The incident disclosure above remains
+unchanged in substance.
+
+All current unresolved items are classified in the final report: intended host,
+staging HTTPS, branch protection, SMTP/live OAuth, scheduler/worker/retention,
+production recovery and manual accessibility/performance checks.
+The rest of this document preserves earlier implementation-stage results;
+its old npm/CI/backup/test statements are historical, not current conclusions.
+
+## Historical overall outcome (superseded by current evidence above)
 
 **NOT READY FOR PRODUCTION.** Useful integrated functionality is implemented and
 tested, but deployment, verified backups and rollback are not configured;

@@ -1,5 +1,41 @@
 # Security audit
 
+## Current evidence: 2026-11-04 final verification
+
+Branch `copilot/final-security-deployment-hardening`; application source
+`95ef441f2f524f5796ce3aabfa873bbf06246385`.
+See [final release readiness](FINAL-RELEASE-READINESS.md) for current CI,
+backup assurance levels and classified open gates.
+
+The final bounded read-only review found no high-confidence exploitable
+vulnerabilities in its reviewed changes. This is static review, not live-host
+or OAuth certification. Earlier publication-boundary findings below remain
+fixed and covered by current PHPUnit/browser regressions.
+
+| # | Severity | File | Lines | Vulnerability | Confidence |
+|---|----------|------|-------|---------------|------------|
+| - | - | - | - | No new high-confidence vulnerability reported in the bounded review | - |
+
+Fresh local regression: **150 tests/934 assertions**, one GD-absence-only skip;
+**11 browser cases passed**. Audits report no dependency advisories.
+Private repository URLs are no longer public links/payload URLs; unknown demos
+remain withheld. OAuth failure/disconnect tests preserve first-party analytics.
+Actual MySQL CI failure revealed JSON-order sensitivity and was corrected;
+no passing MariaDB result is substituted for Oracle MySQL acceptance.
+
+SQL and uploaded assets were restored to a fresh isolated schema/directory and
+checked, not to the owner database. Owner data remains untouched in this phase;
+the original data-loss incident remains unrecovered.
+Repository API inspection: secret scanning/push protection enabled;
+`main` unprotected/no rulesets; Dependabot security updates disabled.
+Protection/dependency-alert configuration is **Owner configuration required**.
+Both corrected-source CI jobs passed on Oracle MySQL 8.4.13, with all 11 browser
+cases passing; the final report links the exact run/jobs.
+Production TLS/proxy/permissions/SMTP/scheduler/live OAuth checks are also
+**Owner configuration required**, not passed security controls.
+
+## Historical audit and prior evidence (superseded where updated above)
+
 Original audit: 2026-11-03, baseline `ce7787c`; regression evidence refreshed 2026-11-04 on `copilot/final-security-deployment-hardening`. This is a local audit, not a penetration-test certification or deployment approval.
 
 ## Confirmed finding

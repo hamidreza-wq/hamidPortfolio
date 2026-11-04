@@ -285,6 +285,16 @@ scheduler/worker, an enabled schedule is not evidence that checks are executing.
 Abrupt process termination can leave `running` history; investigate the worker
 logs and expired locks before retrying.
 
+Monitor `php artisan queue:failed` and failed platform runs; alert before a
+controlled `queue:retry` rather than repeatedly retrying third-party failures.
+Supervise/restart workers after releases and verify one real scheduled task on
+the intended host. No host scheduler or supervised worker was installed by the
+local verification. Production logs need rotation, for example `LOG_STACK=daily`,
+`LOG_LEVEL=warning`, `LOG_DAILY_DAYS=14`, or an equivalent external policy.
+The default single-file channel has no automatic rotation. Agree separate
+retention for failed jobs, platform history and coordinated off-host backups;
+registration in `schedule:list` proves none of these operational requirements.
+
 Read-only checks, with real failure exit status:
 
 ```powershell

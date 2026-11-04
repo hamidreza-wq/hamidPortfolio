@@ -1,5 +1,32 @@
 # Link audit
 
+## Current link disposition: 2026-11-04
+
+Branch `copilot/final-security-deployment-hardening`, application source
+`95ef441f2f524f5796ce3aabfa873bbf06246385`.
+**Fixed and verified:** the owner confirmed Bible, myAccountingHome,
+interpurting-laravel and meisaPortfolio are private. Their earlier anonymous
+404s are preserved below as historical observations, not current broken public
+links. Cards, dialogs and detail pages now say **Private source code** and
+omit public repository URLs; no fallback GitHub URL is synthesized.
+
+Office Converters/officeConverters was anonymously verified public.
+No live demo was verified, so none was fabricated or exposed.
+Explicit public-source and verified-demo editor controls default false.
+PHP regression covers all four private projects and demo visibility; the public
+browser regression covers private card/dialog/detail behavior in four engines.
+All 11 combined browser cases passed locally.
+
+**Known limitation:** private repository authentication is not implemented.
+**Owner configuration required:** independently verify any future public demo
+before enabling its publication flag. The historical finite crawl below was
+not rerun as an unrestricted external crawl. Current release/CI disposition is
+in [final release readiness](FINAL-RELEASE-READINESS.md).
+The corrected-source MySQL matrix and all 11 CI browser cases passed; production
+domain/hosting/link availability still requires staging verification.
+
+## Historical finite crawl (2026-11-03)
+
 Date: 2026-11-03. Isolated QA port 8147. Finite allowlisted pages only; no external forms or crawling. Public HTML is parsed, not executed, for this table. Browser separately exercised dynamically generated cards/dialogs and their link roles. External HEAD falls back once to bounded GET; failures are not proof that a repository is deleted.
 
 Protected `/admin` and `/preview` are expected to redirect guests to login; private-file probes are expected to return 404 (shown as expected denials below). No account/token data is recorded.

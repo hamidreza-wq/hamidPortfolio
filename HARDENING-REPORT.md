@@ -2,6 +2,30 @@
 
 ## A. Executive summary
 
+Current source: `95ef441f2f524f5796ce3aabfa873bbf06246385` on
+`copilot/final-security-deployment-hardening`, 2026-11-04.
+Changes are committed and pushed to draft
+[PR #1](https://github.com/hamidreza-wq/hamidPortfolio/pull/1), never merged/deployed.
+The [final release evidence](docs/qa/FINAL-RELEASE-READINESS.md) supersedes
+historical counts/statuses below and records actual CI conclusions and owner gates.
+
+Fresh local validation: 150 tests/934 assertions, one GD-absence-only skip;
+11 real-browser cases passed across Edge plus public Chromium/Firefox/WebKit.
+Audits, strict Composer/platform checks, Pint, root syntax, build and views pass.
+Isolated fresh/upgrade preservation and SQL/asset restore are verified locally;
+Oracle MySQL acceptance depends on the actual matrix, not a MariaDB proxy.
+Private-source publication, accessible names, Firefox scaling, queue timing and
+JSON-key-order comparison were fixed and tested.
+Corrected-source GitHub CI passed both PHP 8.3/8.5 jobs on Oracle MySQL 8.4.13
+and all 11 browser cases. Status: **READY FOR STAGING**, not production.
+
+Backup creation, integrity, isolated restore and intended-host disaster recovery
+are distinct levels; only the first three are verified. Original lost content
+was not recovered. Live hosting/integrations and comprehensive accessibility
+remain classified limitations in the final checklist.
+
+## Historical hardening stage (superseded)
+
 Current follow-up work is isolated on `copilot/final-security-deployment-hardening`, based on `12f1fa6`. No changes were pushed or deployed. The existing cosmic root frontend remains canonical; Laravel still serves it and the administrator preview uses that same website.
 
 The baseline MySQL suite passed 14 tests and 81 assertions, but important functionality and deployment safeguards were incomplete. Work added request protection, operational font/media management, structured sections, public project SEO pages, revisions, color presets and verification beyond a build.
