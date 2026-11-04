@@ -275,7 +275,10 @@ php artisan queue:work --queue=default --timeout=150 --tries=1
 ```
 
 Use a shared database/Redis cache for multi-server locks and keep queue
-`retry_after` greater than the worker timeout. Jobs have uniqueness and runtime
+`retry_after` greater than the worker timeout (defaults are now 180 seconds versus
+the monitor's 150-second limit). If overriding `DB_QUEUE_RETRY_AFTER`,
+`REDIS_QUEUE_RETRY_AFTER` or `BEANSTALKD_QUEUE_RETRY_AFTER`, preserve that ordering.
+Jobs have uniqueness and runtime
 locks; scans do not automatically retry rate-limit responses. `sync` runs manual
 checks in the request and is intended only for local use. Without a real
 scheduler/worker, an enabled schedule is not evidence that checks are executing.

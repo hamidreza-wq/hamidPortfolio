@@ -106,4 +106,48 @@ class AnalyticsTest extends TestCase
             ->assertSee('40', false)
             ->assertSee('6.0', false);
     }
+
+    public function test_unconfigured_search_console_fails_explicitly_without_affecting_pageviews(): void
+    {
+        config(['services.google_search_console.client_id' => null, 'services.google_search_console.client_secret' => null]);
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $this->post('/admin/analytics/google/connect', ['site_url' => 'https://portfolio.example/'])->assertStatus(503);
+        $this->get('/admin/analytics')->assertOk()->assertSee('Optional');
+        Http::assertNothingSent();
+    }
+
+    public function test_invalid_callback_state_cannot_create_a_connection(): void
+    {
+        $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->withSession(['google_search_console_state' => 'expected-state', 'google_search_console_site' => 'https://portfolio.example/'])
+            ->get('/admin/analytics/google/callback?state=wrong&code=example')
+            ->assertSessionHasErrors('google');
+        $this->assertSame(0, GoogleSearchConsoleConnection::count());
+        Http::assertNothingSent();
+    }
+
+    public function test_unavailable_property_is_rejected_without_storing_tokens(): void
+    {
+        config(['services.google_search_console.client_id' => 'fixture', 'services.google_search_console.client_secret' => 'fixture']);
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'fixture-access', 'refresh_token' => 'fixture-refresh']),
+            'searchconsole.googleapis.com/*' => Http::response(['siteEntry' => [['siteUrl' => 'https://different.example/']]]),
+        ]);
+        $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->withSession(['google_search_console_state' => 'expected-state', 'google_search_console_site' => 'https://portfolio.example/'])
+            ->get('/admin/analytics/google/callback?state=expected-state&code=example')
+            ->assertRedirect(route('admin.analytics'))->assertSessionHasErrors('google');
+        $this->assertSame(0, GoogleSearchConsoleConnection::count());
+    }
+
+    public function test_disconnect_removes_stored_authorization_but_retains_first_party_data(): void
+    {
+        GoogleSearchConsoleConnection::create(['site_url' => 'https://portfolio.example/', 'refresh_token' => 'fixture-refresh', 'connected_at' => now()]);
+        PageView::create(['path' => '/', 'referrer_host' => null]);
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->delete('/admin/analytics/google')
+            ->assertRedirect(route('admin.analytics'))->assertSessionHas('status');
+        $this->assertSame(0, GoogleSearchConsoleConnection::count());
+        $this->assertSame(1, PageView::count());
+        Http::assertNothingSent();
+    }
 }
