@@ -27,6 +27,8 @@ Review these migrations, then apply them explicitly using a deployment account:
   project attribution fields. Existing projects are not republished or replaced.
 - `2026_11_04_010100_add_notification_preferences`: per-administrator category and
   digest choices; email is disabled by default.
+- `2026_11_04_010200_create_analytics_tables`: first-party pageview aggregates
+  and optional encrypted Google Search Console OAuth connection.
 
 ```powershell
 Set-Location E:\hamidPortfolio\backend
@@ -217,10 +219,24 @@ JavaScript for scans, measure Core Web Vitals, certify accessibility/mobile
 layouts, analyse keywords, guarantee indexing or promise rankings. Content
 length is a Unicode-aware review hint, not a ranking target.
 
-Search Console is explicitly **disconnected and not implemented**. There are no
-fabricated clicks/impressions/indexing claims. Future integration requires
-read-only OAuth, verified property access, encrypted credentials and real API
-responses, independently tested before it is represented as connected.
+First-party analytics records successful requests for the public home and
+published project pages. It stores the page path, external referrer hostname
+and timestamp only: no cookies, visitor identifiers, IP addresses, user-agent
+strings, or full referrer URLs. It reports pageviews, not unique visitors.
+Records are pruned weekly after `ANALYTICS_RETENTION_DAYS` (default 90); the
+Laravel scheduler must be running for retention cleanup.
+
+Google Search Console is an optional, separate read-only source. Configure
+`GOOGLE_SEARCH_CONSOLE_CLIENT_ID`, `GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET`, and
+`GOOGLE_SEARCH_CONSOLE_REDIRECT_URI` using the exact HTTPS callback URL
+`https://your-domain/admin/analytics/google/callback` registered in the Google
+OAuth client. The callback must also be authenticated to the studio. The admin
+then selects a property, authorizes only the `webmasters.readonly` scope, and
+the application confirms property access before saving the encrypted refresh
+token. Only actual Search Console API responses are shown; temporary failures
+are reported separately and do not replace first-party counts. Disconnecting
+deletes the locally stored token; revoke the grant in Google Account
+permissions as well if access should be withdrawn immediately.
 
 ## Notifications and email
 

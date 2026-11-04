@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\ContactMessage;
 use App\Models\MediaAsset;
+use App\Models\PageView;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
@@ -42,6 +43,7 @@ class DashboardController extends Controller
             'draftCount' => Project::where('is_published', false)->count(),
             'unreadMessages' => ContactMessage::where('status', 'unread')->count(),
             'mediaBytes' => MediaAsset::sum('size_bytes'),
+            'pageViews' => PageView::where('viewed_at', '>=', now()->subDays(29)->startOfDay())->count(),
             'sectionCount' => PortfolioSection::where('is_visible', true)->count(),
             'totalSections' => PortfolioSection::count(),
             'settings' => $settings,

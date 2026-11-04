@@ -8,8 +8,9 @@
   <p class="card-help">Origin: {{ config('platform.seo_origin') ?: 'Not configured: set SEO_MONITOR_ORIGIN on the server' }}. Schedule: {{ config('platform.schedule.seo') }} (UTC). Only the home page, up to 50 published project pages, robots and sitemap are requested. External links, redirects, admin and arbitrary URLs are never crawled.</p>
   <a class="button" href="{{ route('admin.site-editor.edit') }}">Global metadata / indexing / sharing</a>
   <a class="button" href="{{ route('admin.projects.index') }}">Project content and SEO</a>
-  <h2>Search Console: disconnected</h2>
-  <p class="card-help">No Google credentials are configured and no impressions, clicks, rankings or indexing results are being reported. Technical scan success is not proof of Google indexing. Search Console OAuth/statistics are not implemented in this phase.</p>
+  <h2>Search performance</h2>
+  <p class="card-help">Google Search Console is an optional, separate read-only source. Technical scan success does not prove Google indexing or rankings.</p>
+  <a class="button" href="{{ route('admin.analytics') }}">Open traffic analytics and Search Console →</a>
 </section>
 @forelse($findings as $finding)
 <section class="panel platform-card">

@@ -65,7 +65,7 @@ class PlatformIntegrationTest extends TestCase
         $this->actingAs(User::factory()->create(['is_admin' => true]));
         $this->get('/admin/updates')->assertOk()->assertSee('Activation disabled')->assertSee('0.2.0-dev');
         $this->get('/admin/github-projects')->assertOk()->assertSee('Private repositories are disabled');
-        $this->get('/admin/seo-monitor')->assertOk()->assertSee('Search Console: disconnected');
+        $this->get('/admin/seo-monitor')->assertOk()->assertSee('Search performance')->assertSee(route('admin.analytics'));
         $this->get('/admin/notifications')->assertOk()->assertSee('No notifications recorded');
     }
 

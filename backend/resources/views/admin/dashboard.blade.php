@@ -42,7 +42,7 @@
       @else
         <p style="color:#99d9bd;font-size:10px">Basic metadata checks passed. This does not guarantee search engine indexing or rankings.</p>
       @endif
-      <p style="margin:0;color:#9290a2;font-size:9px;line-height:1.75">Analytics are not configured. This dashboard does not invent visitor or traffic data.</p>
+      <p style="margin:0;color:#9290a2;font-size:9px;line-height:1.75">{{ number_format($pageViews) }} first-party pageviews in the last 30 days. <a href="{{ route('admin.analytics') }}" style="color:#b69bff">View traffic analytics →</a></p>
     </div>
   </section>
 </div>

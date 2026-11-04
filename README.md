@@ -55,11 +55,12 @@ The Laravel document root must be `backend/public`. Keep the root portfolio file
 - **Content history:** review supported site/project snapshots and explicitly restore an earlier version. Revisions are not backups for uploaded assets or the database.
 - **Color presets:** save a draft palette without publishing it, or load a saved palette into the preview before explicitly publishing.
 - **Contact inbox:** the public contact form validates and rate-limits submissions; messages are stored in MySQL with a keyed hash of the submitter IP rather than the raw IP address.
+- **Analytics:** first-party counts of successful public page loads, top pages and external referrer hosts. It does not use cookies or store visitor IPs, user agents or full referrer URLs. Optional Google Search Console read-only metrics remain separate.
 - **Audit trail:** publishing and administrative content actions record the authenticated administrator and action details.
 - **SEO:** global metadata is rendered in HTML; published projects have server-rendered detail pages, sitemap entries and social metadata. Draft projects are not public pages.
 - **Software updates:** discover official GitHub Releases and verify trusted Ed25519 manifests, GitHub/SHA-256 digests and ZIP contents before password-confirmed review. Deployment remains disabled until hosting and protected GitHub Actions are configured.
 - **GitHub projects:** automatic public-only read-only discovery creates real draft projects with a review queue. Existing edits and third-party rights are preserved; private repository authentication is not implemented.
-- **SEO monitoring:** bounded, DNS-pinned scans of the configured public site produce actionable findings and notifications. Search Console remains explicitly disconnected.
+- **SEO monitoring:** bounded, DNS-pinned scans of the configured public site produce actionable findings and notifications. Search Console data is shown only when its optional read-only OAuth integration is connected.
 - **Notifications:** deduplicated in-app history, priority/read/dismiss/snooze and category preferences, with opt-in daily/weekly email digests through a configured mail transport.
 
 ## Request protection

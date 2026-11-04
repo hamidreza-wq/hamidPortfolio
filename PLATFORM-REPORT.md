@@ -134,8 +134,13 @@ stored. The dashboard clearly states this limitation.
 - Persistent findings/priorities/resolution history, editor links, notices,
   and no automatic publication or keyword/ranking claims.
 
-Search Console is explicitly disconnected and **not implemented**. This monitor
-is not a full crawler, external broken-link/image checker, full structured-data
+First-party analytics records successful public home and published project
+pageviews without cookies or storing IP addresses, user agents, or full referrer
+URLs. Optional Google Search Console reporting uses read-only OAuth, checks
+property access, encrypts the refresh token, and keeps Google search metrics
+separate from first-party pageviews. Live production OAuth/API access still
+requires configuration and independent verification. This SEO monitor is not
+a full crawler, external broken-link/image checker, full structured-data
 validator, browser performance measurement, accessibility certification or
 proof of search indexing. Production-origin crawling is not yet configured or
 verified; automated HTTP fixtures validate parsing and safety policy.
@@ -287,9 +292,8 @@ mitigate or excuse the disclosed database incident.
    real behaviour and backup recovery independently.
 8. Configure/test the protected Actions hosting/staging/backup/health/rollback
    workflow before adding any activation endpoint.
-9. Search Console OAuth/statistics and private GitHub access require separate
-   implementation/security verification if wanted; the UI currently reports
-   them as disconnected/disabled, not working features.
+9. Configure and verify the optional read-only Search Console OAuth integration
+   against the production property. Private GitHub access remains disabled.
 10. Review the [operations guide](backend/docs/platform-operations.md) and
     [deployment checklist](DEPLOYMENT.md). No build or audit alone authorises
     production deployment.

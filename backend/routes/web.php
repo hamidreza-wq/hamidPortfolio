@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContentRevisionController;
@@ -16,8 +17,8 @@ use App\Http\Controllers\PublicContactController;
 use App\Http\Controllers\PublicPortfolioController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [PublicPortfolioController::class, 'index'])->name('portfolio.home');
-Route::get('/projects/{slug}', [ProjectDetailController::class, 'show'])->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')->name('portfolio.projects.show');
+Route::get('/', [PublicPortfolioController::class, 'index'])->middleware('record.pageview')->name('portfolio.home');
+Route::get('/projects/{slug}', [ProjectDetailController::class, 'show'])->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')->middleware('record.pageview')->name('portfolio.projects.show');
 Route::get('/sitemap.xml', [ProjectDetailController::class, 'sitemap'])->name('portfolio.sitemap');
 Route::get('/robots.txt', [ProjectDetailController::class, 'robots'])->name('portfolio.robots');
 Route::get('/fonts/{fontAsset}', [FontController::class, 'show'])->name('fonts.show');
@@ -39,6 +40,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::post('/analytics/google/connect', [AnalyticsController::class, 'connect'])->middleware('throttle:5,1')->name('analytics.google.connect');
+    Route::get('/analytics/google/callback', [AnalyticsController::class, 'callback'])->name('analytics.google.callback');
+    Route::delete('/analytics/google', [AnalyticsController::class, 'disconnect'])->name('analytics.google.disconnect');
     Route::get('/updates', [PlatformController::class, 'updates'])->name('platform.updates');
     Route::get('/github-projects', [PlatformController::class, 'github'])->name('platform.github');
     Route::get('/seo-monitor', [PlatformController::class, 'seo'])->name('platform.seo');
