@@ -1,6 +1,6 @@
 # Responsive and accessibility audit
 
-Date: 2026-11-03. Visible VS Code browser exercised public/admin pages throughout. Separate real Edge Playwright runs provide reproducible assertions and exact-size screenshots.
+Original audit: 2026-11-03. A fresh six-test Edge run on 2026-11-04 passed, including public viewport checks and exact-size screenshot assertions. The earlier full 120-admin-page geometry sweep was not repeated.
 
 ## Viewport matrix
 

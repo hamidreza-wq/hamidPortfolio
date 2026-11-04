@@ -10,28 +10,16 @@ use App\Models\Project;
 use App\Models\SkillCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ContentSeoTest extends TestCase
 {
-    use RefreshDatabase {
-        refreshDatabase as private refreshContentTestDatabase;
-    }
-
-    public function refreshDatabase(): void
-    {
-        if (config('database.default') !== 'mysql' || config('database.connections.mysql.database') !== 'hamid_portfolio_test') {
-            throw new \RuntimeException('Content tests require the isolated MySQL hamid_portfolio_test database.');
-        }
-        $this->refreshContentTestDatabase();
-    }
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->assertSame('hamid_portfolio_test', DB::connection()->getDatabaseName());
         $this->seed();
     }
 

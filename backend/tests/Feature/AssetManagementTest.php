@@ -22,20 +22,9 @@ use Tests\TestCase;
 
 class AssetManagementTest extends TestCase
 {
-    use RefreshDatabase {
-        refreshDatabase as private refreshManagedAssetDatabase;
-    }
+    use RefreshDatabase;
 
     private array $fixtures = [];
-
-    public function refreshDatabase(): void
-    {
-        if (config('database.default') !== 'mysql'
-            || config('database.connections.mysql.database') !== 'hamid_portfolio_test') {
-            throw new RuntimeException('Asset tests require the dedicated hamid_portfolio_test MySQL database.');
-        }
-        $this->refreshManagedAssetDatabase();
-    }
 
     protected function setUp(): void
     {

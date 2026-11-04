@@ -2,7 +2,7 @@
 
 ## A. Executive summary
 
-Work is isolated on `copilot/security-and-quality-hardening`. No changes were pushed or deployed. The existing cosmic root frontend remains canonical; Laravel still serves it and the administrator preview uses that same website.
+Current follow-up work is isolated on `copilot/final-security-deployment-hardening`, based on `12f1fa6`. No changes were pushed or deployed. The existing cosmic root frontend remains canonical; Laravel still serves it and the administrator preview uses that same website.
 
 The baseline MySQL suite passed 14 tests and 81 assertions, but important functionality and deployment safeguards were incomplete. Work added request protection, operational font/media management, structured sections, public project SEO pages, revisions, color presets and verification beyond a build.
 
@@ -59,69 +59,42 @@ See [content and SEO operations](backend/docs/content-and-seo.md) and [managed a
 | `backend/tests/Feature/RequestSecurityTest.php`, `AssetManagementTest.php`, `ContentSeoTest.php`, `ThemePresetTest.php`, `backend/tests/TestCase.php` | Behavior/security/integration coverage and MySQL test-database guard. |
 | `README.md`, `DEPLOYMENT.md`, backend operation guides | Actual setup, limitations, safe deployment/backup/restoration and troubleshooting. |
 
-## E. Verification results
+## E. Fresh verification results (2026-11-04)
 
-Initial and intermediate failures were not hidden:
+The current branch's fresh tests explicitly targeted `hamid_portfolio_final_test` and `hamid_portfolio_final_qa_test`, never the owner schema `hamid_portfolio`. The PHPUnit base guard requires MySQL and verifies the effective selected schema ends in `_test`. The owner SQL backup and uploaded assets were preserved in private session storage; the SQL snapshot was restored to an isolated validation schema and its table/row/checksum summary matched. This validates that snapshot restore, not disaster recovery against production. No owner migration refresh/wipe/restore was run.
 
-- `npm audit --json`: failed with `ENOLOCK` because there is no npm lockfile.
-- `npm install --package-lock-only --ignore-scripts`: failed with `EALLOWREMOTE`; this environment disables the requested remote package fetch. The restriction was not bypassed.
-- `npm run build`: failed because Vite is not installed. No successful production build or npm advisory review is claimed.
-- The first private-file test expected 404 for a signed private-storage endpoint; the framework actually denies it with 403. The test now explicitly expects denial for that endpoint rather than exposure.
-- Initial asset fixture/formatting failures were repaired. A new search test initially checked unfiltered embedded preview data rather than the visible results; it now verifies exact rendered result headings and literal `%` matching. The initial narrow-screen browser run found 352px overflow on a 320px projects page; browser action testing then found overlapping project controls at 830px. Both layout causes were fixed and retested.
-
-| Command/check | Actual final result |
+| Command/check | Fresh result |
 |---|---|
-| `php -d extension=gd vendor\bin\phpunit` | **64 tests discovered, 63 passed, 1 conditional skip; 502 assertions, no failures.** The skipped case requires GD to be absent. |
-| `php vendor\bin\phpunit --filter=test_missing_gd_fails_closed` | **1 test passed, 3 assertions**, with GD absent from the default PHP process. |
-| `composer validate --no-check-publish` | Passed. Composer itself emits a PHP 8.5 deprecation notice. |
-| `composer audit --format=json` | Passed: zero advisory and abandoned-package entries for the installed PHP dependencies. |
-| `composer check-platform-reqs` | Passed for installed package requirements; does not establish that the normal web process has GD enabled. |
-| `composer licenses --format=json` | Reviewed 108 installed declarations: 76 MIT, 29 BSD-3-Clause, one Apache-2.0 and two multiple-license declarations including BSD/GPL alternatives. This is not a legal opinion. |
-| `npm audit --json` | **Failed: ENOLOCK. No npm security result obtained.** |
-| `npm install --package-lock-only --ignore-scripts` | **Blocked: EALLOWREMOTE**. No package-fetch restriction was bypassed. |
-| `npm run build` | **Failed: Vite executable missing.** |
-| `node --check app.mjs`, `node --check portfolio-data.mjs` | Passed. |
-| `php -l` on changed PHP sources | Passed for 43 changed source/test/config/migration files. |
-| Pint on all changed PHP source/test files | Passed after applying the repository formatter. |
-| `php artisan view:cache` then `php artisan view:clear` | All Blade views compiled successfully; temporary view cache cleared. |
-| `git diff --check` | Passed. Local environment files remain ignored. |
+| `php -d extension=sodium vendor\bin\phpunit --display-skipped` | **136 tests, 798 assertions; 135 passed, 1 skipped.** The skip exercises the missing-GD branch, which requires GD to be absent; GD is installed in this runtime. |
+| `npm run test:browser` | **Six Edge tests passed in 1.4 minutes** against the isolated QA server, including privacy, responsive/keyboard, analytics separation and exact screenshot-dimension checks. |
+| `composer validate --strict --no-interaction` | Passed; Composer emitted PHP 8.5 deprecation notices from its bundled schema dependency. |
+| `composer audit --no-interaction` | Passed; no PHP dependency advisories. |
+| `npm audit --no-fund` | Passed; zero JavaScript dependency vulnerabilities reported. |
+| `npm run build` | Passed with Vite 7.3.7; 61 modules transformed. |
+| `vendor\bin\pint --test` and PHP syntax checks | Passed. |
+| `php artisan view:cache` | Passed in the earlier QA run. |
+| GitHub Actions | Added least-privilege CI for PHP 8.3/8.5, disposable MySQL 8.4, audits/build/tests and Edge browser regressions. **It has not run on GitHub**, and branch protections are not configured. |
 
-No PHPStan/Larastan analysis was run. PHP syntax and formatting checks are not equivalent to static type analysis.
+During earlier setup, missing npm dependencies initially prevented audit/build; an ordinary dependency install and lockfile resolved that blocker. Exploratory browser runs also exposed login throttling and screenshot sizing issues; the rate limit was retained and the screenshot assertions corrected. These failures and fixes are detailed in [test results](docs/qa/TEST-RESULTS.md).
 
-### Browser evidence
-
-An isolated MySQL database, `hamid_portfolio_browser_test`, was migrated/seeded for real HTTP checks with a GD-enabled PHP process. The owner/application database was not used for test publication.
-
-- Homepage measured at 320, 375, 390, 430, 768, 1024, 1366, 1440 and 1920 pixels.
-- Dashboard/editor/projects/media/fonts/sections/history/inbox loaded at 320, 768 and 1440 pixels; narrow project layout failures were corrected.
-- Unsaved display name, background `#121222`, width `1300px` and Georgia heading changes affected the actual iframe while the published name remained unchanged.
-- Header/footer name preview, mobile menu, web-project filtering (three results), dialog opening and Escape closing were verified.
-- Public and admin project searches returned one expected match; public no-results status and the hidden honeypot accessibility boundary were checked. The final project layout had no horizontal overflow at all nine requested widths plus 830px.
-- Contact submissions passed real CSRF/timing validation and appeared in the private inbox. Visible success feedback was verified; a 700-character unbroken message did not overflow the inbox.
-- A generated test PNG was uploaded/re-encoded, previewed in the library, attached to a test-database project and loaded on the actual homepage and server-rendered detail page. The detail page also emitted its image as Open Graph metadata.
-- Desktop/tablet/mobile screenshots were captured as session deliverables.
-- The temporary HTTP helper was stopped and its uploaded PNG, contact fixtures and temporary administrator were removed. The isolated test schema is not the owner's application database.
-
-These checks are not exhaustive accessibility, performance, load or cross-browser certification.
+No PHPStan/Larastan analysis was run. PHP syntax and formatting checks are not equivalent to static type analysis. Local database testing used MariaDB 10.4.32, not Oracle MySQL.
 
 ## F. Remaining limitations
 
-- npm dependency audit and production asset build remain blocked. Generate and review a lockfile, install dependencies and rerun both checks in an authorized environment.
-- GD is not enabled in the default local PHP process. Tests/browser verification enabled the installed extension explicitly; production and the owner's normal web process must enable it too.
-- Valid licensed font glyph rendering in a real browser still needs owner-provided fonts. Automated font tests check container structure and generated CSS, not comprehensive font-engine validity.
+- CI has not yet been executed by GitHub; PHP 8.3 and MySQL 8.4 coverage therefore remains pending. Required branch checks and secret/dependency controls must be configured by the repository owner.
+- No production HTTPS/TLS, proxy, web-server permissions, hosting, trusted release key/assets, scheduler/worker, SMTP, Search Console OAuth or production public-origin SEO scan is certified.
+- The restored SQL backup validation is not a full production recovery/rollback rehearsal. Keep the incident and its limitations documented in [PLATFORM-REPORT.md](PLATFORM-REPORT.md).
+- GD works in this local runtime, but production must independently enable and verify required extensions. Valid licensed font glyph rendering still needs owner-provided fonts; tests do not establish complete font sanitization.
 - Optional 2FA and CAPTCHA are not implemented. Public self-registration and emailed password reset are intentionally absent; recovery requires trusted shell access.
-- Persistent site drafts and scheduled publication are not implemented. Browser drafts remain unsaved until explicit publication; project drafts are persisted and private.
-- Existing canonical sections may be edited/hidden but not deleted or converted to arbitrary types. There is no separate avatar field; a home-section image is supported.
-- History retains references, not previous asset file bytes. Replacing shared media changes that asset for historical references too. History has no pruning UI or automatic retention policy.
-- Image re-encoding is implemented, but responsive multi-size derivative generation is not.
-- No production TLS/proxy/web-server permissions, crash recovery, real backup restoration, complete font sanitization, exhaustive accessibility/contrast testing or production load testing was performed.
-- Static security reviews reported no high-confidence findings within their scopes. That is not a guarantee that no vulnerabilities remain elsewhere.
+- Persistent site drafts and scheduled publication are not implemented. History retains references, not previous asset file bytes; replacing shared media affects historical references too. History has no pruning UI or automatic retention policy.
+- Responsive multi-size image derivative generation is not implemented. Screen-reader/contrast certification, full accessibility, production load/performance and cross-browser certification remain incomplete.
+- Four public repository URLs returned 404 during the finite audit; they may be private, renamed or unavailable. No replacement URL or ownership claim was invented.
+- Composer reported a newer Laravel patch available; no dependency upgrade was made during this verification. Dependency audits are time-specific and do not guarantee future safety.
+- Static security reviews reported no high-confidence findings within their scopes. That is not proof that no vulnerabilities remain elsewhere.
 
 ## G. Deployment readiness
 
-**NOT READY.**
-
-Resolve the dependency/build blockers, enable required production PHP extensions, verify owner-licensed fonts, and complete the HTTPS/deployment/backup smoke tests in [DEPLOYMENT.md](DEPLOYMENT.md) before approving a release.
+**NOT READY.** Fresh local tests and dependency/build checks passed, but they do not close the unverified hosting, cross-platform, CI, restore/rollback and production integration gates. Require successful GitHub CI and branch protection, then complete the HTTPS, staging, backup-restore and operational smoke tests in [DEPLOYMENT.md](DEPLOYMENT.md) before approving a release.
 
 ## H. Administrator instructions
 

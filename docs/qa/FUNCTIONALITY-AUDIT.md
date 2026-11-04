@@ -2,7 +2,7 @@
 
 ## Scope and evidence policy
 
-QA started 2026-11-03 at commit `ce7787c`. Owner database and port 8000 are not test targets. Dedicated `hamid_portfolio_qa_test`, port 8147 and session-private storage are used. Local server is MariaDB 10.4.32 via PDO MySQL, **not Oracle MySQL**. Do not interpret pending checks as passed.
+QA started 2026-11-03 at commit `ce7787c`; the full PHP/Edge regression suite was rerun on 2026-11-04 on `copilot/final-security-deployment-hardening`. Owner database and port 8000 are not test targets. Fresh tests used `hamid_portfolio_final_test` and `hamid_portfolio_final_qa_test`, both isolated `_test` schemas, plus session-private storage on port 8147. Local server is MariaDB 10.4.32 via PDO MySQL, **not Oracle MySQL**. Do not interpret pending checks as passed.
 
 ## Complete tracked-file inventory
 
@@ -318,7 +318,7 @@ Inventory completeness is not the same as exhaustive behavioral coverage. The 17
 | Project dialog | Open, repository/detail link roles, Escape/backdrop close, focus returned to trigger; dimensions at ten sizes | Native Edge dialog/Escape/focus test | Passed |
 | Contact | Required/email native validation; legitimate synthetic submission acknowledged and appeared in QA inbox | PHP timing/honeypot/replay/rates/validation tests; raw missing-forgery-metadata POST 419 | Passed locally; no real email delivery |
 | Login/authorization | Private fixture login; anonymous admin/preview redirects; actual repeated-run 429 | PHP non-admin/session/logout/rate tests | Passed locally; no visible ordinary-user login |
-| Dashboard | Real seeded totals, draft changes after discovery, unread inbox state; no invented analytics | PHP dashboard/admin assertions | Passed; production analytics not configured |
+| Dashboard and analytics | Real seeded dashboard totals and unread inbox state; first-party analytics dashboard stays separate from optional Google Search Console metrics | Fresh PHP and Edge analytics/source-separation regressions | Passed locally; production traffic history and Search Console OAuth remain unconfigured |
 | Actual-frontend preview | Display name, primary color and Georgia font changed in real iframe; anonymous HTML unchanged before save; explicit publication changed public HTML | Private preview/source-origin PHP tests and real Edge publication boundary test | Passed; no separate template |
 | Site editor/skills | Name/theme/font/media changes saved; skill-group/name/item changes appeared publicly and were restored | PHP validation and full site/revision tests | Partial: representative fields, not every input/value combination |
 | Visibility/publication | All built-ins hidden; public JSON empty and DOM removed; authenticated preview still available; restored afterward | New privacy PHP/Edge regressions | Fixed and passed |
@@ -351,8 +351,7 @@ Inventory completeness is not the same as exhaustive behavioral coverage. The 17
 
 **Partial, not deployment-ready.** Tests are meaningful and bugs were repaired, but unavailable repository URLs and unconfigured real integrations remain failures/open gates, not “passed.”
 
-- QA public: <http://127.0.0.1:8147/>
-- QA dashboard: <http://127.0.0.1:8147/admin> (the visible browser remains authenticated to the temporary QA administrator).
+- QA public/dashboard URLs use `http://127.0.0.1:8147`; the isolated QA server was stopped after the final regression run.
 - Owner application: existing port 8000, not used as a QA mutation target.
 
-QA fixtures and server storage are separate from owner storage. No public registration, bypass login endpoint, default repository password or fake production credentials were added. The QA server is left running as requested. Final evidence is in [TEST-RESULTS.md](TEST-RESULTS.md), [LINK-AUDIT.md](LINK-AUDIT.md), [SECURITY-AUDIT.md](SECURITY-AUDIT.md), [RESPONSIVE-AUDIT.md](RESPONSIVE-AUDIT.md) and [BUG-FIX-REPORT.md](BUG-FIX-REPORT.md).
+QA fixtures and server storage are separate from owner storage. Temporary QA credential files were removed after testing; the SQL and uploaded-asset backups remain private and preserved. No public registration, bypass login endpoint, default repository password or fake production credentials were added. Final evidence is in [TEST-RESULTS.md](TEST-RESULTS.md), [LINK-AUDIT.md](LINK-AUDIT.md), [SECURITY-AUDIT.md](SECURITY-AUDIT.md), [RESPONSIVE-AUDIT.md](RESPONSIVE-AUDIT.md) and [BUG-FIX-REPORT.md](BUG-FIX-REPORT.md).

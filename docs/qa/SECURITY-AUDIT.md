@@ -1,6 +1,6 @@
 # Security audit
 
-Date: 2026-11-03. Baseline: `ce7787c`. This is a local audit, not a penetration-test certification or deployment approval.
+Original audit: 2026-11-03, baseline `ce7787c`; regression evidence refreshed 2026-11-04 on `copilot/final-security-deployment-hardening`. This is a local audit, not a penetration-test certification or deployment approval.
 
 ## Confirmed finding
 
@@ -34,11 +34,13 @@ Regression evidence:
 | Updates/trust | Signed manifest, digest, traversal/ZIP/runtime fixtures in PHP tests; real no-release failure in UI | Verification exercised; activation remains disabled |
 | SSRF/SEO | Bounded DNS-pinned monitor fixtures/static review; actual unconfigured-origin failure | Public production scan not completed; loopback was not allowlisted to bypass policy |
 | GitHub/attribution | Real anonymous public scan, manual review, draft-only creation; preserved manual content tests | Passed for public connection; private auth not implemented |
+| Analytics separation | Fresh PHPUnit and Edge regressions for first-party pageviews/admin reporting versus optional Search Console metrics | Passed locally; production traffic history and Search Console OAuth remain unconfigured |
 | Dependencies | Composer/npm audits completed with no advisories at test time | Time-specific dependency result, not a security guarantee |
 
 ## Data handling
 
-- Browser operations use `hamid_portfolio_qa_test` on port 8147 and session-private storage; PHPUnit uses `hamid_portfolio_test`.
+- Fresh browser operations use `hamid_portfolio_final_qa_test` on port 8147 and session-private storage; PHPUnit uses `hamid_portfolio_final_test`. Both are isolated `_test` schemas.
+- Fresh PHPUnit run: 136 tests, 798 assertions, 135 passed and one conditional skip for a branch requiring GD to be absent. Fresh real Edge run: six tests passed.
 - QA uses its own administrator and session cookie. No fixture password/token is printed in these reports, stored in the repository or captured in screenshots. Trace/video/automatic failure screenshots are disabled.
 - Owner server port 8000 was not stopped, reset or used for test mutations. Final read-only inspection found no QA administrator in the owner schema and zero owner revisions/media/fonts; QA had its own administrator, revisions and assets.
 - Final owner counts were 1 user, 8 projects, 6 sections, 1 settings row and 0 inbox rows. There is no same-run row-level baseline/hash comparison; this report does **not** claim all owner counts equal an earlier phase's five-project baseline.

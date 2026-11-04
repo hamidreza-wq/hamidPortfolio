@@ -3,6 +3,8 @@
 ## Release gates
 
 - Review the latest [QA functionality](docs/qa/FUNCTIONALITY-AUDIT.md), [security](docs/qa/SECURITY-AUDIT.md) and [test evidence](docs/qa/TEST-RESULTS.md). Local Composer/npm audits and builds passed, but Oracle MySQL and real hosting/integration/restore gates remain unverified.
+- [CI](.github/workflows/ci.yml) now defines pull-request and `main` checks on PHP 8.3/8.5 with isolated MySQL, PHP/JavaScript dependency audits, formatting/syntax, view compilation, PHPUnit and an Edge browser run. It is verification-only: no deployment job is configured, and no GitHub Actions run has yet confirmed it.
+- Before relying on the workflow, configure branch protection to require both PHP matrix checks; block force-pushes and direct changes to `main`. Enable dependency alerts, Dependabot and secret scanning/push protection where available. These repository settings are owner actions and are not changed by the workflow.
 - Read [the current platform report](PLATFORM-REPORT.md), including its database incident disclosure, and [platform operations](backend/docs/platform-operations.md). The update centre does not deploy or create verified backups. Hosting/Actions activation remains disabled by explicit owner decision.
 - Enable PHP sodium and ZIP for signed release inspection, and cURL/DOM for public-site monitoring. Configure only the trusted release **public** key; signing private keys stay outside production.
 

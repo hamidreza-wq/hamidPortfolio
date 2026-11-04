@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
-if (process.env.QA_DATABASE !== 'hamid_portfolio_qa_test') {
-    throw new Error('Browser tests require explicit QA_DATABASE=hamid_portfolio_qa_test and the isolated QA server on port 8147. Never use the owner server.');
+if (!/^[a-z0-9_]+_test$/i.test(process.env.QA_DATABASE ?? '')) {
+    throw new Error('Browser tests require an explicit QA_DATABASE whose name ends in _test and an isolated QA server on port 8147. Never use the owner server.');
 }
 
 export default defineConfig({

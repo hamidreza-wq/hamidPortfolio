@@ -1,6 +1,11 @@
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
+
+const screenshotDirectory = process.env.QA_SCREENSHOT_DIR
+    ? resolve(process.env.QA_SCREENSHOT_DIR)
+    : fileURLToPath(new URL('../../../docs/qa/screenshots/', import.meta.url));
 
 async function login(page) {
     expect(process.env.QA_CREDENTIAL_FILE, 'Provide a private QA-only credential file; passwords must not be logged.').toBeTruthy();
@@ -86,6 +91,15 @@ test('mobile dashboard drawer hides offscreen focus targets and closes with Esca
     await expect(sidebar).not.toHaveAttribute('inert', '');
 });
 
+test('analytics separates first-party pageviews from optional Google Search Console', async ({ page }) => {
+    await login(page);
+    await page.goto('/admin/analytics');
+    await expect(page.getByRole('heading', { name: 'Traffic, without guesswork.' })).toBeVisible();
+    await expect(page.getByText('First-party pageviews · last 30 days')).toBeVisible();
+    await expect(page.getByText('Google Search Console')).toBeVisible();
+    await expect(page.getByText('Optional · disconnected')).toBeVisible();
+});
+
 test('particle work stops for disabled motion and hidden particles', async ({ page }) => {
     await page.addInitScript(() => {
         const request = window.requestAnimationFrame.bind(window);
@@ -114,7 +128,8 @@ test('capture correctly sized public and admin evidence without credentials or m
     const screenshot = async (name, fullPage = false) => {
         const viewport = page.viewportSize();
         const clip = fullPage ? { x: 0, y: 0, width: viewport.width, height: await page.evaluate(() => Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)) } : undefined;
-        const png = await page.screenshot({ path: fileURLToPath(new URL(`../../../docs/qa/screenshots/${name}.png`, import.meta.url)), fullPage, clip });
+        mkdirSync(screenshotDirectory, { recursive: true });
+        const png = await page.screenshot({ path: join(screenshotDirectory, `${name}.png`), fullPage, clip });
         expect(png.readUInt32BE(16)).toBe(viewport.width);
         expect(png.readUInt32BE(20)).toBe(fullPage ? clip.height : viewport.height);
     };
@@ -149,6 +164,7 @@ test('capture correctly sized public and admin evidence without credentials or m
         ['/admin/media', 'admin-media'],
         ['/admin/fonts', 'admin-fonts'],
         ['/admin/inbox?q=qa-no-such-message', 'admin-inbox-empty-search'],
+        ['/admin/analytics', 'admin-analytics'],
         ['/admin/updates', 'admin-updates'],
         ['/admin/github-projects', 'admin-github'],
         ['/admin/seo-monitor', 'admin-seo'],
