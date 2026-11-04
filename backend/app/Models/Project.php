@@ -14,6 +14,7 @@ class Project extends Model
         'media_asset_id', 'gallery_media_ids',
         'author_name', 'maintainer_name', 'license_name', 'attribution',
         'copyright_holder', 'rights_confirmed_at',
+        'repository_is_public', 'live_url_verified',
     ];
 
     protected function casts(): array
@@ -26,6 +27,8 @@ class Project extends Model
             'is_published' => 'boolean',
             'sort_order' => 'integer',
             'rights_confirmed_at' => 'datetime',
+            'repository_is_public' => 'boolean',
+            'live_url_verified' => 'boolean',
         ];
     }
 

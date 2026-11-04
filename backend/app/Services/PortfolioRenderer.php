@@ -91,9 +91,6 @@ class PortfolioRenderer
                 foreach ($xpath->query('//*[@data-managed-initial="profile.name"]') as $node) {
                     $node->textContent = mb_strtoupper(mb_substr($name, 0, 1));
                 }
-                foreach ($xpath->query('//*[@data-managed-label="profile.name"]') as $node) {
-                    $node->setAttribute('aria-label', $name.', home');
-                }
             }
             $grid = $document->getElementById('project-grid');
             if ($grid) {

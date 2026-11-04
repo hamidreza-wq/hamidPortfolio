@@ -71,6 +71,7 @@ class PortfolioSeeder extends Seeder
                 'category' => $category,
                 'category_label' => $categoryLabel,
                 'repository_url' => 'https://github.com/hamidreza-wq/'.$repo,
+                'repository_is_public' => $repo === 'officeConverters',
                 'description' => $description,
                 'details' => $details,
                 'technologies' => $technologies,

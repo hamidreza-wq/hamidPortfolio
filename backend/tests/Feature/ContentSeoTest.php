@@ -98,7 +98,7 @@ class ContentSeoTest extends TestCase
         $this->assertStringNotContainsString('Hamid Reza Bayat', $intro);
         $this->assertSame(1, $xpath->query('//*[@id="hero-title"]//span[@class="gradient-text"]')->length);
         $this->assertSame(2, $xpath->query('//*[contains(@class,"brand-name") and text()="Verified Builder"]')->length);
-        $this->assertSame(2, $xpath->query('//a[@aria-label="Verified Builder, home"]')->length);
+        $this->assertSame(2, $xpath->query('//a[contains(concat(" ",normalize-space(@class)," ")," brand ")]/*[@data-managed="profile.name" and text()="Verified Builder"]')->length);
         $this->assertSame(2, $xpath->query('//*[@data-managed-initial="profile.name" and text()="V"]')->length);
         $this->assertSame(1, $xpath->query('//a[@data-managed-href="profile.github.repositories" and @href="https://github.com/verified-builder?tab=repositories"]')->length);
     }

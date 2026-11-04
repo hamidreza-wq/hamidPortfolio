@@ -11,11 +11,16 @@ export default defineConfig({
     reporter: 'list',
     use: {
         baseURL: 'http://127.0.0.1:8147',
-        channel: 'msedge',
         headless: true,
         viewport: { width: 1440, height: 900 },
         trace: 'off',
         screenshot: 'off',
         video: 'off',
     },
+    projects: [
+        { name: 'edge', use: { browserName: 'chromium', channel: 'msedge' } },
+        { name: 'chromium', testMatch: '**/public-accessibility.spec.mjs', use: { browserName: 'chromium' } },
+        { name: 'firefox', testMatch: '**/public-accessibility.spec.mjs', use: { browserName: 'firefox' } },
+        { name: 'webkit', testMatch: '**/public-accessibility.spec.mjs', use: { browserName: 'webkit' } },
+    ],
 });

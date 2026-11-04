@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - copilot/final-security-deployment-hardening
 
 permissions:
   contents: read
@@ -12,6 +13,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +23,7 @@ jobs:
         image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_ROOT_HOST: '%'
           MYSQL_DATABASE: hamid_portfolio_ci_test
           MYSQL_USER: portfolio_test
           MYSQL_PASSWORD: ci-test-password
@@ -45,6 +48,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
 
       - name: Set up PHP
         uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f
@@ -93,11 +98,19 @@ jobs:
         run: php artisan view:cache
 
       - name: Run isolated MySQL tests
-        run: php artisan test --display-skipped
+        env:
+          APP_ENV: testing
+        run: |
+          php artisan portfolio:test-database:verify
+          php artisan test --display-skipped
 
       - name: Install Edge for browser tests
         if: matrix.php == '8.3'
         run: npx playwright install msedge --with-deps
+
+      - name: Install cross-engine browsers
+        if: matrix.php == '8.3'
+        run: npx playwright install chromium firefox webkit --with-deps
 
       - name: Prepare isolated browser database
         if: matrix.php == '8.3'
@@ -105,6 +118,7 @@ jobs:
           MYSQL_PWD: ci-root-password
         run: |
           mysql --protocol=tcp --host=127.0.0.1 --user=root --execute="CREATE DATABASE hamid_portfolio_qa_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON hamid_portfolio_qa_test.* TO 'portfolio_test'@'%';"
+          APP_ENV=testing DB_DATABASE=hamid_portfolio_qa_test php artisan portfolio:test-database:verify
           DB_DATABASE=hamid_portfolio_qa_test php artisan migrate --seed --force
 
       - name: Create temporary browser administrator

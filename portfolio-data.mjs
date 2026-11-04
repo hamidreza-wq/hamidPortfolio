@@ -12,6 +12,7 @@ export const projects = [
     category: "mobile",
     categoryLabel: "MOBILE + WEB / EARLY BUILD",
     repo: "Bible",
+    sourcePublic: false,
     description:
       "An early devotional product with a React web shell, Laravel API, and an Expo mobile app scaffold.",
     detail:
@@ -30,6 +31,8 @@ export const projects = [
     category: "tools",
     categoryLabel: "DESKTOP & WEB",
     repo: "officeConverters",
+    sourcePublic: true,
+    repositoryUrl: "https://github.com/hamidreza-wq/officeConverters",
     description:
       "A local document converter with an offline Windows desktop installer, alongside a separately deployable Laravel web application.",
     detail:
@@ -48,6 +51,7 @@ export const projects = [
     category: "web",
     categoryLabel: "WEB APPLICATION",
     repo: "myAccountingHome",
+    sourcePublic: false,
     description:
       "A family-finance application for recording GBP income, expenses, transfers, and budgets.",
     detail:
@@ -66,6 +70,7 @@ export const projects = [
     category: "web",
     categoryLabel: "WEB PLATFORM",
     repo: "interpurting-laravel",
+    sourcePublic: false,
     description:
       "A language platform with a public React site, Laravel content dashboard, and community discussion space.",
     detail:
@@ -84,6 +89,7 @@ export const projects = [
     category: "web",
     categoryLabel: "BILINGUAL WEB PLATFORM",
     repo: "meisaPortfolio",
+    sourcePublic: false,
     description:
       "A Farsi–English community interpreting website with a content-management dashboard.",
     detail:

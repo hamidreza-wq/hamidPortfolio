@@ -117,6 +117,7 @@ class GithubDiscovery
         return Project::create([
             'name' => $data['name'], 'slug' => $slug, 'category' => 'other',
             'category_label' => 'GitHub project', 'repository_url' => $data['url'],
+            'repository_is_public' => true,
             'description' => $data['description'], 'details' => $data['description'],
             'technologies' => $data['language'] ? [$data['language']] : [], 'features' => [],
             'visual' => 'planet', 'visual_label' => 'DRAFT / REVIEW', 'status' => 'draft',

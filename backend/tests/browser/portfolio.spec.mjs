@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 const screenshotDirectory = process.env.QA_SCREENSHOT_DIR
     ? resolve(process.env.QA_SCREENSHOT_DIR)
@@ -36,7 +37,7 @@ test('public search, filters, keyboard dialog and all requested viewport widths'
     await page.getByRole('button', { name: 'Desktop & tools', exact: true }).click();
     await expect(page.locator('.project-card')).toHaveCount(1);
     await page.getByRole('button', { name: 'All work', exact: true }).click();
-    const trigger = page.getByRole('button', { name: 'Open details for OnePrayer', exact: true });
+    const trigger = page.getByRole('button', { name: /OnePrayer/ });
     await trigger.click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');
@@ -100,6 +101,19 @@ test('analytics separates first-party pageviews from optional Google Search Cons
     await expect(page.getByText('Optional · disconnected')).toBeVisible();
 });
 
+test('login and core administrator pages have no serious accessibility violations', async ({ page }) => {
+    test.setTimeout(90000);
+    await page.goto('/admin/login');
+    let scan = await new AxeBuilder({ page }).analyze();
+    expect(scan.violations.filter(item => ['serious', 'critical'].includes(item.impact))).toEqual([]);
+    await login(page);
+    for (const route of ['/admin', '/admin/site-editor', '/admin/projects', '/admin/analytics']) {
+        await page.goto(route);
+        scan = await new AxeBuilder({ page }).analyze();
+        expect(scan.violations.filter(item => ['serious', 'critical'].includes(item.impact)), route).toEqual([]);
+    }
+});
+
 test('particle work stops for disabled motion and hidden particles', async ({ page }) => {
     await page.addInitScript(() => {
         const request = window.requestAnimationFrame.bind(window);
@@ -145,7 +159,7 @@ test('capture correctly sized public and admin evidence without credentials or m
     await page.goto('/');
     await page.locator('#work').scrollIntoViewIfNeeded();
     await screenshot('public-projects');
-    await page.getByRole('button', { name: 'Open details for OnePrayer', exact: true }).click();
+    await page.getByRole('button', { name: /OnePrayer/ }).click();
     await screenshot('project-dialog');
     await page.keyboard.press('Escape');
     await page.locator('#contact').scrollIntoViewIfNeeded();

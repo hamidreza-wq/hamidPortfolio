@@ -52,7 +52,7 @@ function renderProjects() {
 
   projectGrid.innerHTML = visibleProjects.map((project, index) => `
     <article class="project-card reveal is-visible" style="--card-index:${index}">
-      <button class="project-open" type="button" data-project="${escapeHTML(project.slug || project.repo)}" aria-label="Open details for ${escapeHTML(project.name)}">
+      <button class="project-open" type="button" data-project="${escapeHTML(project.slug || project.repo)}">
         <span class="project-art project-art--${escapeHTML(project.visual)}" aria-hidden="true">
           ${project.image ? `<img class="project-card-image" src="${escapeHTML(safeURL(project.image.url))}" alt="">` : ""}
           <span class="art-orbit art-orbit--one"></span>
@@ -65,6 +65,7 @@ function renderProjects() {
           <span class="project-category">${escapeHTML(project.categoryLabel)}${project.featured ? " · Featured" : ""}${project.status ? ` · ${escapeHTML(project.status)}` : ""}</span>
           <span class="project-title-line"><strong>${escapeHTML(project.name)}</strong><span class="project-arrow" aria-hidden="true">↗</span></span>
           <span class="project-description">${escapeHTML(project.description)}</span>
+          ${project.sourcePublic === true ? "" : '<span class="project-category">Private source code</span>'}
           <span class="project-tags">${project.technologies.slice(0, 4).map((tech) => `<span>${escapeHTML(tech)}</span>`).join("")}</span>
         </span>
       </button>
@@ -174,9 +175,6 @@ function applyPortfolioData(data) {
     const initial = Array.from(profile.name.trim())[0].toLocaleUpperCase();
     document.querySelectorAll('[data-managed-initial="profile.name"]').forEach((element) => {
       element.textContent = initial;
-    });
-    document.querySelectorAll('[data-managed-label="profile.name"]').forEach((element) => {
-      element.setAttribute("aria-label", `${profile.name.trim()}, home`);
     });
   }
 
@@ -290,9 +288,9 @@ function showProject(project) {
     <ul class="dialog-tags">${project.technologies.map((tech) => `<li>${escapeHTML(tech)}</li>`).join("")}</ul>
     <h3>Inside the project</h3>
     <ul class="dialog-features">${project.features.map((feature) => `<li>${escapeHTML(feature)}</li>`).join("")}</ul>
-    <a class="button button-primary dialog-repo" href="${escapeHTML(safeURL(project.repositoryUrl ?? `https://github.com/hamidreza-wq/${encodeURIComponent(project.repo)}`))}" target="_blank" rel="noreferrer">
+    ${project.sourcePublic === true && project.repositoryUrl ? `<a class="button button-primary dialog-repo" href="${escapeHTML(safeURL(project.repositoryUrl))}" target="_blank" rel="noreferrer">
       View repository <span aria-hidden="true">↗</span>
-    </a>
+    </a>` : '<span class="button button-quiet">Private source code</span>'}
     ${project.liveUrl ? `<a class="button button-quiet" href="${escapeHTML(safeURL(project.liveUrl))}" target="_blank" rel="noreferrer">Live demo ↗</a>` : ""}
     ${project.detailUrl ? `<a class="button button-quiet" href="${escapeHTML(safeURL(project.detailUrl))}">Indexable project page ↗</a>` : ""}
   `;

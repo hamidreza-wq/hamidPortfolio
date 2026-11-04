@@ -93,6 +93,8 @@ class ProjectController extends Controller
             'category_label' => ['required', 'string', 'max:80'],
             'repository_url' => ['required', 'url', 'max:255', 'regex:/^https:\/\/github\.com\//i'],
             'live_url' => ['nullable', 'url:http,https', 'max:255'],
+            'repository_is_public' => ['sometimes', 'boolean'],
+            'live_url_verified' => ['sometimes', 'boolean'],
             'media_asset_id' => app(MediaLibrary::class)->selectionRules(),
             'gallery_media_ids' => ['nullable', 'array', 'max:12'],
             'gallery_media_ids.*' => [...app(MediaLibrary::class)->selectionRules(), 'required', 'distinct'],
@@ -144,6 +146,8 @@ class ProjectController extends Controller
 
         return [
             ...$validated,
+            'repository_is_public' => (bool) ($validated['repository_is_public'] ?? ($project?->repository_url === $validated['repository_url'] && $project?->repository_is_public)),
+            'live_url_verified' => ! empty($validated['live_url']) && (bool) ($validated['live_url_verified'] ?? ($project?->live_url === $validated['live_url'] && $project?->live_url_verified)),
             'rights_confirmed_at' => $confirmed ? ($project?->rights_confirmed_at ?? now()) : null,
             'slug' => $slug,
             'gallery_media_ids' => array_map('intval', $validated['gallery_media_ids'] ?? []),

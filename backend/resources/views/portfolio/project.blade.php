@@ -26,8 +26,12 @@
     <ul class="dialog-features">@foreach($project->features ?? [] as $feature)<li>{{ $feature }}</li>@endforeach</ul>
     @if($gallery->isNotEmpty())<div class="project-gallery">@foreach($gallery as $media)<img src="{{ $media['url'] }}" alt="{{ $media['alt'] }}" loading="lazy">@endforeach</div>@endif
     <div class="contact-actions">
+      @if($project->repository_is_public)
       <a class="button button-primary" href="{{ $project->repository_url }}" target="_blank" rel="noopener noreferrer">View repository ↗</a>
-      @if($project->live_url)<a class="button button-quiet" href="{{ $project->live_url }}" target="_blank" rel="noopener noreferrer">Live demo ↗</a>@endif
+      @else
+      <span class="button button-quiet">Private source code</span>
+      @endif
+      @if($project->live_url && $project->live_url_verified)<a class="button button-quiet" href="{{ $project->live_url }}" target="_blank" rel="noopener noreferrer">Live demo ↗</a>@endif
     </div>
   </main>
 </body>
