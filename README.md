@@ -62,10 +62,23 @@ The Laravel document root must be `backend/public`. Keep the root portfolio file
 - **Contact inbox:** the public contact form validates and rate-limits submissions; messages are stored in MySQL with a keyed hash of the submitter IP rather than the raw IP address.
 - **Analytics:** first-party counts of successful public page loads, top pages and external referrer hosts. It does not use cookies or store visitor IPs, user agents or full referrer URLs. Optional Google Search Console read-only metrics remain separate.
 - **Audit trail:** publishing and administrative content actions record the authenticated administrator and action details.
-- **SEO:** global metadata is rendered in HTML; published projects have server-rendered detail pages, sitemap entries and social metadata. Draft projects are not public pages.
+- **SEO:** unique titles/descriptions, canonical URLs, robots policy and Open Graph/Twitter cards are rendered in HTML. Homepage JSON-LD connects the `ProfilePage`, `Person` and `WebSite` using stable canonical identifiers and the configured public profile links. Published project pages include `CreativeWork` and canonical breadcrumbs; authorship remains gated by confirmed rights. Library sharing images supply dimensions and alt text. Draft projects are not public pages or sitemap entries.
 - **Software updates:** discover official GitHub Releases and verify trusted Ed25519 manifests, GitHub/SHA-256 digests and ZIP contents before password-confirmed review. Deployment remains disabled until hosting and protected GitHub Actions are configured.
 - **GitHub projects:** automatic public-only read-only discovery creates real draft projects with a review queue. Existing edits and third-party rights are preserved; private repository authentication is not implemented.
 - **SEO monitoring:** bounded, DNS-pinned scans of the configured public site produce actionable findings and notifications. Search Console data is shown only when its optional read-only OAuth integration is connected.
+
+Search metadata is managed in **Live site editor > Search & sharing**; project
+overrides remain in the project editor. Describe actual work and use unique,
+useful summaries rather than keyword stuffing. A public HTTPS sharing image
+around 1200 x 630 pixels is recommended; upload your own image to the library,
+provide descriptive alt text and select it as the default sharing image.
+Only indexable public pages advertise expanded Google snippet/image previews.
+Preview and maintenance/indexing controls retain their noindex protections.
+No fake ratings, locations, credentials, obsolete meta-keywords, or ranking
+guarantees are added. Google may rewrite snippets and takes time to crawl changes;
+submit the canonical `/sitemap.xml` in a verified Search Console property.
+Search Console verification/OAuth requires the owner's real Google account and
+credentials and is not accomplished by adding meta tags.
 - **Notifications:** deduplicated in-app history, priority/read/dismiss/snooze and category preferences, with opt-in daily/weekly email digests through a configured mail transport.
 
 ## Request protection

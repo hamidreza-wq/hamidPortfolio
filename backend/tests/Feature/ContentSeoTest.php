@@ -61,6 +61,95 @@ class ContentSeoTest extends TestCase
         $this->get('/projects/Invalid!')->assertNotFound();
     }
 
+    public function test_homepage_links_profile_website_and_person_schema_with_unique_metadata(): void
+    {
+        PortfolioSetting::findOrFail(1)->update([
+            'canonical_url' => 'https://portfolio.example/',
+            'github_url' => 'https://github.com/verified-builder',
+            'linkedin_url' => 'https://www.linkedin.com/in/verified-builder',
+            'site_description' => 'Laravel and React web applications and desktop tools.',
+        ]);
+        $response = $this->get('/')->assertOk()
+            ->assertSee('name="author" content="Hamid Reza Bayat"', false)
+            ->assertSee('property="og:site_name"', false)
+            ->assertSee('name="googlebot" content="max-image-preview:large, max-snippet:-1, max-video-preview:-1"', false);
+        $xpath = new \DOMXPath($this->document($response->getContent()));
+        foreach (['//title', '//meta[@name="description"]', '//meta[@name="robots"]', '//link[@rel="canonical"]',
+            '//meta[@property="og:title"]', '//meta[@name="twitter:title"]', '//script[@type="application/ld+json"]'] as $query) {
+            $this->assertSame(1, $xpath->query($query)->length, $query);
+        }
+        $schema = json_decode($xpath->query('//script[@type="application/ld+json"]')->item(0)->textContent, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('https://schema.org', $schema['@context']);
+        [$website, $person, $profile] = $schema['@graph'];
+        $this->assertSame('WebSite', $website['@type']);
+        $this->assertSame('Person', $person['@type']);
+        $this->assertSame('Software Developer', $person['jobTitle']);
+        $this->assertSame(['https://github.com/verified-builder', 'https://www.linkedin.com/in/verified-builder'], $person['sameAs']);
+        $this->assertSame('ProfilePage', $profile['@type']);
+        $this->assertSame('https://portfolio.example/', $profile['url']);
+        $this->assertSame($person['@id'], $profile['mainEntity']['@id']);
+        $this->assertSame($person['@id'], $website['publisher']['@id']);
+        $this->assertSame($website['@id'], $profile['isPartOf']['@id']);
+        $this->assertSame('Laravel and React web applications and desktop tools.', $profile['description']);
+        $this->assertArrayNotHasKey('email', $person);
+        $this->assertArrayNotHasKey('address', $person);
+    }
+
+    public function test_project_schema_has_canonical_breadcrumbs_without_unconfirmed_author_claims(): void
+    {
+        PortfolioSetting::findOrFail(1)->update(['canonical_url' => 'https://portfolio.example']);
+        $project = Project::firstOrFail();
+        $project->update([
+            'name' => 'A </script> & "quoted" project',
+            'author_name' => 'Unconfirmed author',
+            'rights_confirmed_at' => null,
+        ]);
+        $response = $this->get('/projects/'.$project->slug)->assertOk();
+        $xpath = new \DOMXPath($this->document($response->getContent()));
+        $schema = json_decode($xpath->query('//script[@type="application/ld+json"]')->item(0)->textContent, true, 512, JSON_THROW_ON_ERROR);
+        $canonical = 'https://portfolio.example/projects/'.$project->slug;
+        $this->assertSame($canonical.'#project', $schema['@id']);
+        $this->assertSame($project->name, $schema['name']);
+        $this->assertSame($canonical, $schema['mainEntityOfPage']['@id']);
+        $breadcrumbs = $schema['mainEntityOfPage']['breadcrumb'];
+        $this->assertSame('BreadcrumbList', $breadcrumbs['@type']);
+        $this->assertSame([1, 2], array_column($breadcrumbs['itemListElement'], 'position'));
+        $this->assertSame(['https://portfolio.example/', $canonical], array_column($breadcrumbs['itemListElement'], 'item'));
+        $this->assertSame($project->name, $breadcrumbs['itemListElement'][1]['name']);
+        $this->assertArrayNotHasKey('author', $schema);
+        $this->assertSame(0, $xpath->query('//meta[@name="author"]')->length);
+        $project->update(['rights_confirmed_at' => now()]);
+        $this->get('/projects/'.$project->slug)->assertOk()->assertSee('name="author" content="Unconfirmed author"', false);
+    }
+
+    public function test_social_images_include_dimensions_alt_text_and_no_invented_image(): void
+    {
+        Storage::fake('local');
+        $this->get('/')->assertOk()->assertDontSee('property="og:image"', false);
+        $media = $this->image();
+        PortfolioSetting::findOrFail(1)->update(['og_image_media_id' => $media->id, 'linkedin_url' => null]);
+        $this->get('/')->assertOk()
+            ->assertSee('property="og:image:width" content="'.$media->width.'"', false)
+            ->assertSee('property="og:image:height" content="'.$media->height.'"', false)
+            ->assertSee('property="og:image:alt" content="Verified screenshot"', false)
+            ->assertSee('name="twitter:card" content="summary_large_image"', false);
+        $media->update(['alt_text' => '']);
+        $this->get('/')->assertOk()->assertSee('name="twitter:image:alt" content="Hamid Reza Bayat — Software Developer"', false);
+        Storage::disk('local')->delete($media->path);
+        $this->get('/')->assertOk()->assertDontSee('property="og:image"', false);
+    }
+
+    public function test_disabled_indexing_and_preview_do_not_advertise_expanded_search_previews(): void
+    {
+        PortfolioSetting::findOrFail(1)->update(['indexing_enabled' => false]);
+        $this->get('/')->assertOk()->assertDontSee('name="googlebot"', false)->assertHeader('X-Robots-Tag', 'noindex, follow');
+        $project = Project::firstOrFail();
+        $this->get('/projects/'.$project->slug)->assertOk()->assertDontSee('name="googlebot"', false);
+        PortfolioSetting::findOrFail(1)->update(['indexing_enabled' => true]);
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get('/preview')->assertOk()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow')->assertDontSee('name="googlebot"', false);
+    }
+
     public function test_indexing_preferences_apply_to_home_projects_robots_and_sitemap(): void
     {
         $this->assertFileDoesNotExist(public_path('robots.txt'), 'A static robots file bypasses the dynamic indexing policy on real web servers.');

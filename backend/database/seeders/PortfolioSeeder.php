@@ -20,7 +20,7 @@ class PortfolioSeeder extends Seeder
             'professional_title' => 'Software Developer',
             'github_url' => 'https://github.com/hamidreza-wq',
             'site_title' => 'Hamid Reza Bayat — Software Developer',
-            'site_description' => 'A small universe of useful software, carefully built.',
+            'site_description' => 'Explore Hamid Reza Bayat\'s software development portfolio: Laravel and React web applications, desktop tools, and thoughtful solutions to real-world problems.',
             'color_background' => '#070811',
             'color_foreground' => '#f3f1f8',
             'color_primary' => '#ad91ff',
