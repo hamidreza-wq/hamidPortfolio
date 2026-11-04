@@ -4,6 +4,7 @@ namespace App\Services\Platform;
 
 use App\Models\GithubRepository;
 use App\Models\Project;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -51,7 +52,7 @@ class GithubDiscovery
                         $row->project_id = $this->draft($data)->id;
                         $new++;
                     }
-                } elseif ($row->metadata !== $data) {
+                } elseif (Arr::sortRecursive($row->metadata ?? []) !== Arr::sortRecursive($data)) {
                     $row->previous_metadata = $row->metadata;
                     if (in_array($row->state, ['approved', 'linked'], true)) {
                         $row->state = 'changes';

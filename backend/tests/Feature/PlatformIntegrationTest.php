@@ -309,7 +309,10 @@ class PlatformIntegrationTest extends TestCase
         $repo = GithubRepository::findOrFail(101);
         $project = Project::findOrFail($repo->project_id);
         $project->update(['name' => 'Hand-edited name', 'description' => 'Hand-written description']);
-        $repo->update(['state' => 'approved']);
+        $repo->update(['state' => 'approved', 'metadata' => array_reverse($repo->metadata, true)]);
+        app(GithubDiscovery::class)->scan();
+        $this->assertSame('approved', $repo->fresh()->state);
+        $this->assertNull($repo->fresh()->previous_metadata);
         $this->fakeRepositories([$this->repository(101, ['name' => 'renamed', 'full_name' => 'hamidreza-wq/renamed', 'html_url' => 'https://github.com/hamidreza-wq/renamed'])]);
         app(GithubDiscovery::class)->scan();
         app(GithubDiscovery::class)->scan();
