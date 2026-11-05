@@ -1,6 +1,143 @@
 # Production deployment and rollback
 
-## Current release decision
+## Owner-authorized Hostinger deployment - 2026-11-04
+
+The owner subsequently authorized deployment to
+**https://hamidbayat.co.uk**, selecting a copy of the current local content and
+uploads without changing the local database. This supersedes the earlier
+no-deployment instruction below, not the prohibition on merging to `main`.
+The deployed archive is commit `6bac31edbf0a52c55ea74f35e5e832367209b4fa`
+from the existing hardening branch. Its
+[actual CI run](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/41874992304)
+passed both PHP jobs. PR #1 remains draft and unmerged.
+
+Executed and verified:
+
+- Created an isolated application database and restored a fresh, read-only
+  snapshot of all 29 local tables, excluding ephemeral table data. Verified
+  imported counts and all three copied storage-file hashes, then applied the
+  single pending additive link-visibility migration. No production seed/reset
+  was run. All 29 local table counts/checksums still matched after deployment.
+  This copies the current installation; **it does not recover the content lost
+  in the previously disclosed database incident**.
+- Installed production dependencies on PHP 8.3.36 / MariaDB 11.8.9, checked
+  platform requirements, and cached configuration/views. Because `proc_open`
+  is disabled, Composer ran with `--no-scripts`; its package discovery and
+  Laravel asset-publication hooks were executed directly with PHP instead.
+- Kept source, environment, durable storage and backups outside the document
+  root. `public_html` points only to the release's `backend/public`.
+  Initial origin/CDN 404 responses were caused by private-only traversal
+  permissions on the new public-root ancestors, not DNS. Giving those
+  ancestors/public directories `0755` and public files `0644` fixed routing;
+  the private environment and cached configuration remain `0600`.
+- Live HTTPS checks passed for home, health, sitemap/robots, all six published
+  project URLs, four byte-identical frontend assets, private-source labels,
+  authentication redirects, secure session cookies and private-file denial.
+  HTTP redirects to HTTPS. `www` is a valid HTTPS alias with the apex canonical
+  URL; it is not configured as an apex redirect.
+- The owner signed into the retained administrator account. Authenticated
+  dashboard/platform pages and the live editor's functioning preview passed.
+  A real synthetic contact submission reached the inbox; a temporary 2x2 PNG
+  was uploaded, safely re-encoded and publicly served. Both test records were
+  deleted through their administrator controls; audit history was retained.
+  The imported media/font libraries had zero database records, despite the
+  three preserved storage files. Missing asset IDs correctly return 404.
+- Desktop (1440px) and mobile (390px) browser smoke checks passed without
+  horizontal overflow or browser console errors. New first-party pageviews
+  were confirmed in the production database.
+- Preserved private pre-publication SQL/uploads/environment backups and the
+  original placeholder webroot. SQL/uploads and operational-script archives
+  were copied off-host and their hashes verified. Removed temporary server
+  staging and duplicate credential files; revoked the temporary deployment
+  SSH key and verified that it can no longer authenticate.
+
+### Host-specific operations and remaining limits
+
+Only this portfolio received the following Hostinger cron entries; existing
+sites, their cron entries, shared PHP settings and DNS/email records were not
+modified:
+
+- Weekly Sunday analytics retention invokes the existing named
+  `analytics:prune` callback through a private
+  `shared/ops/analytics-retention.php` adapter. This preserves application
+  retention configuration and overlap protection without invoking disabled
+  subprocess APIs. Direct execution succeeded with zero expired rows; the
+  first weekly cron occurrence has not yet been observed.
+- The owner separately authorized a bounded dashboard queue worker.
+  An every-minute cron invokes private `shared/ops/queue-worker.sh`, with an
+  effective-production-database preflight and nonblocking `flock`.
+  Each worker stops when empty or after its 50-second between-job budget;
+  jobs retain their 150-second timeout. An OS limit sends TERM at 160 seconds
+  and KILL after another five, below the 180-second queue visibility interval.
+  The overlap-skip path passed. The pending SEO check completed successfully,
+  with zero pending/failed jobs at verification. Actual Hostinger cron output
+  recorded `Worker STOPPED Queue empty` at 17:48:03 UTC, independently of the
+  manual execution.
+
+The full Laravel scheduler and automatic recurring platform checks were not
+enabled. SMTP delivery, Google Search Console OAuth and signed-release
+verification remain unconfigured; mail uses the log transport and sodium is
+unavailable. The queue worker does not make log mail deliver to an inbox.
+In-app release activation remains disabled. No owner edits were published by
+the deployment smoke tests. Long-term encrypted backup retention and a
+dedicated intended-host recovery rehearsal remain owner operational gates.
+**The site is deployed and live-smoke-verified, not comprehensively certified
+production-ready.**
+
+## Owner-authorized SEO rollout - 2026-11-05
+
+The owner approved the software-development search focus, live publication and
+a screenshot of the portfolio as its sharing image. Release
+`c77d9087cfb37819130e4562231bd0287d97a71c` was activated without merging `main`.
+Its [fresh CI run](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/41882708811)
+completed successfully for PHP 8.3/8.5, including the browser regression step.
+An initial bounded CI wait expired while browser installation was still
+running; deployment stayed blocked until the subsequent completed result was
+verified for the exact commit and both jobs.
+
+- Focused local SEO tests passed: 27 tests, 255 assertions; PHP formatting passed.
+  New schema and templates also rendered on hosting PHP before activation.
+- A new private release reused the existing dependencies only after confirming
+  an identical Composer lockfile. Production configuration, encryption key,
+  database and durable storage were retained; no migration or seeder ran.
+- Native pre-SEO SQL/uploads/environment backups were preserved privately.
+  SQL and uploads were copied off-host and verified against their SHA256 hashes.
+- The approved portfolio screenshot was cropped to remove browser chrome and
+  sized to exactly 1200 x 630 pixels, then uploaded and safely re-encoded through
+  the media library. It is the selected sharing image at `/media/2`.
+- Only the site description, Open Graph title/description and default sharing
+  image selection were published. The browser session had expired by the end
+  of CI, so these four approved fields were saved using the hosting connection,
+  repository validation rules, a locked transaction, the existing content-history
+  helper and an explicit deployment audit entry with no impersonated user.
+  Other settings, sections, skills and projects were not overwritten.
+- Live checks passed for homepage plus all six published project pages:
+  unique metadata, apex canonical URLs, linked profile/person/website JSON-LD,
+  project breadcrumbs, index/follow controls and matching Open Graph/Twitter
+  image/description tags. The actual image response was verified as PNG,
+  1200 x 630. Existing queue and analytics-retention scripts resolved the new
+  release successfully.
+- The broader live regression passed all 31 HTTP checks, including security
+  headers, protected files, anonymous admin/preview access and public assets.
+  A final read-only comparison confirmed all 29 local owner tables unchanged.
+- Post-SEO SQL and uploads backups now also include the published metadata and
+  sharing image. Their off-host copies matched the native SHA256 hashes.
+  The pre-SEO snapshots remain available separately for rollback.
+- Temporary staging archives, the publishing helper and backup client options
+  were removed. The separate SEO deployment SSH key was deleted in hPanel;
+  public-key-only authentication then failed with `Permission denied` and
+  exit 255. Its local private/public key files were deleted.
+
+This improves truthful search and social metadata, not guaranteed ranking or
+confirmed Google indexing. A simulated `Googlebot` user-agent from the
+workstation received a Hostinger 403 challenge, while simulated Twitter and
+Facebook sharing requests succeeded. That is **not a verified Google crawl**
+and may be anti-spoofing protection. CDN security settings were inspected but
+not weakened. The owner should verify actual live crawl access in Search Console
+and submit `https://hamidbayat.co.uk/sitemap.xml`; investigate Hostinger crawler
+handling if Google's real inspection fails.
+
+## Earlier release decision - before owner deployment authorization
 
 See [final release readiness](docs/qa/FINAL-RELEASE-READINESS.md) for the
 2026-11-04 evidence on `copilot/final-security-deployment-hardening`, application
@@ -9,7 +146,7 @@ isolated restore results and remaining owner-controlled gates.
 Production is not approved; keep [PR #1](https://github.com/hamidreza-wq/hamidPortfolio/pull/1)
 draft and do not deploy, merge or change DNS/hosting.
 Corrected-source CI passed both PHP 8.3/8.5 jobs on Oracle MySQL 8.4.13 and all
-11 browser cases. **READY FOR STAGING** is the current evidence-based status;
+11 browser cases. **READY FOR STAGING** was the evidence-based status then;
 the intended host and operational/staging gates below remain owner actions.
 
 ## Release gates
@@ -54,8 +191,9 @@ the intended host and operational/staging gates below remain owner actions.
 
 ### Coordinated backup and isolated rehearsal
 
-These are owner-run instructions for a separately approved release, not commands
-executed against production by this task.
+These are general recovery instructions. The dated deployment record above
+distinguishes executed backup/import checks from a still-unverified dedicated
+intended-host recovery rehearsal.
 
 1. Establish a maintenance/quiescent-write window so SQL and uploaded assets
    represent the same point in time. Keep private environment/application key
