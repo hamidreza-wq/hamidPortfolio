@@ -388,3 +388,5 @@ database over new writes. Previous releases and backups are retained. Review
 Actions for failures before retrying an ambiguous dispatch. A known terminal
 unsuccessful workflow can be reverified after inspecting Actions and the current
 site. An unresolved/ambiguous request remains blocked against duplicate dispatch.
+If published asset metadata changes while a request is pending, discovery
+reports a failure and retains that request instead of resetting its review state.

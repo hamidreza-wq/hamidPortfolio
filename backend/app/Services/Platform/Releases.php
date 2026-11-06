@@ -50,6 +50,9 @@ class Releases
         }
         $candidate = ReleaseCandidate::firstOrNew(['tag' => $tag]);
         if ($candidate->exists && $candidate->release_assets !== $assets) {
+            if (str_starts_with($candidate->status, 'deployment_')) {
+                throw new IntegrationFailure('Published release assets changed during a deployment request. Review GitHub Actions and the current site; the existing request is retained.');
+            }
             $candidate->fill([
                 'status' => 'available', 'verified_at' => null, 'approved_at' => null,
                 'approved_by' => null, 'manifest' => null, 'inspection' => null,

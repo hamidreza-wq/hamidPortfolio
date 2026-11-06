@@ -91,6 +91,24 @@ class PlatformIntegrationTest extends TestCase
         $this->assertNull($candidate->approved_at);
     }
 
+    public function test_asset_changes_cannot_erase_an_existing_deployment_request(): void
+    {
+        $asset = ['id' => 3, 'name' => 'portfolio.zip', 'size' => 10, 'digest' => 'sha256:'.str_repeat('a', 64)];
+        $inspection = ['deployment_request' => ['request_id' => 'dd32f6b2-e9c2-42d8-921c-cd21f31b61af']];
+        $candidate = ReleaseCandidate::create([
+            'tag' => 'v1.0.0', 'version' => '1.0.0', 'released_at' => now(),
+            'status' => 'deployment_requested', 'release_assets' => ['portfolio.zip' => $asset], 'inspection' => $inspection,
+        ]);
+        Http::fake(['api.github.com/*' => Http::response([
+            ...$this->release(), 'assets' => [[...$asset, 'size' => 11]],
+        ])]);
+        $this->assertSame('failed', app(Monitor::class)->run('releases')->status);
+        $candidate->refresh();
+        $this->assertSame('deployment_requested', $candidate->status);
+        $this->assertSame($inspection, $candidate->inspection);
+        $this->assertSame(['portfolio.zip' => $asset], $candidate->release_assets);
+    }
+
     public function test_update_action_requires_password_verified_bytes_and_rejects_double_dispatch(): void
     {
         $candidate = $this->signedCandidate(['schema_to' => 3]);
