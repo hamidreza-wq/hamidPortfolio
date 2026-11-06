@@ -1,0 +1,102 @@
+name: Protected portfolio update
+run-name: Portfolio update ${{ inputs.request_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Signed stable release tag
+        required: true
+      artifact_sha256:
+        description: Verified signed ZIP SHA256
+        required: true
+      installed_version:
+        description: Expected installed VERSION
+        required: true
+      request_id:
+        description: Dashboard deployment request UUID
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portfolio-production-update
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validate release verification, extraction and rollback
+        run: |
+          node --test scripts/tests/verify-release.test.mjs
+          python -B -m unittest discover -s scripts/tests -p 'test_*.py'
+          bash -n scripts/hosting-update.sh
+  deploy:
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f
+        with:
+          php-version: '8.3'
+          extensions: fileinfo, gd, pdo_mysql, sodium, zip
+          coverage: none
+      - name: Fetch and independently verify reviewed release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          DIGEST: ${{ inputs.artifact_sha256 }}
+          INSTALLED: ${{ inputs.installed_version }}
+          REQUEST: ${{ inputs.request_id }}
+          RELEASE_PUBLIC_KEY: ${{ vars.RELEASE_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          [[ "$REQUEST" =~ ^[a-f0-9-]{36}$ ]]
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          mkdir "$RUNNER_TEMP/release-assets" "$RUNNER_TEMP/runtime"
+          gh api "repos/hamidreza-wq/hamidPortfolio/releases/tags/$TAG" > "$RUNNER_TEMP/release.json"
+          jq -e --arg tag "$TAG" --arg digest "sha256:$DIGEST" '.tag_name == $tag and .draft == false and .prerelease == false and any(.assets[]; .name == "portfolio.zip" and .digest == $digest)' "$RUNNER_TEMP/release.json"
+          gh release download "$TAG" --repo hamidreza-wq/hamidPortfolio --dir "$RUNNER_TEMP/release-assets" --pattern portfolio-manifest.json --pattern portfolio-manifest.sig --pattern portfolio.zip
+          node scripts/verify-release.mjs "$RUNNER_TEMP/release-assets" "$TAG" "$DIGEST" "$INSTALLED"
+          python scripts/extract-release.py "$RUNNER_TEMP/release-assets/portfolio.zip" "$RUNNER_TEMP/runtime"
+      - name: Install reviewed production dependencies without plugins or scripts
+        working-directory: ${{ runner.temp }}/runtime/backend
+        run: |
+          composer validate --strict --no-interaction
+          composer install --no-dev --no-interaction --prefer-dist --no-plugins --no-scripts --optimize-autoloader
+          composer audit --no-dev --no-interaction
+      - name: Package and deploy to pinned Hostinger target
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_DEPLOY_KEY }}
+          SSH_KNOWN_HOSTS: ${{ vars.HOSTINGER_KNOWN_HOSTS }}
+          REQUEST: ${{ inputs.request_id }}
+          TAG: ${{ inputs.tag }}
+          INSTALLED: ${{ inputs.installed_version }}
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "$SSH_PRIVATE_KEY" && -n "$SSH_KNOWN_HOSTS" ]]
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/portfolio"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          tar -czf "$RUNNER_TEMP/runtime.tar.gz" -C "$RUNNER_TEMP/runtime" .
+          digest=$(sha256sum "$RUNNER_TEMP/runtime.tar.gz" | cut -d' ' -f1)
+          stage="/home/u504051894/domains/hamidbayat.co.uk/shared/update-$REQUEST"
+          ssh -i "$HOME/.ssh/portfolio" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p 65002 u504051894@185.224.137.166 "umask 077; mkdir '$stage'"
+          scp -i "$HOME/.ssh/portfolio" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -P 65002 "$RUNNER_TEMP/runtime.tar.gz" "$RUNNER_TEMP/release-assets/portfolio-manifest.json" scripts/hosting-update.php scripts/hosting-update.sh "u504051894@185.224.137.166:$stage/"
+          ssh -i "$HOME/.ssh/portfolio" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p 65002 u504051894@185.224.137.166 "bash '$stage/hosting-update.sh' '$REQUEST' '$TAG' '$digest' '$INSTALLED'"
+      - name: Remove runner deployment credentials
+        if: always()
+        run: rm -f -- "$HOME/.ssh/portfolio"
