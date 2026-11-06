@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -110,13 +110,9 @@ jobs:
           php artisan portfolio:test-database:verify
           php artisan test --display-skipped
 
-      - name: Install Edge for browser tests
+      - name: Install all browser engines and shared dependencies once
         if: matrix.php == '8.3'
-        run: npx playwright install msedge --with-deps
-
-      - name: Install cross-engine browsers
-        if: matrix.php == '8.3'
-        run: npx playwright install chromium firefox webkit --with-deps
+        run: npx playwright install msedge chromium firefox webkit --with-deps
 
       - name: Prepare isolated browser database
         if: matrix.php == '8.3'

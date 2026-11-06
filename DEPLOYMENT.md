@@ -327,3 +327,46 @@ Leave digests off, GSC disconnected and release installation disabled until
 their documented owner checks pass.
 
 No public self-registration or emailed password reset is provided. Recovery requires trusted shell access and the administrator command. Optional two-factor authentication and CAPTCHA require a separately reviewed provider/configuration; do not treat them as implemented.
+
+## Owner-authorized SEO and protected-update bootstrap - 2026-11-06
+
+- Activated `admin-bootstrap-20261106` after verifying source baselines,
+  unchanged dependency locks, isolated HTTP rendering and private production
+  configuration. Existing content/account records, SMTP and GA4 configuration
+  were preserved. No migration, seeder or database restore ran.
+- Created private SQL/uploads/environment/source backups, verified their SHA256
+  hashes on hosting and again in an owner-restricted off-host directory.
+  Atomic activation passed homepage, privacy, project, sitemap, robots, health
+  version-header and private-file-denial checks. Previous releases remain.
+- Fixed the homepage JSON-LD graph false positive and published only approved,
+  repository-grounded description/details/features for projects 7, 6 and 9.
+  The actual production SEO scan at 23:11:01 UTC reported zero open findings;
+  the notification centre shows the matching warnings resolved, not dismissed.
+- Local related PHP validation passed 141 tests / 734 assertions, with PHP
+  formatting and Blade compilation passing. Signature/archive utility tests
+  passed; all seven isolated hosting-runner backup, cache, health/version,
+  exit-trap rollback and concurrency tests passed without disrupting production.
+- Update implementation was pushed as `808fb26`. The separately approved
+  default-branch publication `fa38e2a` contains only the deployment workflow,
+  utility scripts/tests and their LF attribute; historical application changes
+  were not merged into `main`. GitHub registered the workflow as active.
+- Enabled sodium for the selected website and confirmed sodium/ZIP availability
+  in the live admin panel. The dedicated selected-repository App and private
+  hosting credential are provisioned. Production requires independent review,
+  prevents self-review, disables administrator bypass and permits only `main`.
+  Public trust/host-key variables are saved; the SSH secret was independently
+  verified by name after the owner's manual save. Real scoped App authentication
+  to the registered workflow passed without dispatching a deployment.
+- A signed `v0.3.0` package was prepared and independently verified using actual
+  MariaDB 11.8 compatibility bounds. It has not been published or installed.
+  The bootstrap intentionally retains installed `VERSION` `0.2.0-dev` so the
+  signed release can later be genuinely exercised through Update. Activation
+  remains disabled until secret setup and the protected end-to-end run pass.
+- The exact implementation CI run
+  [42309496823](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/42309496823)
+  passed PHP/audit/build and isolated MySQL/utility checks on both runtimes,
+  but exceeded the 25-minute limit during repeated browser dependency installs
+  on the rolling Ubuntu runner. CI/deployment are now pinned to Ubuntu 24.04,
+  with one shared browser dependency-installation pass. Release publication
+  remains blocked pending a successful replacement CI run. No full CI or live
+  Update success is claimed yet.

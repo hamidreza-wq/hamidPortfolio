@@ -363,6 +363,8 @@ SSH connection, a host-side lock and the expected installed version.
 Restrict the environment's deployment branch policy to `main`. The workflow
 tests its verification/extraction helpers and isolated backup, activation,
 health-failure, exit-trap rollback and concurrency paths before deployment.
+CI and deployment use Ubuntu 24.04 rather than the rolling latest runner.
+CI installs all browser engines with one shared dependency-installation pass.
 
 For a reviewed stable `VERSION`, package only tracked application files:
 
