@@ -53,6 +53,8 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::post('/platform/check/{kind}', [PlatformController::class, 'scan'])->middleware('throttle:6,1')->name('platform.scan');
     Route::post('/updates/{releaseCandidate}/verify', [PlatformController::class, 'prepare'])->middleware('throttle:3,1')->name('platform.prepare');
     Route::post('/updates/{releaseCandidate}/approve', [PlatformController::class, 'approve'])->middleware('throttle:3,1')->name('platform.approve');
+    Route::post('/updates/{releaseCandidate}/deploy', [PlatformController::class, 'deploy'])->middleware('throttle:3,1')->name('platform.deploy');
+    Route::post('/updates/{releaseCandidate}/deployment-status', [PlatformController::class, 'deploymentStatus'])->middleware('throttle:6,1')->name('platform.deployment-status');
     Route::post('/github-projects/{githubRepository}/review', [PlatformController::class, 'review'])->name('platform.review');
     Route::patch('/notifications/{platformNotice}', [PlatformController::class, 'notice'])->name('platform.notice');
     Route::get('/site-editor', [SiteEditorController::class, 'edit'])->name('site-editor.edit');

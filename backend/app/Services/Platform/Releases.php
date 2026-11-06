@@ -260,7 +260,7 @@ class Releases
 
         return [
             'entries' => count($seen), 'expanded_bytes' => $total, 'migrations' => $migrations,
-            'deployment' => 'disabled', 'backups' => 'not configured or verified',
+            'deployment' => 'not_requested', 'backups' => 'not created by artifact verification',
             'warning' => 'Archive verified and inspected only; not extracted or executed. Migration flags are heuristic: human review of every migration is mandatory.',
         ];
     }

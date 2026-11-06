@@ -6,12 +6,14 @@ use App\Mail\PlatformDigest;
 use App\Models\GithubRepository;
 use App\Models\NotificationPreference;
 use App\Models\PlatformNotice;
+use App\Models\PlatformRun;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
 use App\Models\ReleaseCandidate;
 use App\Models\SeoFinding;
 use App\Models\User;
 use App\Services\DestructiveDatabaseGuard;
+use App\Services\Platform\Deployment;
 use App\Services\Platform\GithubDiscovery;
 use App\Services\Platform\IntegrationFailure;
 use App\Services\Platform\Monitor;
@@ -63,7 +65,7 @@ class PlatformIntegrationTest extends TestCase
     public function test_platform_pages_render_honest_disconnected_states(): void
     {
         $this->actingAs(User::factory()->create(['is_admin' => true]));
-        $this->get('/admin/updates')->assertOk()->assertSee('Activation disabled')->assertSee('0.2.0-dev');
+        $this->get('/admin/updates')->assertOk()->assertSee('Activation disabled')->assertSee(trim(file_get_contents(base_path('../VERSION'))));
         $this->get('/admin/github-projects')->assertOk()->assertSee('Private repositories are disabled');
         $this->get('/admin/seo-monitor')->assertOk()->assertSee('Search performance')->assertSee(route('admin.analytics'));
         $this->get('/admin/notifications')->assertOk()->assertSee('No notifications recorded');
@@ -89,6 +91,25 @@ class PlatformIntegrationTest extends TestCase
         $this->assertNull($candidate->approved_at);
     }
 
+    public function test_update_action_requires_password_verified_bytes_and_rejects_double_dispatch(): void
+    {
+        $candidate = $this->signedCandidate(['schema_to' => 3]);
+        app(Releases::class)->prepare($candidate);
+        $admin = User::factory()->create(['is_admin' => true, 'password' => 'Valid-admin-password!']);
+        $this->actingAs($admin);
+        $this->post('/admin/updates/'.$candidate->id.'/deploy', ['confirm' => 1, 'password' => 'wrong'])
+            ->assertSessionHasErrors('password');
+        $deployment = $this->mock(Deployment::class);
+        $deployment->shouldReceive('configured')->andReturn(true);
+        $deployment->shouldReceive('dispatch')->once()
+            ->andReturn(['request_id' => 'dd32f6b2-e9c2-42d8-921c-cd21f31b61af', 'status' => 'requested']);
+        $this->post('/admin/updates/'.$candidate->id.'/deploy', ['confirm' => 1, 'password' => 'Valid-admin-password!'])
+            ->assertSessionHasNoErrors();
+        $this->assertSame('deployment_requested', $candidate->fresh()->status);
+        $this->post('/admin/updates/'.$candidate->id.'/deploy', ['confirm' => 1, 'password' => 'Valid-admin-password!'])
+            ->assertSessionHasErrors('release');
+    }
+
     public function test_current_release_does_not_create_an_update(): void
     {
         Http::fake(['api.github.com/*' => Http::response($this->release('v0.1.0'))]);
@@ -96,6 +117,49 @@ class PlatformIntegrationTest extends TestCase
         $this->assertSame('successful', $run->status);
         $this->assertSame(0, ReleaseCandidate::count());
         $this->assertStringContainsString('No newer stable', $run->message);
+    }
+
+    public function test_unconfigured_update_does_not_change_verified_candidate_state(): void
+    {
+        $candidate = $this->signedCandidate(['schema_to' => 3]);
+        app(Releases::class)->prepare($candidate);
+        $this->actingAs(User::factory()->create(['is_admin' => true, 'password' => 'Valid-admin-password!']));
+        config(['platform.deployment.enabled' => false]);
+        $this->post('/admin/updates/'.$candidate->id.'/deploy', ['confirm' => 1, 'password' => 'Valid-admin-password!'])
+            ->assertSessionHasErrors('release');
+        $this->assertSame('awaiting_approval', $candidate->fresh()->status);
+        $this->assertArrayNotHasKey('deployment_request', $candidate->fresh()->inspection);
+    }
+
+    #[DataProvider('deploymentOutcomes')]
+    public function test_deployment_refresh_records_terminal_outcomes_once(string $conclusion, string $state, string $runStatus): void
+    {
+        $candidate = $this->signedCandidate(['schema_to' => 3]);
+        $candidate->update(['status' => 'deployment_requested', 'inspection' => [
+            'deployment_request' => ['request_id' => 'dd32f6b2-e9c2-42d8-921c-cd21f31b61af'],
+        ]]);
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $deployment = $this->mock(Deployment::class);
+        $deployment->shouldReceive('configured')->andReturn(true);
+        $deployment->shouldReceive('refresh')->twice()->andReturn([
+            'request_id' => 'dd32f6b2-e9c2-42d8-921c-cd21f31b61af',
+            'run_id' => 77, 'status' => 'completed', 'conclusion' => $conclusion,
+        ]);
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $this->post('/admin/updates/'.$candidate->id.'/deployment-status')->assertSessionHasNoErrors();
+        }
+        $this->assertSame($state, $candidate->fresh()->status);
+        $this->assertSame(1, PlatformRun::where('kind', 'deployment')->where('status', $runStatus)->count());
+        $this->get('/admin/updates')->assertOk()
+            ->assertSee($state === 'failed' ? 'Verify release artifact' : 'applied');
+    }
+
+    public static function deploymentOutcomes(): array
+    {
+        return [
+            'verified success' => ['success', 'applied', 'successful'],
+            'known failure permits review and reverification' => ['failure', 'failed', 'failed'],
+        ];
     }
 
     #[DataProvider('badReleaseMetadata')]
@@ -122,7 +186,7 @@ class PlatformIntegrationTest extends TestCase
         $this->assertSame('awaiting_approval', $candidate->status);
         $this->assertNotNull($candidate->verified_at);
         $this->assertNull($candidate->approved_at);
-        $this->assertSame('disabled', $candidate->inspection['deployment']);
+        $this->assertSame('not_requested', $candidate->inspection['deployment']);
         $this->assertTrue($candidate->inspection['migrations'][0]['potentially_destructive']);
         Storage::disk('local')->assertExists($candidate->artifact_path);
         $this->assertSame($candidate->artifact_sha256, hash_file('sha256', Storage::disk('local')->path($candidate->artifact_path)));
@@ -536,6 +600,41 @@ class PlatformIntegrationTest extends TestCase
         app(Monitor::class)->run('seo');
         $this->assertDatabaseHas('seo_findings', ['path' => '/', 'check' => 'http-status']);
         Http::assertNotSent(fn ($request) => str_contains($request->url(), '127.0.0.1'));
+    }
+
+    #[DataProvider('structuredDataDocuments')]
+    public function test_seo_monitor_recognizes_typed_json_ld_graphs(string $schema, bool $valid): void
+    {
+        Project::query()->update(['is_published' => false]);
+        config(['platform.seo_origin' => 'https://site.example']);
+        $settings = PortfolioSetting::findOrFail(1);
+        $settings->update(['canonical_url' => 'https://site.example']);
+        $this->mock(PublicDns::class)->shouldReceive('ipv4')->andReturn('93.184.216.34');
+        Http::fake([
+            'https://site.example/robots.txt' => Http::response("User-agent: *\nAllow: /\nSitemap: https://site.example/sitemap.xml"),
+            'https://site.example/sitemap.xml' => Http::response('<urlset><url><loc>https://site.example/</loc></url></urlset>'),
+            'https://site.example/' => Http::response(
+                '<html><head><script type="application/ld+json">'.$schema.'</script></head><body><main><h1>Portfolio</h1></main></body></html>'
+            ),
+        ]);
+        $this->assertSame('successful', app(Monitor::class)->run('seo')->status);
+        $this->assertSame(! $valid, SeoFinding::where('check', 'schema')->whereNull('resolved_at')->exists());
+    }
+
+    public static function structuredDataDocuments(): array
+    {
+        return [
+            'actual homepage graph' => ['{"@context":"https://schema.org","@graph":[{"@type":"WebSite"},{"@type":"Person"},{"@type":"ProfilePage"}]}', true],
+            'single typed node' => ['{"@context":"https://schema.org","@type":"CreativeWork"}', true],
+            'multiple types' => ['{"@context":"https://schema.org","@type":["WebSite","CreativeWork"]}', true],
+            'blank type' => ['{"@context":"https://schema.org","@type":" "}', false],
+            'non-string type list' => ['{"@context":"https://schema.org","@type":[42]}', false],
+            'empty graph' => ['{"@context":"https://schema.org","@graph":[]}', false],
+            'untyped graph' => ['{"@context":"https://schema.org","@graph":[{"name":"Untyped"}]}', false],
+            'invalid graph shape' => ['{"@context":"https://schema.org","@graph":"not a graph"}', false],
+            'wrong context' => ['{"@context":"https://example.test","@type":"WebSite"}', false],
+            'invalid JSON' => ['{broken}', false],
+        ];
     }
 
     public function test_notices_deduplicate_dismiss_snooze_and_reopen_changed_issues(): void

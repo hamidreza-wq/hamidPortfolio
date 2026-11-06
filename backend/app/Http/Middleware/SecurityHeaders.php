@@ -11,6 +11,9 @@ class SecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+        if ($request->is('up')) {
+            $response->headers->set('X-Portfolio-Version', trim(file_get_contents(base_path('../VERSION'))));
+        }
         $nonce = base64_encode(random_bytes(24));
         if (str_contains((string) $response->headers->get('Content-Type'), 'text/html')) {
             $content = $response->getContent();

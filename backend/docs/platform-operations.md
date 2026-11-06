@@ -2,13 +2,13 @@
 
 ## Status and deployment boundary
 
-This is development software, not a production deployment approval. The update
-centre implements discovery, cryptographic verification, archive inspection and
-recorded administrator review. **Staging, verified backups, activation, Actions
-dispatch, post-deployment checks and automated rollback are disabled/not
-implemented.** The owner chose to leave activation disabled until hosting is
-decided, with protected GitHub Actions environment approval required later.
-There is no web endpoint that runs shell commands or executes downloaded PHP.
+The update centre implements discovery, cryptographic verification, archive
+inspection and administrator-confirmed requests to the protected
+`deploy.yml` GitHub Actions workflow. Deployment is disabled by default until
+the selected-repository GitHub App and hosting secrets are configured.
+The web application never runs shell commands or executes downloaded PHP.
+Initial one-click updates are limited to **schema-preserving releases**;
+database migrations and host runtime changes remain separately reviewed.
 
 Read [the development report](../../PLATFORM-REPORT.md), including its database
 incident disclosure, before using these changes. Back up the database before
@@ -139,8 +139,11 @@ Potentially destructive migration patterns are flagged heuristically. This is
 **not a PHP sandbox or a proof migrations are safe**. Review every migration,
 including `up`/`down`, data effects, runtime requirements and backward
 compatibility. Approval rechecks stored artifact bytes and trust-key identity.
-It records `manual_action_required`, never `applied` or deployment success.
-Neither verification nor approval creates a database/media backup.
+Review approval alone records `manual_action_required`, never deployment success.
+Neither verification nor review approval creates a database/media backup.
+The separate **Update** action rechecks verified artifact bytes and the trust
+key, requires current-password confirmation, and dispatches the protected
+workflow. It does not report success merely because GitHub accepted the request.
 
 If GitHub has no release, or a key/signature/digest is unavailable, the UI records
 a clear setup/failure state. Do not loosen verification to make an update appear.
@@ -316,23 +319,26 @@ version reports do not prove compatibility or assess every breaking change.
 Review lockfile diffs and major upgrades in an isolated branch; never blanket
 `composer update` in production.
 
-## Future protected Actions activation (not configured)
+## Protected Actions activation
 
 Before enabling any deploy action:
 
 1. Decide the hosting OS, SSH/self-hosted runner boundary, exact release layout,
    web identity and independently protected deployment identity.
-2. Create a protected `production` environment requiring human reviewers and
-   restrict tags/workflow permissions. Keep signing keys separate from deploy
-   credentials; do not grant the web user Actions write/deploy permissions.
+2. Create a protected `production` environment requiring reviewers, prevent
+   self-review and disable administrator bypass. The dashboard checks these
+   protections before dispatch. Install a dedicated GitHub App on only
+   `hamidPortfolio`, with Actions read/write, Contents read-only and mandatory
+   Metadata read-only. Its short-lived installation token is restricted to that
+   repository and permissions. Keep signing keys separate from App/deploy keys.
 3. Independently reverify official release, trusted signature and digest in
    CI/worker. Never trust a dashboard boolean as authorization to execute bytes.
 4. Build/test in isolation against a dedicated Oracle MySQL test server; resolve
    npm lock/build/audit failures and verify compatible runtime versions.
 5. Create verified database, media and configuration backups with private
    credentials files; restore to an isolated staging database and verify assets.
-6. Stage a new immutable release; review and apply only backward-compatible
-   migrations during a controlled maintenance window.
+6. Stage a new immutable release. This runner does not run migrations: both
+   signed schema versions must equal the installed schema version.
 7. Activate atomically where supported; verify HTTPS, public/admin/project/
    preview/contact/asset health before marking success.
 8. If health fails, switch the application release back only when schema
@@ -341,4 +347,42 @@ Before enabling any deploy action:
    enabling approval-to-deploy integration. Keep old releases/backups until a
    reviewed retention policy explicitly removes them.
 
-These are deployment requirements, not implemented or tested activation claims.
+### Configuration and release preparation
+
+Server-only environment variables: `UPDATE_DEPLOYMENT_ENABLED`,
+`UPDATE_GITHUB_APP_ID`, `UPDATE_GITHUB_INSTALLATION_ID` and
+`UPDATE_GITHUB_PRIVATE_KEY_PATH`. The PEM path must be outside the public root;
+never put the key itself in Git or the environment file. Keep the existing
+`RELEASE_PUBLIC_KEY` pinned independently of release assets.
+
+The `production` GitHub environment needs `HOSTINGER_DEPLOY_KEY` as a secret,
+and `HOSTINGER_KNOWN_HOSTS` and `RELEASE_PUBLIC_KEY` as variables. The workflow
+is fixed to `main` and this repository/site; no dashboard-supplied command,
+workflow ref, host, path or repository is accepted. Deployment uses a host-pinned
+SSH connection, a host-side lock and the expected installed version.
+Restrict the environment's deployment branch policy to `main`. The workflow
+tests its verification/extraction helpers and isolated backup, activation,
+health-failure, exit-trap rollback and concurrency paths before deployment.
+
+For a reviewed stable `VERSION`, package only tracked application files:
+
+```powershell
+python scripts\package-release.py C:\private\release mysql 8.0.0 9.0.0
+php scripts\sign-release.php C:\private\release C:\private\release-signing.private
+```
+
+Select actual database-family bounds, not the illustrative MySQL bounds above.
+The signing key file contains a base64 Ed25519 secret key and stays outside the
+application and production host. Publish the ZIP, exact manifest and signature
+on the matching stable GitHub tag only after CI and human review.
+
+The runner independently verifies signature/digests, rejects private/runtime
+archive paths, installs lockfile dependencies with no scripts/plugins and audits
+them, checks host runtime/schema compatibility, creates private SHA256-verified
+database/uploads/environment/source backups and atomically switches releases.
+Public homepage/privacy/health checks and the exact health version header gate
+success. Health failure switches back the old release without restoring a stale
+database over new writes. Previous releases and backups are retained. Review
+Actions for failures before retrying an ambiguous dispatch. A known terminal
+unsuccessful workflow can be reverified after inspecting Actions and the current
+site. An unresolved/ambiguous request remains blocked against duplicate dispatch.

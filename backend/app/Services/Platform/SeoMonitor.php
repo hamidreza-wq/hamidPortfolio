@@ -119,7 +119,21 @@ class SeoMonitor
             $validSchema = false;
             foreach ($xpath->query('//script[@type="application/ld+json"]') as $script) {
                 $schema = json_decode($script->textContent, true);
-                $validSchema = $validSchema || (is_array($schema) && ($schema['@context'] ?? '') === 'https://schema.org' && isset($schema['@type']));
+                if (! is_array($schema) || ($schema['@context'] ?? '') !== 'https://schema.org') {
+                    continue;
+                }
+                $nodes = $schema['@graph'] ?? [$schema];
+                $validSchema = $validSchema || (is_array($nodes) && array_is_list($nodes) && $nodes !== []
+                    && count(array_filter($nodes, function ($node) {
+                        if (! is_array($node)) {
+                            return false;
+                        }
+                        $types = $node['@type'] ?? null;
+                        $types = is_string($types) ? [$types] : $types;
+
+                        return is_array($types) && array_is_list($types) && $types !== []
+                            && count(array_filter($types, fn ($type) => is_string($type) && trim($type) !== '')) === count($types);
+                    })) === count($nodes));
             }
             if (! $validSchema) {
                 $this->add($findings, $path, 'schema', 'medium', 'Add valid, accurate JSON-LD describing the visible page.');

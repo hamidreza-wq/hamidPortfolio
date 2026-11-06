@@ -11,6 +11,7 @@ use App\Models\PlatformNotice;
 use App\Models\PlatformRun;
 use App\Models\ReleaseCandidate;
 use App\Models\SeoFinding;
+use App\Services\Platform\Deployment;
 use App\Services\Platform\GithubDiscovery;
 use App\Services\Platform\IntegrationFailure;
 use App\Services\Platform\Notices;
@@ -19,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class PlatformController extends Controller
@@ -27,8 +29,9 @@ class PlatformController extends Controller
     {
         return view('admin.platform.updates', [
             'version' => app(Releases::class)->installedVersion(),
+            'deploymentConfigured' => app(Deployment::class)->configured(),
             'releases' => ReleaseCandidate::latest('released_at')->paginate(10),
-            'runs' => PlatformRun::whereIn('kind', ['releases', 'prepare', 'approval', 'dependencies'])->latest('id')->limit(20)->get(),
+            'runs' => PlatformRun::whereIn('kind', ['releases', 'prepare', 'approval', 'dependencies', 'deployment'])->latest('id')->limit(20)->get(),
         ]);
     }
 
@@ -97,6 +100,9 @@ class PlatformController extends Controller
             throw ValidationException::withMessages(['release' => 'Another release check or verification is running.']);
         }
         try {
+            if (str_starts_with($releaseCandidate->fresh()->status, 'deployment_')) {
+                throw ValidationException::withMessages(['release' => 'Review the existing deployment request in GitHub before starting another release operation.']);
+            }
             $run = PlatformRun::create(['kind' => 'prepare', 'status' => 'running']);
             try {
                 app(Releases::class)->prepare($releaseCandidate->fresh());
@@ -120,7 +126,7 @@ class PlatformController extends Controller
             $lock->release();
         }
 
-        return back()->with('status', 'Verified for review only. Review every migration; backups, staging and activation remain disabled.');
+        return back()->with('status', 'Verified for review only; nothing was deployed. Review every migration. Schema-preserving releases can use Update once protected deployment setup is complete.');
     }
 
     public function approve(Request $request, ReleaseCandidate $releaseCandidate)
@@ -142,7 +148,7 @@ class PlatformController extends Controller
                     throw ValidationException::withMessages(['release' => 'Only a verified, unchanged artifact can be approved. Verify it again.']);
                 }
                 $candidate->update(['status' => 'manual_action_required', 'approved_by' => $request->user()->id, 'approved_at' => now()]);
-                PlatformRun::create(['kind' => 'approval', 'status' => 'manual_action_required', 'message' => $candidate->tag.' reviewed. Hosting, verified backups and protected Actions deployment are not configured. Nothing was activated.']);
+                PlatformRun::create(['kind' => 'approval', 'status' => 'manual_action_required', 'message' => $candidate->tag.' review recorded. Nothing was activated; use Update only after protected deployment setup is complete.']);
                 $this->audit($request, 'release.review_approved', $candidate->tag);
             });
         } finally {
@@ -150,6 +156,92 @@ class PlatformController extends Controller
         }
 
         return back()->with('status', 'Review recorded, not deployed. Activation requires configured and tested protected GitHub Actions hosting.');
+    }
+
+    public function deploy(Request $request, ReleaseCandidate $releaseCandidate)
+    {
+        $request->validate(['password' => ['required', 'current_password'], 'confirm' => ['accepted']]);
+        if (! app(Deployment::class)->configured()) {
+            throw ValidationException::withMessages(['release' => 'Protected update deployment is not configured. Nothing was requested.']);
+        }
+        $lock = Cache::lock('platform:releases', 180);
+        if (! $lock->get()) {
+            throw ValidationException::withMessages(['release' => 'Another release operation is running.']);
+        }
+        try {
+            $candidate = $releaseCandidate->fresh();
+            $key = base64_decode((string) config('platform.release_public_key'), true);
+            if (! in_array($candidate->status, ['awaiting_approval', 'manual_action_required'], true)
+                || ! $candidate->verified_at || $key === false || strlen($key) !== 32
+                || ($candidate->inspection['trust_key_sha256'] ?? '') !== hash('sha256', $key)
+                || ! $candidate->artifact_path || ! Storage::disk('local')->exists($candidate->artifact_path)
+                || ! hash_equals($candidate->artifact_sha256, hash_file('sha256', Storage::disk('local')->path($candidate->artifact_path)))) {
+                throw ValidationException::withMessages(['release' => 'Only a verified, unchanged release can be updated. Verify it again.']);
+            }
+            $candidate->update(['status' => 'deployment_requesting', 'approved_by' => $request->user()->id, 'approved_at' => now(),
+                'inspection' => [...$candidate->inspection, 'deployment_request' => [
+                    'request_id' => (string) Str::uuid(), 'status' => 'requesting', 'requested_at' => now()->toIso8601String(),
+                ]]]);
+            $run = PlatformRun::create(['kind' => 'deployment', 'status' => 'running', 'message' => $candidate->tag.' deployment request in progress.']);
+            try {
+                $deployment = app(Deployment::class)->dispatch($candidate);
+                $candidate->update(['status' => 'deployment_requested', 'inspection' => [...$candidate->inspection, 'deployment_request' => $deployment]]);
+                $run->update(['status' => 'requested', 'message' => $candidate->tag.' requested through protected GitHub Actions. Independent production approval is still required; not yet applied.', 'summary' => $deployment]);
+                $this->audit($request, 'release.deployment_requested', $candidate->tag);
+            } catch (IntegrationFailure $exception) {
+                $candidate->update(['status' => 'deployment_needs_review']);
+                $run->update(['status' => 'failed', 'message' => $exception->getMessage()]);
+                app(Notices::class)->put('deployment:'.$candidate->tag, 'updates', 'high', 'Update deployment needs attention', $exception->getMessage(), 'admin.platform.updates');
+
+                return back()->withErrors(['release' => $exception->getMessage()]);
+            } finally {
+                if ($run->status === 'running') {
+                    $run->update(['status' => 'failed', 'message' => 'Unexpected dispatch failure. Review GitHub Actions before retrying; no deployment success is assumed.']);
+                    $candidate->update(['status' => 'deployment_needs_review']);
+                }
+            }
+        } finally {
+            $lock->release();
+        }
+
+        return back()->with('status', 'Update requested. Open GitHub Actions for independent production approval, then refresh deployment status.');
+    }
+
+    public function deploymentStatus(Request $request, ReleaseCandidate $releaseCandidate)
+    {
+        $lock = Cache::lock('platform:releases', 180);
+        if (! $lock->get()) {
+            throw ValidationException::withMessages(['release' => 'Another release operation is running.']);
+        }
+        try {
+            $candidate = $releaseCandidate->fresh();
+            try {
+                $deployment = app(Deployment::class)->refresh($candidate->inspection['deployment_request'] ?? []);
+            } catch (IntegrationFailure $exception) {
+                return back()->withErrors(['release' => $exception->getMessage()]);
+            }
+            $candidate->update(['inspection' => [...$candidate->inspection, 'deployment_request' => $deployment]]);
+            if (($deployment['status'] ?? '') === 'completed' && ($deployment['conclusion'] ?? '') === 'success'
+                && $candidate->status !== 'applied') {
+                $candidate->update(['status' => 'applied']);
+                PlatformRun::create(['kind' => 'deployment', 'status' => 'successful',
+                    'message' => $candidate->tag.' protected workflow completed successfully after backup, activation and version-specific health checks.', 'summary' => $deployment]);
+                app(Notices::class)->resolve('release:'.$candidate->tag);
+                app(Notices::class)->resolve('deployment:'.$candidate->tag);
+            } elseif (($deployment['status'] ?? '') === 'completed'
+                && in_array($deployment['conclusion'] ?? '', ['failure', 'cancelled', 'timed_out', 'startup_failure', 'action_required', 'stale', 'neutral', 'skipped'], true)
+                && str_starts_with($candidate->status, 'deployment_')) {
+                $candidate->update(['status' => 'failed']);
+                $message = $candidate->tag.' workflow did not succeed. Review GitHub Actions and the current site before verifying and requesting another update.';
+                PlatformRun::create(['kind' => 'deployment', 'status' => 'failed', 'message' => $message, 'summary' => $deployment]);
+                app(Notices::class)->put('deployment:'.$candidate->tag, 'updates', 'high', 'Update workflow failed', $message, 'admin.platform.updates');
+            }
+            $this->audit($request, 'release.deployment_status_checked', $candidate->tag);
+        } finally {
+            $lock->release();
+        }
+
+        return back()->with('status', 'Deployment status refreshed. A request or queued run is not a completed update.');
     }
 
     public function review(Request $request, GithubRepository $githubRepository)
