@@ -17,6 +17,10 @@ class AnalyticsController extends Controller
     public function index(GoogleSearchConsole $searchConsole)
     {
         $start = now()->subDays(29)->startOfDay();
+        $measurementId = config('services.google_analytics.measurement_id');
+        $googleAnalyticsConfigured = app()->environment('production')
+            && is_string($measurementId)
+            && preg_match('/\AG-[A-Z0-9]+\z/', $measurementId) === 1;
         $dailyCounts = PageView::query()->where('viewed_at', '>=', $start)
             ->selectRaw('DATE(viewed_at) as day, COUNT(*) as views')
             ->groupBy('day')->pluck('views', 'day');
@@ -41,6 +45,8 @@ class AnalyticsController extends Controller
         }
 
         return view('admin.analytics', [
+            'googleAnalyticsConfigured' => $googleAnalyticsConfigured,
+            'googleAnalyticsMeasurementId' => $googleAnalyticsConfigured ? $measurementId : null,
             'pageViews' => PageView::query()->where('viewed_at', '>=', $start)->count(),
             'recentViews' => PageView::query()->where('viewed_at', '>=', now()->subDays(6)->startOfDay())->count(),
             'topPages' => PageView::query()->where('viewed_at', '>=', $start)

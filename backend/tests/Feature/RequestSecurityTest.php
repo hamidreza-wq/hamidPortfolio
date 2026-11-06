@@ -25,6 +25,8 @@ class RequestSecurityTest extends TestCase
         $csp = $response->headers->get('Content-Security-Policy');
         $this->assertStringContainsString("frame-ancestors 'self'", $csp);
         $this->assertStringNotContainsString("'unsafe-eval'", $csp);
+        $this->assertStringContainsString('https://www.googletagmanager.com', $csp);
+        $this->assertStringContainsString('https://*.google-analytics.com', $csp);
         preg_match("/script-src 'self' 'nonce-([^']+)'/", $csp, $match);
         $this->assertNotEmpty($match[1]);
         $response->assertSee('nonce="'.$match[1].'"', false);

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ContactMessage;
 use App\Models\PortfolioSetting;
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
@@ -29,6 +30,33 @@ class PublicPortfolioTest extends TestCase
         $this->get('/styles.css')->assertOk()->assertHeader('content-type', 'text/css; charset=UTF-8');
         $this->get('/favicon.svg')->assertOk();
         $this->get('/.env')->assertNotFound();
+    }
+
+    public function test_google_analytics_is_opt_in_and_available_on_public_pages_only(): void
+    {
+        $this->app['env'] = 'production';
+        config(['services.google_analytics.measurement_id' => 'G-TEST123ABC']);
+
+        $this->get('/')->assertOk()
+            ->assertSee('analytics-consent')
+            ->assertSee('Allow analytics')
+            ->assertSee('Reject optional')
+            ->assertSee('https://www.googletagmanager.com/gtag/js', false)
+            ->assertSee('G-TEST123ABC');
+
+        $project = Project::firstOrFail();
+        $project->update(['is_published' => true]);
+        $this->get('/projects/'.$project->slug)->assertOk()
+            ->assertSee('analytics-consent')
+            ->assertSee('G-TEST123ABC');
+
+        $this->get('/privacy')->assertOk()
+            ->assertSee('Google Analytics')
+            ->assertSee('analytics-consent');
+
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->actingAs($admin)->get('/preview')->assertOk()
+            ->assertDontSee('analytics-consent');
     }
 
     public function test_public_contact_form_submissions_are_saved_to_the_inbox(): void

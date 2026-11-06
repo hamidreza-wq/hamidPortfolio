@@ -93,6 +93,12 @@ class PublicPortfolioController extends Controller
         $html = preg_replace('/<link\\s+rel="canonical"[^>]*>/i', '', $html) ?? $html;
         $html = preg_replace('/<html\\b[^>]*>/i', '<html lang="'.e($seo['language']).'">', $html, 1) ?? $html;
         $html = str_replace('</head>', app(PortfolioSeo::class)->tags($seo).'<style>'.app(FontLibrary::class)->css().'</style></head>', $html);
+        if (! $isPreview) {
+            $consentUi = view('portfolio.analytics-consent', [
+                'measurementId' => config('services.google_analytics.measurement_id'),
+            ])->render();
+            $html = str_replace('</body>', $consentUi.'</body>', $html);
+        }
 
         return response($html)
             ->header('Content-Type', 'text/html; charset=UTF-8')

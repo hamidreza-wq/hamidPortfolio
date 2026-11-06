@@ -137,6 +137,83 @@ not weakened. The owner should verify actual live crawl access in Search Console
 and submit `https://hamidbayat.co.uk/sitemap.xml`; investigate Hostinger crawler
 handling if Google's real inspection fails.
 
+## Owner-authorized Google Analytics deployment - 2026-11-06
+
+The owner authorized deployment through Hostinger to **https://hamidbayat.co.uk**.
+The `ga4-20261106` release is a copy of the previous `c77d908` runtime with the
+18-file analytics working-tree package applied. This is a manifest-verified local
+snapshot, not a new committed or CI-certified release. No branch was merged.
+
+- Created a separate GA4 property, **Hamid Bayat Portfolio**, and web stream for
+  the exact `https://hamidbayat.co.uk` origin. Measurement ID: `G-LCT08K6TVX`.
+  The existing stream for a different domain was not changed.
+- Verified the old runtime files against the expected source baseline, ignoring
+  only CRLF/LF differences. The Composer lockfile matched, so the existing
+  production dependencies were copied unchanged.
+- Preserved private native MySQL, uploads, environment and source backups under
+  `backups/pre-ga4-20261106`. Off-host copies matched their SHA256 hashes.
+  No migration, seeding, database reset, account change or content publication ran.
+- Passed 27 focused PHP tests (179 assertions), PHP formatting, hosting PHP
+  syntax checks and candidate rendering. A real Edge test of the exact
+  production-rendered consent code covered no pre-consent requests, persisted
+  rejection, one-tag opt-in, withdrawal, CSP and 320/390/768/1440px layouts.
+- Cached candidate configuration/views and atomically switched only this site's
+  public-root symlink. The previous release remains available for rollback.
+- Live Edge verification received HTTP **204** from Google's collection endpoint
+  with the correct Measurement ID. Rejection produced no Google requests;
+  project/privacy navigation retained the choice and withdrawal removed
+  analytics cookies. No browser script errors were observed.
+- Live homepage, privacy and health checks passed. Anonymous analytics access
+  still redirects to login, private environment/configuration paths remain
+  denied, and nine content/account tables retained their predeployment hashes.
+- After the owner signed in, the production admin Analytics page displayed
+  **Google Analytics 4 · Configured** with the correct Measurement ID. Google's
+  live last-30-minutes card subsequently showed a visitor from the test traffic.
+- Removed private staging and native-backup client options. Deleted the temporary
+  SSH key in hPanel and independently verified authentication failure before
+  deleting the local key material. Other websites and hosting settings were not
+  changed.
+
+Google Analytics reports remain separate from first-party counts in the website
+dashboard. Standard GA4 reports can take time to populate; an accepted collection
+request is not a claim that every report has finished processing.
+
+## Owner-authorized contact email deployment - 2026-11-06
+
+The owner requested contact-form delivery to their existing domain mailbox.
+The active `contact-20261106` release copies `ga4-20261106` and overlays a
+manifest-verified nine-file contact email package. This remains an uncommitted
+working-tree snapshot, not a new CI-certified release; no branch was merged.
+
+- The existing public contact email was already correct and was not republished.
+  New submissions remain in the private website inbox and are also emailed
+  through authenticated Hostinger SMTP over implicit TLS on port 465.
+  The domain mailbox is From; the validated visitor address is Reply-To.
+- Contact notifications explicitly use SMTP without a log/failover fallback or
+  queue worker. Transport failure preserves the saved message, records only its
+  ID in an error log, and displays explicit saved-but-not-emailed feedback.
+- A password-free PHP mail probe was accepted locally but delivery was not
+  verified, so that method was not enabled. The owner supplied an existing
+  mailbox password through a private local file. It was transferred directly
+  into the isolated release's private environment configuration without being
+  displayed, committed or included in the source package.
+- Passed 25 focused PHP tests (150 assertions), targeted PHP formatting and
+  diff whitespace checks. Hosting PHP 8.3 syntax, configuration/view caches,
+  candidate file hashes and SMTP TLS authentication passed before activation.
+- Preserved and SHA256-verified native database, uploads, environment and source
+  backups under `backups/pre-contact-20261106`. The previous release remains
+  available for rollback. No migration, seeding, reset or account changes ran.
+- Atomically activated this site's public-root symlink. Live homepage, privacy
+  and health returned 200; environment/configuration paths remained denied.
+  One explicitly approved public contact test was saved, SMTP accepted it, and
+  the owner confirmed receipt in their Inbox. All pre-existing records across
+  nine content/account tables retained their predeployment hashes.
+- Removed private staging and backup-client options. Deleted the temporary SSH
+  key in hPanel with owner approval and verified subsequent SSH authentication
+  rejection. Removed local temporary key/client material and, with separate owner
+  approval, the local plaintext password file. The deployment manifest remains
+  in the release and backup.
+
 ## Earlier release decision - before owner deployment authorization
 
 See [final release readiness](docs/qa/FINAL-RELEASE-READINESS.md) for the
@@ -171,6 +248,7 @@ the intended host and operational/staging gates below remain owner actions.
 - Use HTTPS. Set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://your-domain`, `SESSION_SECURE_COOKIE=true`, `SESSION_HTTP_ONLY=true`, `SESSION_SAME_SITE=lax` and a suitable `SESSION_LIFETIME`. Generate `APP_KEY` once and preserve it across releases.
 - Set database credentials outside Git. Grant write access only to `storage` and `bootstrap/cache`; do not make application source writable by the web server.
 - Optional Search Console metrics require a Google OAuth web client configured with the exact production callback URI. Set `GOOGLE_SEARCH_CONSOLE_CLIENT_ID`, `GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET` and `GOOGLE_SEARCH_CONSOLE_REDIRECT_URI` in the private environment; never put these credentials in source control. The integration requests read-only access and verifies the selected property.
+- Google Analytics 4 uses `GOOGLE_ANALYTICS_MEASUREMENT_ID` (default: `G-LCT08K6TVX`). The public tag loads only after explicit visitor consent; the CSP allowlist includes the Google tag and Analytics endpoints. Verify both consent choices and live Realtime data after deploying.
 - Configure TLS termination and trusted proxies explicitly when using a reverse proxy. Verify Laravel sees requests as HTTPS before relying on HSTS and secure cookies. HSTS is emitted only for HTTPS production requests.
 - Check CSP in a browser: scripts/styles receive nonces, external framing is blocked, and the same-origin admin preview is allowed. Inline style attributes remain allowed because existing theme/layout controls rely on them; inline script handlers are not allowed.
 - Keep MySQL, PHP, web server and system dependencies patched. Review private contact and authentication logs under an explicit retention policy.

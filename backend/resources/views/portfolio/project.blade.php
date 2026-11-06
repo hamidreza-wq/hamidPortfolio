@@ -34,5 +34,6 @@
       @if($project->live_url && $project->live_url_verified)<a class="button button-quiet" href="{{ $project->live_url }}" target="_blank" rel="noopener noreferrer">Live demo ↗</a>@endif
     </div>
   </main>
+  @include('portfolio.analytics-consent', ['measurementId' => $analyticsMeasurementId])
 </body>
 </html>

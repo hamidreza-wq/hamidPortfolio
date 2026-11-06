@@ -34,6 +34,7 @@ class ProjectDetailController extends Controller
             'fontCss' => app(FontLibrary::class)->css(),
             'image' => app(MediaLibrary::class)->publicPayload($project->media_asset_id),
             'gallery' => collect($project->gallery_media_ids ?? [])->map(fn ($id) => app(MediaLibrary::class)->publicPayload($id))->filter(),
+            'analyticsMeasurementId' => config('services.google_analytics.measurement_id'),
         ])->header('X-Robots-Tag', $seo['robots'])->header('Cache-Control', 'private, no-store');
     }
 

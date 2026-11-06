@@ -3,15 +3,26 @@
 @section('breadcrumb', 'Analytics')
 @section('content')
 <div class="page-head">
-  <div><p class="eyebrow">YOUR DIGITAL UNIVERSE / ANALYTICS</p><h1>Traffic, without guesswork.</h1><p>First-party pageviews are the foundation. Google search performance is an optional, separate source.</p></div>
+  <div><p class="eyebrow">YOUR DIGITAL UNIVERSE / ANALYTICS</p><h1>Traffic, without guesswork.</h1><p>First-party pageviews remain separate from optional Google Analytics 4 and Search Console data.</p></div>
 </div>
+<section class="panel" style="margin-bottom:14px">
+  <div class="panel-head"><h2>Google Analytics 4</h2>
+    @if($googleAnalyticsConfigured)<span class="status-pill">Configured</span>@else<span class="status-pill off">Not configured</span>@endif
+  </div>
+  @if($googleAnalyticsConfigured)
+    <p class="card-help">Measurement ID: <code>{{ $googleAnalyticsMeasurementId }}</code>. Tracking runs only after a visitor opts in; detailed reports are viewed in Google Analytics.</p>
+    <a class="button button-quiet" href="https://analytics.google.com/analytics/web/" target="_blank" rel="noopener noreferrer">Open Google Analytics ↗</a>
+  @else
+    <p class="card-help">Google Analytics tracking is available on production after a valid GA4 Measurement ID is configured. Visitors must opt in before the tag loads.</p>
+  @endif
+</section>
 <div class="grid stats">
   <article class="stat-card"><div class="stat-top"><span>Pageviews / 30 days</span><span class="stat-mark">⌁</span></div><div class="stat-number">{{ number_format($pageViews) }}</div><div class="stat-caption">Public home and published project pages</div></article>
   <article class="stat-card"><div class="stat-top"><span>Pageviews / 7 days</span><span class="stat-mark">◷</span></div><div class="stat-number">{{ number_format($recentViews) }}</div><div class="stat-caption">Public page requests only</div></article>
 </div>
 <section class="panel" style="margin-bottom:14px">
   <div class="panel-head"><h2>First-party pageviews · last 30 days</h2><span class="status-pill">Recording</span></div>
-  <p class="card-help">Counts successful public HTML page loads, not unique visitors. No cookies, IP addresses, full referrer URLs, or user-agent strings are stored.</p>
+  <p class="card-help">Counts successful public HTML page loads, not unique visitors. These first-party records do not store cookies, IP addresses, full referrer URLs, or user-agent strings. Google Analytics is separate and consent-based.</p>
   <div role="img" aria-label="Daily first-party pageviews during the last 30 days" style="display:grid;grid-template-columns:repeat(30,minmax(0,1fr));align-items:end;gap:4px;min-height:145px;padding:12px 0 0">
     @foreach($dailyViews as $index => $day)
       <div title="{{ $day['label'] }}: {{ $day['views'] }} pageviews" style="display:flex;height:125px;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px">

@@ -50,6 +50,8 @@ class AnalyticsTest extends TestCase
             ->assertSee('Pageviews / 30 days')
             ->assertSee('1', false)
             ->assertSee('example.org')
+            ->assertSee('Google Analytics 4')
+            ->assertSee('Not configured')
             ->assertSee('Google Search Console')
             ->assertSee('no search performance data is shown');
     }

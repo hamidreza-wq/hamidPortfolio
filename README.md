@@ -60,7 +60,7 @@ The Laravel document root must be `backend/public`. Keep the root portfolio file
 - **Content history:** review supported site/project snapshots and explicitly restore an earlier version. Revisions are not backups for uploaded assets or the database.
 - **Color presets:** save a draft palette without publishing it, or load a saved palette into the preview before explicitly publishing.
 - **Contact inbox:** the public contact form validates and rate-limits submissions; messages are stored in MySQL with a keyed hash of the submitter IP rather than the raw IP address.
-- **Analytics:** first-party counts of successful public page loads, top pages and external referrer hosts. It does not use cookies or store visitor IPs, user agents or full referrer URLs. Optional Google Search Console read-only metrics remain separate.
+- **Analytics:** first-party counts of successful public page loads, top pages and external referrer hosts. It does not store visitor IPs, user agents or full referrer URLs. Optional Google Analytics 4 tracking stays off until a visitor opts in; the choice can be changed through Privacy settings. Search Console read-only metrics remain separate.
 - **Audit trail:** publishing and administrative content actions record the authenticated administrator and action details.
 - **SEO:** unique titles/descriptions, canonical URLs, robots policy and Open Graph/Twitter cards are rendered in HTML. Homepage JSON-LD connects the `ProfilePage`, `Person` and `WebSite` using stable canonical identifiers and the configured public profile links. Published project pages include `CreativeWork` and canonical breadcrumbs; authorship remains gated by confirmed rights. Library sharing images supply dimensions and alt text. Draft projects are not public pages or sitemap entries.
 - **Software updates:** discover official GitHub Releases and verify trusted Ed25519 manifests, GitHub/SHA-256 digests and ZIP contents before password-confirmed review. Deployment remains disabled until hosting and protected GitHub Actions are configured.
@@ -127,7 +127,16 @@ The [platform operations guide](backend/docs/platform-operations.md) documents s
 - Set `APP_ENV=production`, `APP_DEBUG=false`, a strong `APP_KEY`, and production MySQL credentials in the deployment environment. Do not commit `.env` files.
 - Point the web server at `backend/public`; ensure the parent repository files remain readable by the PHP application.
 - Configure a durable, private backup for MySQL and uploaded media. Test database restoration before relying on backups.
-- Configure outbound mail if contact messages should also generate notifications; the inbox itself works without an email provider.
+- To email new contact messages, set `CONTACT_RECIPIENT` to the owner's mailbox
+  and configure `MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME`, `MAIL_USERNAME`,
+  `MAIL_PASSWORD`, and `MAIL_FROM_ADDRESS` for authenticated SMTP. Use the
+  authenticated mailbox as From; the visitor is Reply-To, never From.
+  Notifications use SMTP directly (no log/failover fallback or queue worker);
+  `MAIL_TIMEOUT` defaults to 10 seconds. Leave `CONTACT_RECIPIENT` empty for
+  inbox-only operation. Messages are saved before sending; SMTP failures log
+  only the message ID and show explicit saved-but-not-emailed feedback, without
+  losing the message or asking visitors to resubmit. Delivery to the receiving
+  mailbox must be checked separately from SMTP acceptance.
 - Use HTTPS, and set the canonical URL in the admin editor only after the final public domain is configured.
 - The dashboard is intended for a single owner. Create accounts only through the protected server-side admin command and remove access promptly when it is no longer needed.
 

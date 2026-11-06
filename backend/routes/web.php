@@ -21,6 +21,7 @@ Route::get('/', [PublicPortfolioController::class, 'index'])->middleware('record
 Route::get('/projects/{slug}', [ProjectDetailController::class, 'show'])->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')->middleware('record.pageview')->name('portfolio.projects.show');
 Route::get('/sitemap.xml', [ProjectDetailController::class, 'sitemap'])->name('portfolio.sitemap');
 Route::get('/robots.txt', [ProjectDetailController::class, 'robots'])->name('portfolio.robots');
+Route::view('/privacy', 'portfolio.privacy')->name('portfolio.privacy');
 Route::get('/fonts/{fontAsset}', [FontController::class, 'show'])->name('fonts.show');
 Route::get('/media/{mediaAsset}', [MediaController::class, 'show'])->name('media.show');
 Route::post('/contact', [PublicContactController::class, 'store'])

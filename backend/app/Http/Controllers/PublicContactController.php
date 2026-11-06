@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMessageReceived;
 use App\Models\ContactMessage;
 use App\Services\ContactSubmissionGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class PublicContactController extends Controller
 {
@@ -42,7 +46,7 @@ class PublicContactController extends Controller
         }
         RateLimiter::hit($emailKey, 600);
 
-        ContactMessage::create([
+        $message = ContactMessage::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'subject' => $validated['subject'],
@@ -50,6 +54,19 @@ class PublicContactController extends Controller
             'status' => 'unread',
             'ip_hash' => hash_hmac('sha256', $request->ip() ?? 'unknown', (string) config('app.key')),
         ]);
+
+        $recipient = config('portfolio.contact_recipient');
+        if ($recipient) {
+            try {
+                Mail::mailer('smtp')->to($recipient)->send(new ContactMessageReceived($message));
+            } catch (TransportExceptionInterface) {
+                Log::error('Contact email transport failed; message retained in website inbox.', [
+                    'contact_message_id' => $message->id,
+                ]);
+
+                return redirect('/#contact')->with('contact_status', 'Your message was saved in the website inbox, but the email notification could not be sent. You do not need to submit it again.');
+            }
+        }
 
         return redirect('/#contact')->with('contact_status', 'Thanks for reaching out. Your message has been received.');
     }
