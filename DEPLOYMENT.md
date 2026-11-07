@@ -326,10 +326,12 @@ See [operational requirements](backend/docs/platform-operations.md) for
 supervised workers, minute scheduling, shared locks and digest failure handling.
 Queue visibility defaults to 180 seconds, above the 150-second monitor timeout;
 preserve this ordering for environment overrides. Confirm actual worker execution,
-failed-job alerting and log rotation on the intended host. Mail currently uses
-`log` locally; no real SMTP receipt or live GSC/SEO-origin validation is claimed.
-Leave digests off, GSC disconnected and release installation disabled until
-their documented owner checks pass.
+failed-job alerting and log rotation on the intended host. Local mail uses
+`log`; production SMTP receipt was separately confirmed by the owner. Live
+technical SEO validation and protected release installation are recorded below.
+Leave digests off and GSC disconnected until their separate owner checks pass.
+Protected installation remains disabled by default for other installations;
+this production site's explicitly approved setup is enabled and verified below.
 
 No public self-registration or emailed password reset is provided. Recovery requires trusted shell access and the administrator command. Optional two-factor authentication and CAPTCHA require a separately reviewed provider/configuration; do not treat them as implemented.
 
@@ -363,15 +365,70 @@ No public self-registration or emailed password reset is provided. Recovery requ
   verified by name after the owner's manual save. Real scoped App authentication
   to the registered workflow passed without dispatching a deployment.
 - A signed `v0.3.0` package was prepared and independently verified using actual
-  MariaDB 11.8 compatibility bounds. It has not been published or installed.
-  The bootstrap intentionally retains installed `VERSION` `0.2.0-dev` so the
-  signed release can later be genuinely exercised through Update. Activation
-  remains disabled until secret setup and the protected end-to-end run pass.
+  MariaDB 11.8 compatibility bounds. At this bootstrap checkpoint it was not
+  published or installed. The bootstrap intentionally retained installed
+  `VERSION` `0.2.0-dev` so a signed release could genuinely be exercised through
+  Update. Activation was disabled pending the protected end-to-end run.
 - The exact implementation CI run
   [42309496823](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/42309496823)
   passed PHP/audit/build and isolated MySQL/utility checks on both runtimes,
   but exceeded the 25-minute limit during repeated browser dependency installs
   on the rolling Ubuntu runner. CI/deployment are now pinned to Ubuntu 24.04,
-  with one shared browser dependency-installation pass. Release publication
-  remains blocked pending a successful replacement CI run. No full CI or live
-  Update success is claimed yet.
+  with one shared browser dependency-installation pass. This blocked initial
+  release publication; successful replacement CI and actual installation are
+  recorded in the final outcome below.
+
+## Verified protected Update outcome - 2026-11-07
+
+- Exact-source CI passed for `4b3b6a4`
+  ([42313708850](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/42313708850)).
+  Published signed `v0.3.0` without modifying its assets afterward. Live
+  verification exposed discarded signed CDN query parameters; the downloader
+  now retains signature/expiry parameters, with 92 related tests / 336 assertions
+  and real-host downloads passing. Only that downloader call was patched in the
+  bootstrap, preserving its private source baseline.
+- Published immutable signed
+  [v0.3.1](https://github.com/hamidreza-wq/hamidPortfolio/releases/tag/v0.3.1)
+  from `fd0d782` after its exact-source
+  [CI run](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/42315734193)
+  passed. Its first PHP 8.3 job failed an Edge zoom/clipping assertion in the
+  unchanged frontend; rerunning that job passed without removing any assertion
+  or browser. All three published asset sizes and SHA256 digests match the
+  locally signed bytes; signature, archive paths/CRC/core files and VERSION
+  were independently verified.
+- The first protected Update
+  [42317596401](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/42317596401)
+  reached activation but returned HTTP 404 because private archive directory/
+  public-file modes blocked web-server access. It restored the previous release
+  without restoring or changing the database. Independent content, uploads,
+  private configuration and migration-history checks verified that rollback.
+- Corrected only isolated release/backend traversal and public-webroot modes;
+  environment/configuration and shared-storage permissions remain private.
+  All eight isolated POSIX runner tests passed on hosting, including restrictive
+  archive modes, backup/cache failures, health/version rollback, EXIT-trap
+  rollback and concurrency. Full exact-source
+  [CI 42318423941](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/42318423941)
+  passed on both PHP runtimes for `01b260e`. Published only the corrected runner
+  and test to `main` as `7152bb7`; no historical application merge was performed.
+- The owner privately confirmed the administrator password/backup request and
+  independently approved production for the new UUID
+  `4c951cb9-bdb2-4d8e-9842-e881ecf45d76`.
+  [Update 42319164481](https://github.com/hamidreza-wq/hamidPortfolio/actions/runs/42319164481)
+  completed successfully using the corrected `main` runner. The live admin
+  records `v0.3.1` as **applied**, with `completed / success` and that exact run.
+  `public_html` points to its isolated release; `/up` returns HTTP 200 and
+  `X-Portfolio-Version: 0.3.1`. Homepage, privacy, project, sitemap and robots
+  routes return HTTP 200; private source/environment paths remain denied.
+- Verified existing content/account records, stored files, SMTP/GA4/private
+  configuration, `APP_KEY`, dependency lock, PHP/database runtime and migration
+  history against a private pre-Update baseline. No migrations, seeders or
+  database restores ran. Native SQL/uploads/environment/source backup hashes
+  passed on hosting and again in an owner-restricted off-host copy. Persistent
+  credentials, backups and previous releases are intentionally retained.
+- After preservation checks, changed only project 6's previously approved
+  details/features to replace the now-obsolete "setup pending" wording with the
+  verified protected-update capability. The final production SEO scan at
+  **00:43:00 UTC** reported **zero open findings and zero open SEO notices**.
+  Superseded `v0.3.0` download/availability notices were resolved because the
+  corrected `v0.3.1` is genuinely installed; failed attempt history remains,
+  and `v0.3.0` is not misrepresented as installed. No open update notices remain.
