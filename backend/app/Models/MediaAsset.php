@@ -8,11 +8,16 @@ class MediaAsset extends Model
 {
     protected $fillable = [
         'label', 'original_name', 'disk', 'path', 'mime_type', 'size_bytes',
-        'width', 'height', 'alt_text', 'uploaded_by',
+        'width', 'height', 'alt_text', 'uploaded_by', 'reencoded',
     ];
 
     protected function casts(): array
     {
-        return ['size_bytes' => 'integer', 'width' => 'integer', 'height' => 'integer'];
+        return ['size_bytes' => 'integer', 'width' => 'integer', 'height' => 'integer', 'reencoded' => 'boolean'];
+    }
+
+    public function publicUrl(): string
+    {
+        return route('media.show', $this);
     }
 }

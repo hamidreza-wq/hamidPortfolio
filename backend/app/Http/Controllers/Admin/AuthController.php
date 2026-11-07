@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -22,7 +23,8 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $key = Str::transliterate(Str::lower($validated['email']).'|'.$request->ip());
+        $validated['email'] = Str::lower(trim($validated['email']));
+        $key = 'admin-login:'.hash('sha256', Str::transliterate($validated['email'].'|'.$request->ip()));
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             return back()
@@ -36,6 +38,10 @@ class AuthController extends Controller
             'is_admin' => true,
         ])) {
             RateLimiter::hit($key, 60);
+            AuditLog::create([
+                'action' => 'authentication.failed',
+                'ip_address' => $request->ip(),
+            ]);
 
             return back()
                 ->withErrors(['email' => 'Those administrator credentials were not accepted.'])
@@ -44,12 +50,22 @@ class AuthController extends Controller
 
         RateLimiter::clear($key);
         $request->session()->regenerate();
+        AuditLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'authentication.login',
+            'ip_address' => $request->ip(),
+        ]);
 
-        return redirect()->intended(route('admin.dashboard'));
+        return redirect()->route('admin.dashboard');
     }
 
     public function destroy(Request $request)
     {
+        AuditLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'authentication.logout',
+            'ip_address' => $request->ip(),
+        ]);
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

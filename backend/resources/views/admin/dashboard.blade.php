@@ -35,7 +35,14 @@
     </div>
     <div style="margin-top:17px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
       <div class="panel-head" style="margin-bottom:7px"><h2>Search visibility</h2><a href="{{ route('admin.site-editor.edit') }}">Review SEO →</a></div>
-      <p style="margin:0;color:#9290a2;font-size:9px;line-height:1.75">Analytics are not configured. This dashboard does not invent visitor or traffic data.</p>
+      @if($seoIssues)
+        <ul style="padding-left:16px;color:#c3bfce;font-size:10px;line-height:1.75">
+          @foreach($seoIssues as $issue)<li>{{ $issue }}</li>@endforeach
+        </ul>
+      @else
+        <p style="color:#99d9bd;font-size:10px">Basic metadata checks passed. This does not guarantee search engine indexing or rankings.</p>
+      @endif
+      <p style="margin:0;color:#9290a2;font-size:9px;line-height:1.75">{{ number_format($pageViews) }} first-party pageviews in the last 30 days. <a href="{{ route('admin.analytics') }}" style="color:#b69bff">View traffic analytics →</a></p>
     </div>
   </section>
 </div>

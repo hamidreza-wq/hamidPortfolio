@@ -13,6 +13,14 @@
     @media(max-width:800px){.sidebar{width:220px;transform:translateX(-101%);transition:transform .2s ease}.sidebar.open{transform:translateX(0);box-shadow:20px 0 60px rgba(0,0,0,.38)}.main{margin-left:0}.topbar{padding:0 20px}.menu-toggle{display:grid;place-items:center}.content{padding:25px 20px 40px}.editor-layout{grid-template-columns:1fr}.preview-card{position:relative;top:auto}.preview-frame{height:620px;min-height:420px}.upload-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:520px){.content{padding-inline:15px}.topbar{height:58px;padding-inline:15px}.top-actions .button-quiet{display:none}.page-head{align-items:flex-start;flex-direction:column}.stats{gap:9px}.stat-card{padding:13px}.stat-number{font-size:24px}.dashboard-columns{grid-template-columns:1fr}.field-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.project-editor{grid-template-columns:1fr}.project-editor-actions{flex-direction:row;flex-wrap:wrap}.project-editor-actions .button{width:auto}.media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.upload-form{grid-template-columns:1fr}.preview-frame{height:540px}.activity-time{display:none}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+    .platform-card{margin-bottom:16px;overflow-wrap:anywhere}
+    .platform-card h2{font-size:14px}
+    .platform-card p{line-height:1.75}
+    .platform-card pre{max-width:100%;max-height:360px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;padding:12px;background:#0b0b14;border-radius:6px}
+    .platform-card details{margin:14px 0}
+    .platform-card summary{cursor:pointer;color:var(--violet)}
+    .platform-card .field-grid{margin:14px 0}
+    @media(max-width:900px){.platform-stack{grid-template-columns:minmax(0,1fr)}}
   </style>
   <style>
     .field input[type="checkbox"],
@@ -38,6 +46,40 @@
     .inbox-message {
       overflow-wrap: anywhere;
     }
+    .sidebar {
+      overflow-y: auto;
+    }
+    .form-inline {
+      flex-wrap: wrap;
+    }
+    .panel,
+    .editor-card {
+      min-width: 0;
+    }
+    .project-editor-main,
+    .project-title-row h2 {
+      min-width: 0;
+    }
+    .project-title-row h2 {
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 1100px) {
+      .editor-layout,
+      .project-editor {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .preview-card {
+        position: relative;
+        top: auto;
+      }
+      .project-editor-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .project-editor-actions .button {
+        width: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -50,11 +92,20 @@
     </a>
     <p class="nav-label">WORKSPACE</p>
     <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><span class="nav-icon">◈</span>Overview</a>
+    <a class="nav-link {{ request()->routeIs('admin.analytics*') ? 'active' : '' }}" href="{{ route('admin.analytics') }}"><span class="nav-icon">⌁</span>Analytics</a>
     <a class="nav-link {{ request()->routeIs('admin.site-editor.*') ? 'active' : '' }}" href="{{ route('admin.site-editor.edit') }}"><span class="nav-icon">◉</span>Live site editor</a>
     <a class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}" href="{{ route('admin.projects.index') }}"><span class="nav-icon">▧</span>Projects</a>
+    <a class="nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}" href="{{ route('admin.sections.index') }}"><span class="nav-icon">+</span>Sections</a>
+    <a class="nav-link {{ request()->routeIs('admin.revisions.*') ? 'active' : '' }}" href="{{ route('admin.revisions.index') }}"><span class="nav-icon">↶</span>Content history</a>
     <p class="nav-label">LIBRARY</p>
     <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" href="{{ route('admin.media.index') }}"><span class="nav-icon">▤</span>Media library</a>
+    <a class="nav-link {{ request()->routeIs('admin.fonts.*') ? 'active' : '' }}" href="{{ route('admin.fonts.index') }}"><span class="nav-icon">Aa</span>Fonts</a>
     <a class="nav-link {{ request()->routeIs('admin.inbox.*') ? 'active' : '' }}" href="{{ route('admin.inbox.index') }}"><span class="nav-icon">✉</span>Contact inbox</a>
+    <p class="nav-label">PLATFORM</p>
+    <a class="nav-link {{ request()->routeIs('admin.platform.updates') ? 'active' : '' }}" href="{{ route('admin.platform.updates') }}">Software updates</a>
+    <a class="nav-link {{ request()->routeIs('admin.platform.github') ? 'active' : '' }}" href="{{ route('admin.platform.github') }}">GitHub projects</a>
+    <a class="nav-link {{ request()->routeIs('admin.platform.seo') ? 'active' : '' }}" href="{{ route('admin.platform.seo') }}">SEO monitoring</a>
+    <a class="nav-link {{ request()->routeIs('admin.platform.notifications') ? 'active' : '' }}" href="{{ route('admin.platform.notifications') }}">Notifications <span aria-label="unread notifications">{{ \App\Models\PlatformNotice::visible()->whereNull('read_at')->whereIn('category', \App\Models\NotificationPreference::forUser(auth()->id())->categories)->count() }}</span></a>
     <div class="sidebar-bottom">
       <div class="sidebar-note"><strong>Private studio</strong><br>Changes publish to the live portfolio only when you choose to save them.</div>
       <p class="nav-label">ACCOUNT</p>
@@ -63,7 +114,7 @@
   </aside>
   <div class="main">
     <header class="topbar">
-      <div style="display:flex;align-items:center;gap:12px"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open dashboard navigation" aria-expanded="false">☰</button><div class="breadcrumbs">Studio <span aria-hidden="true">/</span> <strong>@yield('breadcrumb', 'Overview')</strong></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open dashboard navigation" aria-controls="admin-sidebar" aria-expanded="false">☰</button><div class="breadcrumbs">Studio <span aria-hidden="true">/</span> <strong>@yield('breadcrumb', 'Overview')</strong></div></div>
       <div class="top-actions">
         <a class="button button-quiet" href="{{ route('portfolio.home') }}" target="_blank" rel="noreferrer">View live site <span aria-hidden="true">↗</span></a>
         <a class="button" href="{{ route('admin.site-editor.edit') }}">Edit portfolio</a>
@@ -82,13 +133,38 @@
 <script>
   const menuToggle = document.querySelector('#menu-toggle');
   const sidebar = document.querySelector('#admin-sidebar');
+  const mobileNavigation = window.matchMedia('(max-width: 800px)');
+  const syncNavigation = () => {
+    if (!sidebar || !menuToggle) return;
+    const expanded = mobileNavigation.matches && sidebar.classList.contains('open');
+    const hidden = mobileNavigation.matches && !expanded;
+    if (hidden && sidebar.contains(document.activeElement)) menuToggle.focus();
+    sidebar.inert = hidden;
+    sidebar.setAttribute('aria-hidden', String(hidden));
+    menuToggle.setAttribute('aria-expanded', String(expanded));
+    menuToggle.setAttribute('aria-label', expanded ? 'Close dashboard navigation' : 'Open dashboard navigation');
+  };
   menuToggle?.addEventListener('click', () => {
-    const expanded = menuToggle.getAttribute('aria-expanded') === 'true';
-    menuToggle.setAttribute('aria-expanded', String(!expanded));
-    sidebar.classList.toggle('open', !expanded);
+    sidebar.classList.toggle('open');
+    syncNavigation();
   });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !mobileNavigation.matches || !sidebar?.classList.contains('open')) return;
+    sidebar.classList.remove('open');
+    syncNavigation();
+    menuToggle.focus();
+  });
+  mobileNavigation.addEventListener('change', () => {
+    sidebar?.classList.remove('open');
+    syncNavigation();
+  });
+  syncNavigation();
   document.querySelectorAll('form[data-confirm]').forEach((form) => form.addEventListener('submit', (event) => {
     if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+  }));
+  document.querySelectorAll('form[data-platform-submit]').forEach((form) => form.addEventListener('submit', () => {
+    form.querySelector('button[type="submit"]').disabled = true;
+    form.querySelector('[data-platform-status]').textContent = 'Request in progress. Please wait; review history for the actual result.';
   }));
   document.querySelectorAll('form[data-unsaved]').forEach((form) => {
     let dirty = false;

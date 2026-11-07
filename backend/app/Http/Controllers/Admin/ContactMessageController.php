@@ -12,6 +12,10 @@ class ContactMessageController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate([
+            'q' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'in:unread,read,archived'],
+        ]);
         $messages = ContactMessage::query()
             ->when($request->filled('q'), fn ($query) => $query->where(function ($subQuery) use ($request) {
                 $term = '%'.$request->string('q')->toString().'%';
@@ -34,18 +38,19 @@ class ContactMessageController extends Controller
             'internal_note' => ['nullable', 'string', 'max:3000'],
         ]);
 
-        $contactMessage->update([
-            ...$validated,
-            'archived_at' => $validated['status'] === 'archived' ? now() : null,
-        ]);
-
-        AuditLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'contact_message.updated',
-            'subject_type' => 'contact_message',
-            'subject_id' => $contactMessage->id,
-            'ip_address' => $request->ip(),
-        ]);
+        DB::transaction(function () use ($request, $contactMessage, $validated): void {
+            $contactMessage->update([
+                ...$validated,
+                'archived_at' => $validated['status'] === 'archived' ? now() : null,
+            ]);
+            AuditLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'contact_message.updated',
+                'subject_type' => 'contact_message',
+                'subject_id' => $contactMessage->id,
+                'ip_address' => $request->ip(),
+            ]);
+        });
 
         return back()->with('status', 'Message updated.');
     }

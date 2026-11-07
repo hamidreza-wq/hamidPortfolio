@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'google_search_console' => [
+        'client_id' => env('GOOGLE_SEARCH_CONSOLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET'),
+        'redirect_uri' => env('GOOGLE_SEARCH_CONSOLE_REDIRECT_URI'),
+    ],
+
+    'google_analytics' => [
+        'measurement_id' => env('GOOGLE_ANALYTICS_MEASUREMENT_ID', 'G-LCT08K6TVX'),
+    ],
+
 ];

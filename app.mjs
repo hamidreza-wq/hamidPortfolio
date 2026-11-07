@@ -7,6 +7,16 @@ import {
 let profile = window.portfolioPayload?.profile ?? fallbackProfile;
 let projects = window.portfolioPayload?.projects ?? fallbackProjects;
 let craft = window.portfolioPayload?.craft ?? fallbackCraft;
+const loadedFonts = new Set();
+
+function safeURL(value) {
+  try {
+    const url = new URL(value, window.location.origin);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "#";
+  } catch {
+    return "#";
+  }
+}
 
 const projectGrid = document.querySelector("#project-grid");
 const searchInput = document.querySelector(".project-search input");
@@ -27,6 +37,7 @@ function escapeHTML(value) {
 }
 
 function renderProjects() {
+  if (!projectGrid || !searchInput || !emptyState) return;
   const query = searchInput.value.trim().toLowerCase();
   const visibleProjects = projects.filter((project) => {
     const matchesFilter = activeFilter === "all" || project.category === activeFilter;
@@ -41,8 +52,9 @@ function renderProjects() {
 
   projectGrid.innerHTML = visibleProjects.map((project, index) => `
     <article class="project-card reveal is-visible" style="--card-index:${index}">
-      <button class="project-open" type="button" data-project="${escapeHTML(project.repo)}" aria-label="Open details for ${escapeHTML(project.name)}">
+      <button class="project-open" type="button" data-project="${escapeHTML(project.slug || project.repo)}">
         <span class="project-art project-art--${escapeHTML(project.visual)}" aria-hidden="true">
+          ${project.image ? `<img class="project-card-image" src="${escapeHTML(safeURL(project.image.url))}" alt="">` : ""}
           <span class="art-orbit art-orbit--one"></span>
           <span class="art-orbit art-orbit--two"></span>
           <span class="art-core"></span>
@@ -50,12 +62,14 @@ function renderProjects() {
           <span class="art-index">0${index + 1}</span>
         </span>
         <span class="project-card-body">
-          <span class="project-category">${escapeHTML(project.categoryLabel)}</span>
+          <span class="project-category">${escapeHTML(project.categoryLabel)}${project.featured ? " · Featured" : ""}${project.status ? ` · ${escapeHTML(project.status)}` : ""}</span>
           <span class="project-title-line"><strong>${escapeHTML(project.name)}</strong><span class="project-arrow" aria-hidden="true">↗</span></span>
           <span class="project-description">${escapeHTML(project.description)}</span>
+          ${project.sourcePublic === true ? "" : '<span class="project-category">Private source code</span>'}
           <span class="project-tags">${project.technologies.slice(0, 4).map((tech) => `<span>${escapeHTML(tech)}</span>`).join("")}</span>
         </span>
       </button>
+      ${project.detailUrl ? `<a class="project-detail-link" href="${escapeHTML(safeURL(project.detailUrl))}">Project page <span aria-hidden="true">↗</span></a>` : ""}
     </article>
   `).join("");
   emptyState.hidden = visibleProjects.length > 0;
@@ -63,7 +77,9 @@ function renderProjects() {
 }
 
 function renderCraft() {
-  document.querySelector("#craft-groups").innerHTML = craft.map((group, index) => `
+  const craftGroups = document.querySelector("#craft-groups");
+  if (!craftGroups) return;
+  craftGroups.innerHTML = craft.map((group, index) => `
     <section class="craft-group reveal is-visible" style="--group-index:${index}">
       <h3><span>0${index + 1}</span>${escapeHTML(group.title)}</h3>
       <ul>${group.items.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
@@ -72,7 +88,9 @@ function renderCraft() {
 }
 
 function renderContact() {
-  document.querySelector("#contact-actions").innerHTML = `
+  const contactActions = document.querySelector("#contact-actions");
+  if (!contactActions) return;
+  contactActions.innerHTML = `
     ${profile.email ? `<a class="button button-primary" href="mailto:${encodeURIComponent(profile.email)}">Email me <span aria-hidden="true">↗</span></a>` : ""}
     <a class="button ${profile.email ? "button-quiet" : "button-primary"}" href="${escapeHTML(profile.github)}" target="_blank" rel="noreferrer">
       Connect on GitHub <span aria-hidden="true">↗</span>
@@ -87,6 +105,8 @@ function renderContact() {
   contactSlot.innerHTML = `
     <form class="portfolio-contact-form" method="post" action="${escapeHTML(actionUrl)}">
       <input type="hidden" name="_token" value="${escapeHTML(token)}">
+      <input type="hidden" name="submission_token" value="${escapeHTML(window.portfolioPayload?.settings?.contact_submission_token ?? "")}">
+      <label class="contact-honeypot" aria-hidden="true">Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label>
       <div class="contact-form-heading"><strong>Send a note</strong><span>Private · goes directly to the studio inbox</span></div>
       <div class="contact-form-grid">
         <label>Your name<input name="name" autocomplete="name" maxlength="120" required></label>
@@ -113,26 +133,63 @@ function applyPortfolioData(data) {
   const managedValues = {
     "profile.name": profile.name,
     "profile.title": profile.title,
-    "profile.footer": data.settings?.footer_text,
+    "profile.footer": data.settings?.footer_text ?? "",
   };
   for (const section of data.sections ?? []) {
     managedValues[`section.${section.key}.title`] = section.title;
-    managedValues[`section.${section.key}.subtitle`] = section.subtitle;
-    managedValues[`section.${section.key}.body`] = section.body;
+    managedValues[`section.${section.key}.subtitle`] = section.subtitle ?? "";
+    managedValues[`section.${section.key}.body`] = section.body ?? "";
+    if (section.key === "home") managedValues["section.home.body"] = (section.body ?? "").replace(/^I['’]m [^—\r\n]{1,120}\s*—\s*/u, "");
   }
 
   document.querySelectorAll("[data-managed]").forEach((element) => {
     const value = managedValues[element.dataset.managed];
     if (typeof value !== "string") return;
-    if (element.textContent.trim().replace(/\s+/g, " ") === value.trim().replace(/\s+/g, " ")) return;
+    const copy = element.cloneNode(true);
+    copy.querySelectorAll("br").forEach((lineBreak) => lineBreak.replaceWith(" "));
+    if (copy.textContent.trim().replace(/\s+/g, " ") === value.trim().replace(/\s+/g, " ")) return;
     element.textContent = value;
+    if (element.dataset.managed === "section.home.title") {
+      const parts = value.match(/^(.*\s)(\S+)$/s);
+      if (parts) {
+        const accent = document.createElement("span");
+        accent.className = "gradient-text";
+        accent.textContent = parts[2];
+        element.replaceChildren(document.createTextNode(parts[1]), accent);
+      }
+    }
   });
   document.querySelectorAll('[data-managed-href="profile.github"]').forEach((element) => {
     if (profile.github) element.href = profile.github;
   });
+  document.querySelectorAll('[data-managed-href="profile.github.repositories"]').forEach((element) => {
+    const href = safeURL(profile.github);
+    if (href === "#") return;
+    const url = new URL(href);
+    if (url.protocol !== "https:" || url.hostname.toLowerCase() !== "github.com") return;
+    url.search = "?tab=repositories";
+    url.hash = "";
+    element.href = url.href;
+  });
+  if (typeof profile.name === "string" && profile.name.trim()) {
+    const initial = Array.from(profile.name.trim())[0].toLocaleUpperCase();
+    document.querySelectorAll('[data-managed-initial="profile.name"]').forEach((element) => {
+      element.textContent = initial;
+    });
+  }
 
   const theme = data.theme ?? {};
   const root = document.documentElement;
+  if (/^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})*$/.test(data.settings?.language ?? "")) root.lang = data.settings.language;
+  for (const font of data.fonts ?? []) {
+    if (!/^PortfolioFont\d+$/.test(font.css_family ?? "") || loadedFonts.has(font.css_family)) continue;
+    if (!/^\d{3}$/.test(String(font.weight)) || !["normal", "italic", "oblique"].includes(font.style)) continue;
+    const source = safeURL(font.url);
+    if (source === "#") continue;
+    const face = new FontFace(font.css_family, `url("${source}")`, { weight: String(font.weight), style: font.style });
+    loadedFonts.add(font.css_family);
+    face.load().then((loaded) => document.fonts.add(loaded)).catch(() => loadedFonts.delete(font.css_family));
+  }
   const colorProperties = {
     background: "--night",
     foreground: "--ink",
@@ -150,6 +207,7 @@ function applyPortfolioData(data) {
   if (Number.isFinite(Number(theme.border_radius))) root.style.setProperty("--card-radius", `${Math.min(32, Math.max(0, Number(theme.border_radius)))}px`);
   document.body.dataset.motion = theme.animations_enabled === false || theme.animations_enabled === 0 ? "off" : "on";
   document.querySelector(".particle-field").hidden = theme.particles_enabled === false || theme.particles_enabled === 0;
+  document.dispatchEvent(new Event("portfolio:motionchange"));
 
   const sectionElements = {
     home: document.querySelector("#home"),
@@ -159,6 +217,18 @@ function applyPortfolioData(data) {
     journey: document.querySelector("#journey"),
     contact: document.querySelector("#contact"),
   };
+  document.querySelectorAll("[data-custom-section]").forEach((element) => element.remove());
+  for (const section of data.sections ?? []) {
+    if (sectionElements[section.key] || !/^[a-z0-9-]+$/.test(section.key) || !["experience", "education", "services", "testimonials", "custom"].includes(section.type)) continue;
+    const element = document.createElement("section");
+    element.id = section.key;
+    element.className = "content-section section-shell managed-custom-section";
+    element.dataset.customSection = "";
+    element.innerHTML = `<div class="section-heading"><p class="eyebrow">${escapeHTML(section.subtitle ?? "")}</p><h2>${escapeHTML(section.title ?? "")}</h2><p>${escapeHTML(section.body ?? "")}</p></div>
+      ${section.image ? `<img class="section-image" src="${escapeHTML(safeURL(section.image.url))}" alt="${escapeHTML(section.image.alt ?? "")}" loading="lazy">` : ""}
+      <div class="content-items">${(section.items ?? []).map((item) => `<article class="content-item"><h3>${escapeHTML(item.title ?? "")}</h3><p class="eyebrow">${escapeHTML(item.subtitle ?? "")}</p><p>${escapeHTML(item.body ?? "")}</p></article>`).join("")}</div>`;
+    sectionElements[section.key] = element;
+  }
   if (Array.isArray(data.sections) && data.sections.length) {
     const main = document.querySelector("#main");
     const home = sectionElements.home;
@@ -172,12 +242,34 @@ function applyPortfolioData(data) {
     activeSections.forEach((section) => {
       const element = sectionElements[section.key];
       element.hidden = section.is_visible === false || section.is_visible === 0;
+      const spacingScale = Math.max(48, Math.min(240, Number(theme.section_spacing ?? 140))) / 140;
+      element.style.paddingTop = `${Math.max(0, Math.min(240, Number(section.spacing_top ?? 100))) * spacingScale}px`;
+      element.style.paddingBottom = `${Math.max(0, Math.min(240, Number(section.spacing_bottom ?? 100))) * spacingScale}px`;
+      element.dataset.backgroundEffect = section.background_effect ?? "cosmic";
+      element.style.backgroundImage = section.background ? `url("${safeURL(section.background.url)}")` : "";
+      if (["home", "about", "work", "craft", "journey", "contact"].includes(section.key)) {
+        element.querySelector("[data-section-image]")?.remove();
+        if (section.image) {
+          const image = document.createElement("img");
+          image.className = "section-image";
+          image.dataset.sectionImage = "";
+          image.src = safeURL(section.image.url);
+          image.alt = section.image.alt ?? "";
+          image.loading = "lazy";
+          element.append(image);
+        }
+      }
     });
-    main.prepend(home);
-    if (strip) home.after(strip);
-    activeSections
-      .filter((section) => section.key !== "home")
-      .forEach((section) => main.append(sectionElements[section.key]));
+    activeSections.forEach((section) => {
+      main.append(sectionElements[section.key]);
+      if (section.key === "home" && strip) {
+        strip.hidden = sectionElements.home.hidden;
+        main.append(strip);
+      }
+    });
+    const nav = document.querySelector(".primary-navigation");
+    nav.innerHTML = activeSections.filter((section) => section.is_visible && section.show_in_navigation !== false && section.show_in_navigation !== 0)
+      .map((section) => `<a href="#${escapeHTML(section.key)}">${escapeHTML(section.label || section.title)}</a>`).join("");
   }
 
   renderProjects();
@@ -190,13 +282,17 @@ function showProject(project) {
     <p class="eyebrow">${escapeHTML(project.categoryLabel)} <span class="dialog-index">/ REPOSITORY NOTES</span></p>
     <h2 id="dialog-title">${escapeHTML(project.name)}</h2>
     <p class="dialog-description">${escapeHTML(project.detail)}</p>
+    ${project.image ? `<img class="project-featured-image" src="${escapeHTML(safeURL(project.image.url))}" alt="${escapeHTML(project.image.alt ?? "")}">` : ""}
+    ${(project.gallery ?? []).length ? `<div class="project-gallery">${project.gallery.map((image) => `<img src="${escapeHTML(safeURL(image.url))}" alt="${escapeHTML(image.alt ?? "")}" loading="lazy">`).join("")}</div>` : ""}
     <h3>Built with</h3>
     <ul class="dialog-tags">${project.technologies.map((tech) => `<li>${escapeHTML(tech)}</li>`).join("")}</ul>
     <h3>Inside the project</h3>
     <ul class="dialog-features">${project.features.map((feature) => `<li>${escapeHTML(feature)}</li>`).join("")}</ul>
-    <a class="button button-primary dialog-repo" href="${escapeHTML(project.repositoryUrl ?? `https://github.com/hamidreza-wq/${encodeURIComponent(project.repo)}`)}" target="_blank" rel="noreferrer">
+    ${project.sourcePublic === true && project.repositoryUrl ? `<a class="button button-primary dialog-repo" href="${escapeHTML(safeURL(project.repositoryUrl))}" target="_blank" rel="noreferrer">
       View repository <span aria-hidden="true">↗</span>
-    </a>
+    </a>` : '<span class="button button-quiet">Private source code</span>'}
+    ${project.liveUrl ? `<a class="button button-quiet" href="${escapeHTML(safeURL(project.liveUrl))}" target="_blank" rel="noreferrer">Live demo ↗</a>` : ""}
+    ${project.detailUrl ? `<a class="button button-quiet" href="${escapeHTML(safeURL(project.detailUrl))}">Indexable project page ↗</a>` : ""}
   `;
   dialog.showModal();
 }
@@ -213,11 +309,11 @@ document.querySelectorAll(".filter-button").forEach((button) => {
   });
 });
 
-searchInput.addEventListener("input", renderProjects);
-projectGrid.addEventListener("click", (event) => {
+searchInput?.addEventListener("input", renderProjects);
+projectGrid?.addEventListener("click", (event) => {
   const trigger = event.target.closest("[data-project]");
   if (!trigger) return;
-  const project = projects.find((item) => item.repo === trigger.dataset.project);
+  const project = projects.find((item) => (item.slug || item.repo) === trigger.dataset.project);
   if (project) showProject(project);
 });
 
@@ -316,14 +412,14 @@ function resizeCanvas() {
     drift: (Math.random() - 0.5) * 0.12,
     phase: Math.random() * Math.PI * 2,
   }));
-  if (reducedMotion) drawParticles(0);
+  syncParticleAnimation();
 }
 
 function drawParticles(time) {
   pointer.x += (pointer.targetX - pointer.x) * 0.04;
   pointer.y += (pointer.targetY - pointer.y) * 0.04;
-  scene.style.setProperty("--pointer-x", `${pointer.x.toFixed(3)}`);
-  scene.style.setProperty("--pointer-y", `${pointer.y.toFixed(3)}`);
+  scene?.style.setProperty("--pointer-x", `${pointer.x.toFixed(3)}`);
+  scene?.style.setProperty("--pointer-y", `${pointer.y.toFixed(3)}`);
   context.clearRect(0, 0, width, height);
   particles.forEach((particle, index) => {
     const shimmer = reducedMotion ? 1 : 0.72 + Math.sin(time / 1300 + particle.phase) * 0.28;
@@ -337,7 +433,17 @@ function drawParticles(time) {
     context.arc(particle.x + shiftX, particle.y + shiftY, particle.radius, 0, Math.PI * 2);
     context.fill();
   });
-  if (!reducedMotion && !document.hidden) animationFrame = requestAnimationFrame(drawParticles);
+  if (shouldAnimateParticles()) animationFrame = requestAnimationFrame(drawParticles);
+}
+
+function shouldAnimateParticles() {
+  return !reducedMotion && !document.hidden && !canvas.hidden && document.body.dataset.motion !== "off";
+}
+
+function syncParticleAnimation() {
+  cancelAnimationFrame(animationFrame);
+  if (shouldAnimateParticles()) animationFrame = requestAnimationFrame(drawParticles);
+  else if (!canvas.hidden && !document.hidden) drawParticles(0);
 }
 
 function setPointer(event) {
@@ -347,11 +453,8 @@ function setPointer(event) {
 
 if (context) {
   resizeCanvas();
-  if (!reducedMotion) animationFrame = requestAnimationFrame(drawParticles);
   window.addEventListener("resize", resizeCanvas, { passive: true });
   window.addEventListener("pointermove", setPointer, { passive: true });
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) cancelAnimationFrame(animationFrame);
-    else if (!reducedMotion) animationFrame = requestAnimationFrame(drawParticles);
-  });
+  document.addEventListener("visibilitychange", syncParticleAnimation);
+  document.addEventListener("portfolio:motionchange", syncParticleAnimation);
 }
