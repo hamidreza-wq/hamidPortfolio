@@ -66,7 +66,7 @@ class GithubApi
                             throw new IntegrationFailure('Remote response exceeds the permitted size.');
                         }
                     },
-                ])->get($url, $query);
+                ])->send('GET', $url, $query === [] ? [] : ['query' => $query]);
         } catch (ConnectionException) {
             throw new IntegrationFailure('Remote connection failed or exceeded its time/size limit. Try again later.');
         }

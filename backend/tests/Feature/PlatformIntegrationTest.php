@@ -14,6 +14,7 @@ use App\Models\SeoFinding;
 use App\Models\User;
 use App\Services\DestructiveDatabaseGuard;
 use App\Services\Platform\Deployment;
+use App\Services\Platform\GithubApi;
 use App\Services\Platform\GithubDiscovery;
 use App\Services\Platform\IntegrationFailure;
 use App\Services\Platform\Monitor;
@@ -89,6 +90,27 @@ class PlatformIntegrationTest extends TestCase
         $this->assertSame('available', $candidate->status);
         $this->assertNull($candidate->verified_at);
         $this->assertNull($candidate->approved_at);
+    }
+
+    public function test_release_download_preserves_signed_redirect_query(): void
+    {
+        $url = 'https://release-assets.githubusercontent.com/asset?sig=test-signature&se=2099-01-01';
+        Http::fake([
+            'api.github.com/repos/hamidreza-wq/hamidPortfolio/releases/assets/123' => Http::response('', 302, ['Location' => $url]),
+            'release-assets.githubusercontent.com/*' => Http::response('signature'),
+        ]);
+
+        $this->assertSame('signature', app(GithubApi::class)->asset(['id' => 123, 'size' => 9], 1024));
+        Http::assertSent(fn ($request) => $request->url() === $url);
+    }
+
+    public function test_github_requests_still_send_explicit_query_parameters(): void
+    {
+        Http::fake(['api.github.com/*' => Http::response([])]);
+
+        app(GithubApi::class)->json('/users/hamidreza-wq/repos', ['per_page' => 100]);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.github.com/users/hamidreza-wq/repos?per_page=100');
     }
 
     public function test_asset_changes_cannot_erase_an_existing_deployment_request(): void

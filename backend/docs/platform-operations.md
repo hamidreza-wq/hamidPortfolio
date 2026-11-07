@@ -131,6 +131,8 @@ checked against declared size and CRC. Limits: 10,000 entries, 50 MiB per file,
 
 Verification downloads use official asset IDs and accept a single HTTPS redirect
 only to GitHub's exact allowlisted asset hosts. Responses have size/time limits.
+Signed CDN redirect queries are retained verbatim; an empty optional query must
+not replace signature/expiry parameters. Explicit API queries remain supported.
 Artifacts are randomly named on Laravel's private `local` disk under
 `platform/releases`. Failed inspections can leave quarantined private artifacts;
 there is no automatic deletion/retention job.
