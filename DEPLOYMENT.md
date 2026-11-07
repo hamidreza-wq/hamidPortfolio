@@ -317,6 +317,11 @@ intended-host recovery rehearsal.
 
 ## Remaining controls
 
+Protected updates restore web-server traversal on the isolated release root and
+backend directory, and readable modes only within its public webroot after
+extracting a private-mode runtime archive. Private environment/configuration
+files and shared-storage permissions are not broadened.
+
 See [operational requirements](backend/docs/platform-operations.md) for
 supervised workers, minute scheduling, shared locks and digest failure handling.
 Queue visibility defaults to 180 seconds, above the 150-second monitor timeout;

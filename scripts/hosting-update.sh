@@ -53,6 +53,9 @@ sha256sum "$backup/database.sql" "$backup/uploads.tar.gz" "$backup/environment.p
 sha256sum -c "$backup/SHA256SUMS"
 mkdir -m 755 "$release"
 tar -xzf "$stage/runtime.tar.gz" -C "$release"
+chmod 755 "$release" "$release/backend"
+find "$release/backend/public" -type d -exec chmod 755 {} +
+find "$release/backend/public" -type f -exec chmod 644 {} +
 cp -p "$current/backend/.env" "$release/backend/.env"
 chmod 600 "$release/backend/.env"
 ln -s "$base/shared/storage" "$release/backend/storage"
