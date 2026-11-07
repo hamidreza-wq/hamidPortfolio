@@ -42,6 +42,15 @@ class HostingUpdateTest(unittest.TestCase):
         (runtime / "backend" / "public").mkdir(parents=True)
         (runtime / "VERSION").write_text("0.3.0\n")
         (runtime / "backend" / "artisan").write_text("mock-artisan")
+        (runtime / "backend" / "public" / ".htaccess").write_text("mock-rewrite")
+        (runtime / "backend" / "public" / "index.php").write_text("mock-entrypoint")
+        (runtime / "backend" / "public" / "assets").mkdir()
+        (runtime / "backend" / "public" / "assets" / "site.css").write_text("mock-styles")
+        (runtime / "backend" / "config").mkdir()
+        (runtime / "backend" / "config" / "app.php").write_text("mock-private-config")
+        for path in [runtime, *runtime.rglob("*")]:
+            path.chmod(0o700 if path.is_dir() else 0o600)
+        self.upload_permissions = (uploads / "existing-upload").stat().st_mode & 0o777
         archive = self.stage / "runtime.tar.gz"
         with tarfile.open(archive, "w:gz") as bundle:
             bundle.add(runtime, arcname=".")
@@ -132,6 +141,24 @@ exec /bin/cp "$@"
         result = self.run_update(MOCK_DUMP_FAIL="1")
         self.assertNotEqual(result.returncode, 0)
         self.assert_preserved()
+
+    def test_private_archive_modes_only_expose_public_webroot(self):
+        result = self.run_update()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for path in [
+            self.release, self.release / "backend", self.release / "backend" / "public",
+            self.release / "backend" / "public" / "assets",
+        ]:
+            self.assertEqual(path.stat().st_mode & 0o777, 0o755)
+        for name in [".htaccess", "index.php", "assets/site.css"]:
+            self.assertEqual((self.release / "backend" / "public" / name).stat().st_mode & 0o777, 0o644)
+        self.assertEqual((self.release / "backend" / ".env").stat().st_mode & 0o777, 0o600)
+        self.assertEqual((self.release / "backend" / "config").stat().st_mode & 0o777, 0o700)
+        self.assertEqual((self.release / "backend" / "config" / "app.php").stat().st_mode & 0o777, 0o600)
+        self.assertEqual(
+            (self.base / "shared" / "storage" / "app" / "public" / "existing-upload").stat().st_mode & 0o777,
+            self.upload_permissions,
+        )
 
     def test_cache_failure_never_switches_the_public_root(self):
         result = self.run_update(MOCK_CACHE_FAIL="1")
