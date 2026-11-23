@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.2 - 2026-11-23
+
+- Project cards on the home page now link straight to each project page, with
+  a "View project" button and a secondary "Quick look" dialog; card numbers past
+  nine read 10, 11 instead of 010.
+- Search Console token refresh failures now report Google's reason (expired or
+  revoked authorization, or a rejected OAuth client), log the OAuth error code
+  without token material, and offer a one-click Reconnect for the stored property.
+- Database schema is unchanged.
+
 ## 0.2.0-dev (unreleased)
 
 - Added explicit public-source/verified-demo publication controls and private
