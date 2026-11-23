@@ -77,8 +77,8 @@ function renderProjects() {
         </span>
       ${detailUrl ? "</a>" : "</button>"}
       ${detailUrl ? `<div class="project-card-actions">
-        <a class="button button-primary project-detail-link" href="${detailUrl}">View project <span aria-hidden="true">→</span></a>
-        <button class="button button-quiet project-quick-look" type="button" data-project="${projectKey}">Quick look</button>
+        <a class="button button-primary project-detail-link" href="${detailUrl}" aria-label="View project: ${escapeHTML(project.name)}">View project <span aria-hidden="true">→</span></a>
+        <button class="button button-quiet project-quick-look" type="button" data-project="${projectKey}" aria-label="Quick look: ${escapeHTML(project.name)}">Quick look</button>
       </div>` : ""}
     </article>
   `;

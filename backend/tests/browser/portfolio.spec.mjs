@@ -37,7 +37,9 @@ test('public search, filters, keyboard dialog and all requested viewport widths'
     await page.getByRole('button', { name: 'Desktop & tools', exact: true }).click();
     await expect(page.locator('.project-card')).toHaveCount(1);
     await page.getByRole('button', { name: 'All work', exact: true }).click();
-    const trigger = page.getByRole('button', { name: /OnePrayer/ });
+    // Cards with a project page link straight to it; the dialog opens from "Quick look".
+    await expect(page.getByRole('link', { name: 'View project: OnePrayer' })).toHaveAttribute('href', /\/projects\/oneprayer$/);
+    const trigger = page.getByRole('button', { name: 'Quick look: OnePrayer' });
     await trigger.click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');
@@ -159,7 +161,7 @@ test('capture correctly sized public and admin evidence without credentials or m
     await page.goto('/');
     await page.locator('#work').scrollIntoViewIfNeeded();
     await screenshot('public-projects');
-    await page.getByRole('button', { name: /OnePrayer/ }).click();
+    await page.getByRole('button', { name: 'Quick look: OnePrayer' }).click();
     await screenshot('project-dialog');
     await page.keyboard.press('Escape');
     await page.locator('#contact').scrollIntoViewIfNeeded();

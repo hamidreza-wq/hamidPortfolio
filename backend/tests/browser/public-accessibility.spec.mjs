@@ -26,9 +26,10 @@ test('public semantics, private sources, forced colours and 200 percent scaling'
         ['BetweenWords', 'betweenwords', 'meisaPortfolio'],
     ]) {
         await page.goto('/');
-        const card = page.locator('.project-card').filter({ has: page.getByRole('button', { name: new RegExp(name) }) });
+        const quickLook = page.getByRole('button', { name: `Quick look: ${name}`, exact: true });
+        const card = page.locator('.project-card').filter({ has: quickLook });
         await expect(card).toContainText('Private source code');
-        await card.getByRole('button').click();
+        await quickLook.click();
         await expect(page.getByRole('dialog')).toContainText('Private source code');
         await expect(page.getByRole('dialog').getByRole('link', { name: 'View repository' })).toHaveCount(0);
         await page.keyboard.press('Escape');
