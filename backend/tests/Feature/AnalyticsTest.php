@@ -142,6 +142,22 @@ class AnalyticsTest extends TestCase
         $this->assertSame(0, GoogleSearchConsoleConnection::count());
     }
 
+    public function test_expired_refresh_token_explains_cause_and_offers_reconnect(): void
+    {
+        config(['services.google_search_console.client_id' => 'fixture', 'services.google_search_console.client_secret' => 'fixture']);
+        GoogleSearchConsoleConnection::create(['site_url' => 'sc-domain:portfolio.example', 'refresh_token' => 'fixture-refresh', 'connected_at' => now()]);
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['error' => 'invalid_grant', 'error_description' => 'Token has been expired or revoked.'], 400),
+        ]);
+
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get('/admin/analytics')
+            ->assertOk()
+            ->assertSee('authorization has expired or was revoked')
+            ->assertSee('Reconnect Search Console')
+            ->assertSee('value="sc-domain:portfolio.example"', false)
+            ->assertDontSee('fixture-refresh');
+    }
+
     public function test_disconnect_removes_stored_authorization_but_retains_first_party_data(): void
     {
         GoogleSearchConsoleConnection::create(['site_url' => 'https://portfolio.example/', 'refresh_token' => 'fixture-refresh', 'connected_at' => now()]);

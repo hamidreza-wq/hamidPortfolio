@@ -68,7 +68,13 @@
         <article class="stat-card"><div class="stat-top"><span>Average position</span></div><div class="stat-number">{{ number_format($searchReport['average_position'], 1) }}</div></article>
       </div>
     @endif
-    <form method="post" action="{{ route('admin.analytics.google.disconnect') }}" onsubmit="return confirm('Disconnect Google Search Console?')">@csrf @method('DELETE')<button class="button button-danger" type="submit">Disconnect Search Console</button></form>
+    @if($searchReconnectRequired && $searchConsoleConfigured)
+      <form method="post" action="{{ route('admin.analytics.google.connect') }}" style="display:inline-block;margin-right:8px">@csrf
+        <input type="hidden" name="site_url" value="{{ $connection->site_url }}">
+        <button class="button button-primary" type="submit">Reconnect Search Console</button>
+      </form>
+    @endif
+    <form method="post" action="{{ route('admin.analytics.google.disconnect') }}" style="display:inline-block" onsubmit="return confirm('Disconnect Google Search Console?')">@csrf @method('DELETE')<button class="button button-danger" type="submit">Disconnect Search Console</button></form>
   @elseif($searchConsoleConfigured)
     <form method="post" action="{{ route('admin.analytics.google.connect') }}" class="field-grid" style="max-width:620px">@csrf
       <div class="field full"><label for="site_url">Verified Search Console property</label><input id="site_url" name="site_url" type="text" required maxlength="255" placeholder="https://example.com/ or sc-domain:example.com" value="{{ old('site_url') }}"><span class="field-hint">The Google account must have access to this exact URL-prefix or domain property. Only read-only Search Console access is requested.</span></div>

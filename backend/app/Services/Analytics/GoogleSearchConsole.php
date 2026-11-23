@@ -6,6 +6,7 @@ use App\Models\GoogleSearchConsoleConnection;
 use App\Services\Platform\IntegrationFailure;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GoogleSearchConsole
 {
@@ -120,10 +121,34 @@ class GoogleSearchConsole
         }
 
         $tokens = $response->json();
-        if (! $response->successful() || ! is_array($tokens) || empty($tokens['access_token'])) {
-            throw new IntegrationFailure($failureMessage);
+        if ($response->successful() && is_array($tokens) && ! empty($tokens['access_token'])) {
+            return $tokens;
         }
 
-        return $tokens;
+        // Google's OAuth error code says why the request failed; it never contains token material.
+        $error = is_array($tokens) && is_string($tokens['error'] ?? null) ? $tokens['error'] : null;
+        Log::warning('Google Search Console token request failed.', [
+            'grant_type' => $parameters['grant_type'] ?? null,
+            'status' => $response->status(),
+            'error' => $error,
+            'error_description' => is_array($tokens) && is_string($tokens['error_description'] ?? null)
+                ? mb_substr($tokens['error_description'], 0, 200) : null,
+        ]);
+
+        if (($parameters['grant_type'] ?? null) === 'refresh_token') {
+            if ($error === 'invalid_grant') {
+                throw new SearchConsoleReauthorizationRequired(
+                    'Google Search Console authorization has expired or was revoked. Reconnect to restore search data. '
+                    .'If this keeps happening about a week after connecting, publish the Google OAuth consent screen to "In production" — apps left in "Testing" have their refresh tokens expire after 7 days.'
+                );
+            }
+            if (in_array($error, ['invalid_client', 'unauthorized_client'], true)) {
+                throw new SearchConsoleReauthorizationRequired(
+                    'Google rejected the Search Console OAuth client. Check GOOGLE_SEARCH_CONSOLE_CLIENT_ID and GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET on the server match the client that was used to connect, then reconnect.'
+                );
+            }
+        }
+
+        throw new IntegrationFailure($error ? "{$failureMessage} (Google: {$error})" : $failureMessage);
     }
 }

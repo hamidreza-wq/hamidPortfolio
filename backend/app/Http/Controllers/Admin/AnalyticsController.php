@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GoogleSearchConsoleConnection;
 use App\Models\PageView;
 use App\Services\Analytics\GoogleSearchConsole;
+use App\Services\Analytics\SearchConsoleReauthorizationRequired;
 use App\Services\Platform\IntegrationFailure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -33,12 +34,16 @@ class AnalyticsController extends Controller
         $connection = GoogleSearchConsoleConnection::query()->first();
         $searchReport = null;
         $searchError = null;
+        $searchReconnectRequired = false;
         $searchDateEnd = now()->subDays(3)->toDateString();
         $searchDateStart = Carbon::parse($searchDateEnd)->subDays(27)->toDateString();
 
         if ($connection) {
             try {
                 $searchReport = $searchConsole->report($connection, $searchDateStart, $searchDateEnd);
+            } catch (SearchConsoleReauthorizationRequired $exception) {
+                $searchError = $exception->getMessage();
+                $searchReconnectRequired = true;
             } catch (IntegrationFailure $exception) {
                 $searchError = $exception->getMessage();
             }
@@ -59,6 +64,7 @@ class AnalyticsController extends Controller
             'searchConsoleConfigured' => $this->searchConsoleConfigured(),
             'searchReport' => $searchReport,
             'searchError' => $searchError,
+            'searchReconnectRequired' => $searchReconnectRequired,
             'searchDateStart' => $searchDateStart,
             'searchDateEnd' => $searchDateEnd,
         ]);
