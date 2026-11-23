@@ -79,3 +79,7 @@ The frontend includes a keyboard skip link, visible focus states, semantic secti
 ## Verified project content
 
 Project descriptions are based on the public READMEs for `Bible`, `officeConverters`, `myAccountingHome`, `interpurting-laravel`, and `meisaPortfolio`. OnePrayer is labeled as an early build because native device testing and mobile product screens are incomplete. No live demo URLs or screenshots are claimed without verification.
+
+## Portfolio
+
+Read more about this project on [Hamid Reza Bayat's portfolio](https://hamidbayat.co.uk/projects/portfolio-studio).
