@@ -50,16 +50,23 @@ function renderProjects() {
     return matchesFilter && searchable.includes(query);
   });
 
-  projectGrid.innerHTML = visibleProjects.map((project, index) => `
+  projectGrid.innerHTML = visibleProjects.map((project, index) => {
+    // Projects with their own page link straight to it; the dialog stays available as a quick look.
+    const detailUrl = project.detailUrl ? escapeHTML(safeURL(project.detailUrl)) : "";
+    const projectKey = escapeHTML(project.slug || project.repo);
+    const openTag = detailUrl
+      ? `<a class="project-open" href="${detailUrl}">`
+      : `<button class="project-open" type="button" data-project="${projectKey}">`;
+    return `
     <article class="project-card reveal is-visible" style="--card-index:${index}">
-      <button class="project-open" type="button" data-project="${escapeHTML(project.slug || project.repo)}">
+      ${openTag}
         <span class="project-art project-art--${escapeHTML(project.visual)}" aria-hidden="true">
           ${project.image ? `<img class="project-card-image" src="${escapeHTML(safeURL(project.image.url))}" alt="">` : ""}
           <span class="art-orbit art-orbit--one"></span>
           <span class="art-orbit art-orbit--two"></span>
           <span class="art-core"></span>
           <span class="art-caption">${escapeHTML(project.visualLabel)}</span>
-          <span class="art-index">0${index + 1}</span>
+          <span class="art-index">${String(index + 1).padStart(2, "0")}</span>
         </span>
         <span class="project-card-body">
           <span class="project-category">${escapeHTML(project.categoryLabel)}${project.featured ? " · Featured" : ""}${project.status ? ` · ${escapeHTML(project.status)}` : ""}</span>
@@ -68,10 +75,14 @@ function renderProjects() {
           ${project.sourcePublic === true ? "" : '<span class="project-category">Private source code</span>'}
           <span class="project-tags">${project.technologies.slice(0, 4).map((tech) => `<span>${escapeHTML(tech)}</span>`).join("")}</span>
         </span>
-      </button>
-      ${project.detailUrl ? `<a class="project-detail-link" href="${escapeHTML(safeURL(project.detailUrl))}">Project page <span aria-hidden="true">↗</span></a>` : ""}
+      ${detailUrl ? "</a>" : "</button>"}
+      ${detailUrl ? `<div class="project-card-actions">
+        <a class="button button-primary project-detail-link" href="${detailUrl}">View project <span aria-hidden="true">→</span></a>
+        <button class="button button-quiet project-quick-look" type="button" data-project="${projectKey}">Quick look</button>
+      </div>` : ""}
     </article>
-  `).join("");
+  `;
+  }).join("");
   emptyState.hidden = visibleProjects.length > 0;
   projectGrid.hidden = visibleProjects.length === 0;
 }
