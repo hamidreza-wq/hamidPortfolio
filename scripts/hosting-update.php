@@ -15,24 +15,8 @@ try {
     if (! $current || ! str_starts_with($current, $base.'/releases/')) {
         throw new RuntimeException('Invalid current release');
     }
-    $configPath = $current.'/backend/bootstrap/cache/config.php';
-    if (! is_file($configPath)) {
-        throw new RuntimeException('Current release has no cached configuration (bootstrap/cache/config.php)');
-    }
-    $config = require $configPath;
-    $db = $config['database']['connections'][$config['database']['default']] ?? [];
-    $secrets = array_filter([$db['password'] ?? null, $config['app']['key'] ?? null], 'is_string');
     $manifest = json_decode(file_get_contents($stage.'/portfolio-manifest.json'), true, flags: JSON_THROW_ON_ERROR);
     $minimum = $manifest['minimum_php'] ?? '99.0.0';
-    if ($config['app']['env'] !== 'production') {
-        throw new RuntimeException('Wrong production target: APP_ENV is not production');
-    }
-    if ($config['app']['debug']) {
-        throw new RuntimeException('Wrong production target: APP_DEBUG is enabled');
-    }
-    if ($config['app']['url'] !== 'https://hamidbayat.co.uk') {
-        throw new RuntimeException('Wrong production target: APP_URL is not https://hamidbayat.co.uk');
-    }
     if (version_compare(PHP_VERSION, $minimum, '<')) {
         throw new RuntimeException('Incompatible PHP: command-line PHP '.PHP_VERSION.' is older than '.$minimum);
     }
@@ -44,9 +28,23 @@ try {
         throw new RuntimeException('Required PHP extensions unavailable to command-line PHP '.PHP_VERSION.': '
             .implode(', ', array_map(static fn ($e): string => is_string($e) ? $e : gettype($e), $missing)));
     }
+    // Load the installed release's configuration through Laravel, which uses
+    // bootstrap/cache/config.php when present and the private .env otherwise.
     require $current.'/backend/vendor/autoload.php';
     $app = require $current.'/backend/bootstrap/app.php';
     $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    $config = ['app' => config('app'), 'database' => config('database')];
+    $db = $config['database']['connections'][$config['database']['default']] ?? [];
+    $secrets = array_filter([$db['password'] ?? null, $config['app']['key'] ?? null], 'is_string');
+    if ($config['app']['env'] !== 'production') {
+        throw new RuntimeException('Wrong production target: APP_ENV is not production');
+    }
+    if ($config['app']['debug']) {
+        throw new RuntimeException('Wrong production target: APP_DEBUG is enabled');
+    }
+    if ($config['app']['url'] !== 'https://hamidbayat.co.uk') {
+        throw new RuntimeException('Wrong production target: APP_URL is not https://hamidbayat.co.uk');
+    }
     $installedSchema = config('platform.schema_version');
     if ($installedSchema !== $manifest['schema_from'] || $manifest['schema_from'] !== $manifest['schema_to']) {
         throw new RuntimeException('Schema change refused by one-click updater (installed '
