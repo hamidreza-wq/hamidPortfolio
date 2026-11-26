@@ -4,6 +4,7 @@ use App\Jobs\RunPlatformMonitor;
 use App\Models\PageView;
 use App\Models\Testimonial;
 use App\Services\Health\HealthMonitor;
+use App\Services\PrivacyData;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -29,5 +30,7 @@ Schedule::command('portfolio:backup:create', ['--trigger' => 'scheduled'])
 Schedule::command('platform:digest')->dailyAt('08:00')->withoutOverlapping(5)->onOneServer();
 Schedule::call(fn () => Testimonial::where('status', 'rejected')->where('updated_at', '<', now()->subDays(90))->delete())
     ->daily()->name('testimonials:prune-rejected')->withoutOverlapping(10)->onOneServer();
+Schedule::call(fn () => app(PrivacyData::class)->prune())
+    ->dailyAt('03:45')->name('privacy:retention')->withoutOverlapping(10)->onOneServer();
 Schedule::call(fn () => PageView::where('viewed_at', '<', now()->subDays(config('portfolio.analytics_retention_days')))->delete())
     ->weekly()->name('analytics:prune')->withoutOverlapping(10)->onOneServer();

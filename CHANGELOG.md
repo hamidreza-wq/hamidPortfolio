@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Added a Privacy page (`/admin/privacy`).
+  - **Inventory** of the personal data the site holds (contact messages,
+    testimonials, activity-log IP addresses, admin sessions, pageview counts,
+    backups), with record counts, the oldest record and how long each is kept.
+    It also notes what lives outside the database (owner notification emails,
+    Google Analytics).
+  - **Retention**: optionally delete contact messages after 90 days, 6
+    months, 1 year or 2 years, and clear IP addresses from the activity log
+    after a chosen period (entries stay). Applied daily. Both default to
+    "keep", so nothing is deleted until you choose.
+  - **Data requests**: look up an email address (sent by POST, so it never
+    appears in URLs or logs), download everything held for it as JSON, or
+    erase it permanently (password and confirmation required). The audit log
+    records a one-way reference, not the address.
+  - A clear note that the tools don't make the site legally compliant on
+    their own.
+- The public privacy notice now states the chosen contact-message retention
+  and how backups affect it, and adds a "Your rights" section.
+- **Database schema 8 → 9** (additive: two nullable retention columns on
+  `portfolio_settings`, defaulting to keep).
 - Light themes are now possible. The public stylesheet derives every colour
   from a theme's five colours instead of hard-coding about 300 light-on-dark
   values, so a theme with a light background stays readable.

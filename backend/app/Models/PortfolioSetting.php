@@ -26,6 +26,8 @@ class PortfolioSetting extends Model
             'particles_enabled' => 'boolean',
             'maintenance_mode' => 'boolean',
             'testimonial_submissions_open' => 'boolean',
+            'contact_retention_days' => 'integer',
+            'activity_ip_retention_days' => 'integer',
             'indexing_enabled' => 'boolean',
             'robots_follow' => 'boolean',
             'max_width' => 'integer',
