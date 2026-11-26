@@ -20,9 +20,12 @@
 - **Database schema 3 → 4** (additive, nullable `users` columns). The one-click
   updater refuses schema-changing releases by design, so this release must be
   deployed as a reviewed migration: back up the database, deploy the code, then
-  `php artisan migrate:status` and `php artisan migrate --force`. The release
-  packaging scripts (`scripts/package-release.py`, `scripts/verify-release.mjs`)
-  still hard-code schema 3 and need updating before a signed 3 → 4 release.
+  `php artisan migrate:status` and `php artisan migrate --force`. Package it
+  with `python scripts/package-release.py <dir> mysql <min> <max> 3`.
+- Release scripts no longer hard-code the schema: `package-release.py` and
+  `verify-release.mjs` read `platform.schema_version` from
+  `backend/config/platform.php`, and packaging takes an optional previous schema
+  for migration releases.
 
 ## 0.3.2 - 2026-11-23
 
