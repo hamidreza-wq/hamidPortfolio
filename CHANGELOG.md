@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Google Fonts integration on the Fonts page.
+  - Search, see the specimen on Google Fonts, tick weights (400 and 700 by
+    default) and normal or italic, then add the font to the library.
+  - Each weight becomes a library font, selectable in the live editor and
+    themes, with a sample line on the Fonts page.
+  - The file is copied onto the site, so visitors never contact Google. This
+    keeps their IP addresses away from Google and fits the existing
+    `font-src 'self'` CSP.
+  - Only `fonts.googleapis.com` and `fonts.gstatic.com` are contacted. The
+    family name and weights are validated first, redirects aren't followed,
+    files are capped at 2 MB, and every file passes the same checks as an
+    uploaded font.
+  - The licence note and specimen link are recorded, and imports are logged.
+  - Without `GOOGLE_FONTS_API_KEY`, about 40 popular families are offered and
+    any family can be added by its exact name. With a key, the whole
+    catalogue is searchable (cached for a day).
+
 - Live site editor upgrades:
   - **Click to edit**: clicking text in the preview opens and highlights the
     field that changes it. Clicking a section opens its settings. This can

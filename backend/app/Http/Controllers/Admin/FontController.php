@@ -8,6 +8,8 @@ use App\Models\FontAsset;
 use App\Services\AssetStorage;
 use App\Services\AssetUpload;
 use App\Services\AssetUsage;
+use App\Services\FontLibrary;
+use App\Services\GoogleFonts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,12 +17,38 @@ use Illuminate\Validation\ValidationException;
 
 class FontController extends Controller
 {
-    public function index(AssetUsage $usage)
+    public function index(Request $request, AssetUsage $usage)
     {
-        $assets = FontAsset::orderBy('family')->paginate(24);
+        $assets = FontAsset::orderBy('family')->orderBy('weight')->paginate(24);
+        $google = app(GoogleFonts::class);
+        $query = (string) ($request->validate(['google' => ['nullable', 'string', 'max:60']])['google'] ?? '');
 
         return view('admin.fonts', ['assets' => $assets,
-            'usage' => $assets->mapWithKeys(fn ($asset) => [$asset->id => $usage->font($asset)])]);
+            'usage' => $assets->mapWithKeys(fn ($asset) => [$asset->id => $usage->font($asset)]),
+            'fontCss' => app(FontLibrary::class)->css(),
+            'google' => $google,
+            'googleQuery' => $query,
+            'googleResults' => $google->search($query)]);
+    }
+
+    public function importGoogle(Request $request, GoogleFonts $google)
+    {
+        $data = $request->validate([
+            'family' => ['required', 'string', 'max:60'],
+            'weights' => ['required', 'array', 'min:1', 'max:9'],
+            'weights.*' => ['integer', 'in:'.implode(',', GoogleFonts::WEIGHTS)],
+            'style' => ['required', 'in:normal,italic'],
+        ]);
+        $result = $google->import($data['family'], array_map('intval', $data['weights']), $data['style'], $request->user()->id);
+        $parts = array_filter([
+            $result['imported'] ? 'Imported '.implode(', ', $result['imported']).'.' : null,
+            $result['skipped'] ? 'Already in the library: '.implode(', ', $result['skipped']).'.' : null,
+        ]);
+        $response = redirect()->route('admin.fonts.index')->with('status', $parts ? $data['family'].': '.implode(' ', $parts).' Choose it in the live editor or a theme.' : null);
+
+        return $result['failed']
+            ? $response->withErrors(['font' => $data['family'].' could not be imported for: '.implode('; ', $result['failed'])])
+            : $response;
     }
 
     public function store(Request $request, AssetUpload $upload, AssetStorage $storage)

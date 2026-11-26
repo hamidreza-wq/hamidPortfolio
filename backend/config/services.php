@@ -41,6 +41,11 @@ return [
         'redirect_uri' => env('GOOGLE_SEARCH_CONSOLE_REDIRECT_URI'),
     ],
 
+    // Optional: lets the Fonts page search Google's whole catalogue. Without it, popular families are offered.
+    'google_fonts' => [
+        'api_key' => env('GOOGLE_FONTS_API_KEY'),
+    ],
+
     'google_analytics' => [
         'measurement_id' => env('GOOGLE_ANALYTICS_MEASUREMENT_ID', 'G-LCT08K6TVX'),
     ],
