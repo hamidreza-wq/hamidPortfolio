@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 - 2026-11-26
+
+The admin dashboard release. **Database schema 3 → 12**, so this release is
+not installed with the dashboard's Update button: back up the database, deploy
+the code, then run `php artisan migrate --force`. After deploying, set
+`SESSION_ENCRYPT=true` and `SEO_MONITOR_ORIGIN` in the server `.env`, add a cron
+job running `php artisan schedule:run` every minute, turn on two-factor sign-in,
+and run the Self-test. See `SECURITY-REVIEW.md` for remaining risks.
 
 - Added a Self-test page (`/admin/self-test`, the operations permission),
   plus `php artisan portfolio:self-test`, run every Monday at 04:30.
