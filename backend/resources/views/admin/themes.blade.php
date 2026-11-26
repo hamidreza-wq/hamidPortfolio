@@ -27,7 +27,7 @@
 
     <section class="editor-card" aria-labelledby="builtin-heading">
       <h2 id="builtin-heading">Ready-made themes</h2>
-      <p class="card-help">All of them are dark: the site's stylesheet is written for dark backgrounds, so a light theme would make some text unreadable. "Cosmic" is the original look and works as "restore default".</p>
+      <p class="card-help">Dark and light looks. The public site works out every other colour from a theme's five colours and switches to dark text when the background is light, so your own themes stay readable too. "Cosmic" is the original look and works as "restore default".</p>
       <div class="grid" style="gap:10px">
         @foreach($builtIn as $key => $theme)
           <article class="theme-card">

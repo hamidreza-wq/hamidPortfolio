@@ -14,8 +14,10 @@ use Illuminate\Validation\ValidationException;
  * corner radius and motion. Applying one never touches content, and the
  * previous look is saved to Content history first so it can be restored.
  *
- * Built-in themes are all dark: the public stylesheet hard-codes many light
- * text colours, so a light background would make parts of the site unreadable.
+ * Built-in themes come in dark and light versions. The public stylesheet derives
+ * every colour from the five theme colours and switches to its light scheme when
+ * the background is light (PortfolioRenderer::colorScheme), so any theme stays
+ * readable. Each built-in theme passes WCAG AA for body text and buttons.
  */
 class Themes
 {
@@ -48,6 +50,12 @@ class Themes
             ['#050805', '#e6f5e6', '#4ee07a', '#9af0b0', '#7fd6e0', 'monospace', 'monospace', 1180, 120, 2, false, false]],
         'rose' => ['Rose', 'Plum-black with soft pink accents.',
             ['#100810', '#f8eef5', '#f08cc0', '#f6b9d8', '#b9a8f2', 'Inter', 'Inter', 1180, 140, 16, true, true]],
+        'daylight' => ['Daylight', 'A light version of Cosmic: soft lavender paper with deep violet accents.',
+            ['#f7f5fc', '#1b1830', '#5d43c9', '#5137b8', '#0d6e8a', 'Inter', 'Inter', 1180, 140, 12, true, true]],
+        'paper' => ['Paper', 'Warm off-white with rust accents and serif headings.',
+            ['#faf7f1', '#241d16', '#9a4519', '#873c14', '#2b6574', 'Inter', 'Georgia, serif', 1080, 160, 6, true, false]],
+        'arctic' => ['Arctic', 'Cool light grey-blue with clear blue and teal accents.',
+            ['#f2f6f9', '#0f1c2a', '#1d64c4', '#1858ad', '#0a6f76', 'Inter', 'Inter', 1180, 140, 10, true, false]],
     ];
 
     /** @return array<string, array{name: string, description: string, values: array<string, mixed>}> */
