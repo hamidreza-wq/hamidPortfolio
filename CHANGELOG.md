@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Added a Help centre (`/admin/help`) with 22 articles, one for every
+  dashboard page plus "Getting started" and "Searching the dashboard".
+  - Each article covers what the page is for, step-by-step instructions,
+    warnings and things worth knowing.
+  - Articles are Markdown files in `backend/resources/help`, so they ship with
+    the release they describe. Raw HTML is escaped and unsafe links dropped.
+  - The help index has search. Every page's top bar has a Help button that
+    opens its article, and dashboard search (Ctrl K) includes help articles.
+  - A test fails if a new admin page has no help article, or if an article
+    links to a page that doesn't exist.
+  - No screenshots yet: the new pages haven't been deployed to capture them.
+
 - Security review of the dashboard stack, written up in `SECURITY-REVIEW.md`.
   Fixes:
   - Symfony 7.4.23 → 7.4.24 (http-kernel, routing and mailer advisories).

@@ -29,6 +29,7 @@ class AdminSearch
         'fonts' => 'Fonts',
         'testimonials' => 'Testimonials',
         'messages' => 'Contact messages',
+        'help' => 'Help articles',
     ];
 
     /**
@@ -184,6 +185,15 @@ class AdminSearch
                 'detail' => (Testimonial::STATUSES[$testimonial->status] ?? $testimonial->status).' · '.$this->excerpt($testimonial->quote, $query),
                 'url' => route('admin.testimonials.index', ['status' => $testimonial->status]).'#testimonial-'.$testimonial->id,
             ])->all();
+    }
+
+    private function help(string $query, string $like, int $limit): array
+    {
+        return array_map(fn ($result) => [
+            'title' => $result['title'],
+            'detail' => 'Help · '.$result['excerpt'],
+            'url' => route('admin.help.show', $result['slug']),
+        ], app(HelpCentre::class)->search($query, $limit));
     }
 
     private function messages(string $query, string $like, int $limit): array

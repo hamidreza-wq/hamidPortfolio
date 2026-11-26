@@ -131,6 +131,7 @@
     <div class="sidebar-bottom">
       <div class="sidebar-note"><strong>Private studio</strong><br>Changes publish to the live portfolio only when you choose to save them.</div>
       <p class="nav-label">ACCOUNT</p>
+      <a class="nav-link {{ request()->routeIs('admin.help.*') ? 'active' : '' }}" href="{{ route('admin.help.index') }}"><span class="nav-icon">?</span>Help centre</a>
       <form method="post" action="{{ route('admin.logout') }}">@csrf<button class="nav-link" type="submit" style="width:100%;text-align:left;background:none;cursor:pointer"><span class="nav-icon">↗</span>Sign out</button></form>
     </div>
   </aside>
@@ -139,6 +140,8 @@
       <div style="display:flex;align-items:center;gap:12px"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open dashboard navigation" aria-controls="admin-sidebar" aria-expanded="false">☰</button><div class="breadcrumbs">Studio <span aria-hidden="true">/</span> <strong>@yield('breadcrumb', 'Overview')</strong></div></div>
       <div class="top-actions">
         <button class="search-trigger" id="search-trigger" type="button" aria-haspopup="dialog" aria-controls="quick-search">⌕ <span>Search the dashboard</span><kbd>Ctrl K</kbd></button>
+        @php($helpTopic = app(\App\Services\HelpCentre::class)->topicForRoute(request()->route()?->getName()))
+        <a class="button" href="{{ $helpTopic ? route('admin.help.show', $helpTopic) : route('admin.help.index') }}" @if($helpTopic) aria-label="Help with this page" @endif>? Help</a>
         <a class="button button-quiet" href="{{ route('portfolio.home') }}" target="_blank" rel="noreferrer">View live site <span aria-hidden="true">↗</span></a>
         <a class="button" href="{{ route('admin.site-editor.edit') }}">Edit portfolio</a>
       </div>
