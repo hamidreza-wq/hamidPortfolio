@@ -114,6 +114,7 @@
     <p class="nav-label">LIBRARY</p>
     <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" href="{{ route('admin.media.index') }}"><span class="nav-icon">▤</span>Media library</a>
     <a class="nav-link {{ request()->routeIs('admin.fonts.*') ? 'active' : '' }}" href="{{ route('admin.fonts.index') }}"><span class="nav-icon">Aa</span>Fonts</a>
+    <a class="nav-link {{ request()->routeIs('admin.social.*') ? 'active' : '' }}" href="{{ route('admin.social.index') }}"><span class="nav-icon">@</span>Social links</a>
     <a class="nav-link {{ request()->routeIs('admin.testimonials.*') ? 'active' : '' }}" href="{{ route('admin.testimonials.index') }}"><span class="nav-icon">❝</span>Testimonials @php($pendingTestimonials = \App\Models\Testimonial::where('status', 'pending')->count())@if($pendingTestimonials)<span aria-label="{{ $pendingTestimonials }} waiting for review">{{ $pendingTestimonials }}</span>@endif</a>
     <a class="nav-link {{ request()->routeIs('admin.inbox.*') ? 'active' : '' }}" href="{{ route('admin.inbox.index') }}"><span class="nav-icon">✉</span>Contact inbox</a>
     <p class="nav-label">PLATFORM</p>

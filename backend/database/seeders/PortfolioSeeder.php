@@ -7,6 +7,7 @@ use App\Models\PortfolioSetting;
 use App\Models\Project;
 use App\Models\Skill;
 use App\Models\SkillCategory;
+use App\Models\SocialLink;
 use App\Models\ThemePreset;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -33,6 +34,15 @@ class PortfolioSeeder extends Seeder
             'border_radius' => 12,
             'footer_text' => 'Made with curiosity, somewhere on Earth.',
         ]);
+
+        if (SocialLink::query()->doesntExist()) {
+            $settings = PortfolioSetting::findOrFail(1);
+            foreach (['github' => $settings->github_url, 'linkedin' => $settings->linkedin_url] as $platform => $url) {
+                if ($url && SocialLink::urlMatchesPlatform($url, $platform)) {
+                    SocialLink::create(['platform' => $platform, 'url' => $url, 'sort_order' => (SocialLink::max('sort_order') ?? 0) + 10]);
+                }
+            }
+        }
 
         $sections = [
             ['home', 'Hero', 'A universe of useful ideas.', 'DIGITAL CRAFT', "I'm Hamid Reza Bayat — I build thoughtful software for real-world problems, from web platforms to tools that work right on your desktop.", 0],

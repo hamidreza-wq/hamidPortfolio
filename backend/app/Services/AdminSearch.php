@@ -52,6 +52,7 @@ class AdminSearch
         ['Security', 'admin.security', 'two-factor 2fa authenticator password sessions sign-in login failed attempts activity audit log'],
         ['Backups', 'admin.backups.index', 'backup restore recovery download archive'],
         ['Health', 'admin.health', 'status uptime errors logs disk space scheduler cron queue ssl certificate https database'],
+        ['Social links', 'admin.social.index', 'social media profiles linkedin github instagram x twitter youtube mastodon bluesky footer header'],
         ['Testimonials', 'admin.testimonials.index', 'reviews praise quotes clients feedback moderation approve'],
     ];
 

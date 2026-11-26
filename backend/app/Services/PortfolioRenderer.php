@@ -141,6 +141,37 @@ class PortfolioRenderer
                     }
                 }
             }
+            // Social links in the header menu and footer, so they work without JavaScript.
+            $social = $payload['social'] ?? [];
+            $socialLink = function (array $item, string $class) use ($document) {
+                $anchor = $document->createElement('a');
+                if ($class !== '') {
+                    $anchor->setAttribute('class', $class);
+                }
+                $anchor->setAttribute('data-social', '');
+                $anchor->setAttribute('href', $item['url']);
+                $anchor->setAttribute('target', '_blank');
+                $anchor->setAttribute('rel', 'me noopener noreferrer');
+                $anchor->textContent = $item['label'];
+
+                return $anchor;
+            };
+            $nav = $document->getElementById('primary-navigation');
+            foreach (array_filter($social, fn ($item) => $item['header']) as $item) {
+                $nav?->appendChild($socialLink($item, 'nav-social'));
+            }
+            $footerItems = array_filter($social, fn ($item) => $item['footer']);
+            $privacy = $xpath->query('//footer//*[contains(concat(" ",normalize-space(@class)," ")," privacy-link ")]')->item(0);
+            if ($footerItems && $privacy) {
+                $list = $document->createElement('nav');
+                $list->setAttribute('class', 'footer-social');
+                $list->setAttribute('data-social', '');
+                $list->setAttribute('aria-label', 'Social profiles');
+                foreach ($footerItems as $item) {
+                    $list->appendChild($socialLink($item, ''));
+                }
+                $privacy->parentNode->insertBefore($list, $privacy);
+            }
             $craft = $document->getElementById('craft-groups');
             if ($craft) {
                 $this->replaceHtml($document, $craft, view('portfolio.skills', ['craft' => $payload['craft']])->render());

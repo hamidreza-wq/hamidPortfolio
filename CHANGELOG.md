@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Added a Social links page (`/admin/social`) for up to 20 profiles: GitHub,
+  LinkedIn, X, Bluesky, Mastodon, Instagram, Facebook, YouTube, TikTok,
+  Dribbble, Behance, Stack Overflow, Medium, DEV, a website, or other. Each
+  link can be added, edited, relabelled, reordered, enabled or disabled, and
+  shown in the header menu, the footer and/or the contact section. Addresses
+  must be HTTPS without credentials and must match the platform's own domain
+  (for example `linkedin.com`), apart from Mastodon, website and other.
+- Links render in the server HTML (header and footer) and in the browser
+  (header, footer and contact buttons) with `rel="me noopener noreferrer"`.
+  Disabled links are never sent to the browser. Enabled links feed the
+  Person `sameAs` list for search engines.
+- The live editor's LinkedIn field is replaced by a link to Social links. The
+  GitHub profile URL stays there for project repository links.
+- **Database schema 5 → 6** (additive: a `social_links` table). The migration
+  seeds it from the existing GitHub and LinkedIn URLs, so the site keeps
+  showing the same links after the upgrade.
+
 - Added a Health page (`/admin/health`) showing healthy, warning or critical
   for each check.
   - Server checks run on every page view: database connection and speed,
