@@ -94,7 +94,7 @@ class PublicPortfolioController extends Controller
             return $tag;
         }, $html) ?? $html;
         $html = preg_replace('/<link\\s+rel="canonical"[^>]*>/i', '', $html) ?? $html;
-        $html = preg_replace('/<html\\b[^>]*>/i', '<html lang="'.e($seo['language']).'">', $html, 1) ?? $html;
+        $html = preg_replace('/<html\\b[^>]*>/i', '<html lang="'.e($seo['language']).'"'.app(PortfolioRenderer::class)->themeAttributes($settings).'>', $html, 1) ?? $html;
         $html = str_replace('</head>', app(PortfolioSeo::class)->tags($seo).'<style>'.app(FontLibrary::class)->css().'</style></head>', $html);
         if (! $isPreview) {
             $consentUi = view('portfolio.analytics-consent', [

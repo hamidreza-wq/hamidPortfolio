@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en"{!! app(\App\Services\PortfolioRenderer::class)->themeAttributes() !!}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,7 +19,7 @@
       <p>{{ $ownerName }} isn't collecting testimonials through this page right now. If you'd like to share feedback, use the contact form on the <a href="/#contact">portfolio</a>.</p>
     @else
       <p>If you've worked with {{ $ownerName }}, a few honest sentences about the experience help other people decide. Nothing is published until it has been read and approved.</p>
-      @if($errors->any())<p role="alert" style="color:#f0b5b8">{{ $errors->first() }}</p>@endif
+      @if($errors->any())<p role="alert" class="form-error">{{ $errors->first() }}</p>@endif
       <form class="portfolio-contact-form" method="post" action="{{ route('testimonials.store') }}" style="margin-top:28px">
         @csrf
         <input type="hidden" name="submission_token" value="{{ $token }}">

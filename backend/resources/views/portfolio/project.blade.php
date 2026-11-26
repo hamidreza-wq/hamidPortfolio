@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ $seo['language'] }}">
+<html lang="{{ $seo['language'] }}"{!! app(\App\Services\PortfolioRenderer::class)->themeAttributes($settings) !!}>
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   @include('portfolio.seo')
@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/styles.css">
   <style>{!! $fontCss !!}</style>
 </head>
-<body class="project-detail-page" style="--night:{{ $settings->color_background }};--ink:{{ $settings->color_foreground }};--violet:{{ $settings->color_primary }};--accent:{{ $settings->color_accent }};--cyan:{{ $settings->color_cyan }};--sans:{{ $settings->font_body }},system-ui,sans-serif;--heading:{{ $settings->font_heading }},system-ui,sans-serif;--content-width:{{ $settings->max_width }}px;--card-radius:{{ $settings->border_radius }}px">
+<body class="project-detail-page">
   <main class="section project-detail">
     <a class="button button-quiet" href="{{ route('portfolio.home') }}#work">← All projects</a>
     <p class="eyebrow">{{ $project->category_label }} · {{ $project->status }}{{ $project->is_featured ? ' · Featured' : '' }}</p>
