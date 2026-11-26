@@ -2,10 +2,38 @@
 @section('title', 'Font library')
 @section('breadcrumb', 'Font library')
 @section('content')
-<div class="page-head"><div><p class="eyebrow">PORTFOLIO ASSETS / TYPOGRAPHY</p><h1>Font library</h1><p>Upload licensed fonts, then choose them for headings or body text in the site editor.</p></div></div>
-<section class="editor-card" style="margin-bottom:17px">
-  <h2>Upload a font</h2>
-  <p class="card-help">WOFF2, WOFF, TTF, or OTF, up to 2 MB. Use web-licensed files from a trusted source. Uploading confirms your right to publish and embed the font.</p>
+<style>{!! $fontCss !!}
+  .font-sample{margin:10px 0;color:#ece7f6;font-size:22px;line-height:1.3;overflow-wrap:anywhere}
+  .google-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;margin-top:12px}
+  .google-result{padding:12px;border:1px solid rgba(195,183,240,.12);border-radius:8px;background:rgba(255,255,255,.02)}
+  .weight-picks{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 0}
+</style>
+<div class="page-head"><div><p class="eyebrow">PORTFOLIO ASSETS / TYPOGRAPHY</p><h1>Font library</h1><p>Add fonts from Google Fonts or upload your own, then choose them for headings or body text in the <a href="{{ route('admin.site-editor.edit') }}" style="color:#b69bff">live editor</a> or a <a href="{{ route('admin.themes.index') }}" style="color:#b69bff">theme</a>.</p></div></div>
+
+<section class="editor-card" style="margin-bottom:17px" aria-labelledby="google-heading">
+  <h2 id="google-heading">Add from Google Fonts</h2>
+  <p class="card-help">The font file is copied onto this site, so visitors' browsers never contact Google. That's the privacy-friendly way to use Google Fonts. Every Google font has an open licence that allows use on websites.
+    @unless($google->hasApiKey()) Showing popular families. To search all of Google Fonts, add a free <code>GOOGLE_FONTS_API_KEY</code> on the server, or type any family name exactly as Google Fonts shows it.@endunless</p>
+  <form method="get" action="{{ route('admin.fonts.index') }}" class="form-inline" style="align-items:end" role="search">
+    <div class="field" style="flex:1"><label for="google-search">Find a font</label><input id="google-search" name="google" type="search" value="{{ $googleQuery }}" maxlength="60" placeholder="For example: Playfair, Mono, Sans"></div>
+    <button class="button" type="submit">Search</button>
+  </form>
+
+  @php($exactMatch = collect($googleResults)->contains(fn ($font) => strcasecmp($font['family'], $googleQuery) === 0))
+  <div class="google-results">
+    @if($googleQuery !== '' && ! $exactMatch)
+      @include('admin.partials.google-font-import', ['family' => $googleQuery, 'category' => 'Import by exact name'])
+    @endif
+    @foreach($googleResults as $font)
+      @include('admin.partials.google-font-import', ['family' => $font['family'], 'category' => $font['category']])
+    @endforeach
+  </div>
+  @if(! $googleResults && $googleQuery === '')<p class="card-help">No fonts to show.</p>@endif
+</section>
+
+<details class="editor-card" style="margin-bottom:17px">
+  <summary style="cursor:pointer"><strong>Upload a font file instead</strong></summary>
+  <p class="card-help" style="margin-top:10px">WOFF2, WOFF, TTF, or OTF, up to 2 MB. Use web-licensed files from a trusted source. Uploading confirms your right to publish and embed the font.</p>
   <form method="post" action="{{ route('admin.fonts.store') }}" enctype="multipart/form-data">
     @csrf
     <div class="field"><label for="font-file">Font file</label><input id="font-file" type="file" name="file" accept=".woff2,.woff,.ttf,.otf" required></div>
@@ -17,12 +45,17 @@
     <label><input type="checkbox" name="license_confirmed" value="1" required> I have the rights to upload, redistribute and web-embed this font.</label>
     <p><button class="button button-primary">Upload and activate</button></p>
   </form>
-</section>
+</details>
+
+<h2 style="font-size:13px;margin:0 0 10px">Your fonts</h2>
 <div class="grid">
 @forelse($assets as $asset)
   <article class="editor-card">
-    <h2>{{ $asset->family }}</h2>
-    <p>{{ strtoupper($asset->format) }} · {{ $asset->weight }} {{ $asset->style }} · {{ number_format($asset->size_bytes / 1024) }} KB · {{ $asset->is_active ? 'Active' : 'Inactive' }}</p>
+    <h2>{{ $asset->family }} <span style="color:#858294;font-weight:400">· {{ $asset->weight }} {{ $asset->style }}</span></h2>
+    @if($asset->is_active && $asset->license_confirmed)
+      <p class="font-sample" style="font-family:'{{ $asset->cssFamily() }}',system-ui;font-weight:{{ (int) $asset->weight }};font-style:{{ $asset->style === 'italic' ? 'italic' : 'normal' }}">The quick brown fox jumps over the lazy dog · 0123456789</p>
+    @endif
+    <p>{{ strtoupper($asset->format) }} · {{ number_format($asset->size_bytes / 1024) }} KB · {{ $asset->is_active ? 'Active' : 'Inactive' }}</p>
     <p>{{ $asset->license_note }}</p>
     @if($asset->source_url)<a href="{{ $asset->source_url }}" target="_blank" rel="noopener noreferrer">License source</a>@endif
     <p>Usage: {{ implode(', ', $usage[$asset->id]) ?: 'Unused' }}</p>
@@ -37,7 +70,7 @@
     </form>
   </article>
 @empty
-  <section class="panel"><p>No uploaded fonts yet.</p></section>
+  <section class="panel"><p>No fonts yet. Add one from Google Fonts above.</p></section>
 @endforelse
 </div>
 @if($assets->hasPages())<div class="pagination">{{ $assets->links() }}</div>@endif

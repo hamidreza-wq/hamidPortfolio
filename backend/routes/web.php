@@ -125,6 +125,7 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::delete('/media/{mediaAsset}', [MediaController::class, 'destroy'])->name('media.destroy');
     Route::get('/fonts', [FontController::class, 'index'])->name('fonts.index');
     Route::post('/fonts', [FontController::class, 'store'])->name('fonts.store');
+    Route::post('/fonts/google', [FontController::class, 'importGoogle'])->middleware('throttle:10,1')->name('fonts.google');
     Route::put('/fonts/{fontAsset}', [FontController::class, 'update'])->name('fonts.update');
     Route::delete('/fonts/{fontAsset}', [FontController::class, 'destroy'])->name('fonts.destroy');
     Route::get('/testimonials', [TestimonialController::class, 'index'])->name('testimonials.index');
