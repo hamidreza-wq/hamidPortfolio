@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\MenuItem;
+use App\Models\Page;
 use App\Models\PortfolioSection;
 use App\Models\Project;
 use App\Services\MenuBuilder;
@@ -28,6 +29,7 @@ class MenuController extends Controller
             'menus' => $menus,
             'sections' => PortfolioSection::orderBy('sort_order')->orderBy('id')->get(),
             'projects' => Project::orderBy('sort_order')->orderBy('name')->get(['id', 'name', 'is_published']),
+            'customPages' => Page::orderBy('title')->get(),
             'max' => self::MAX_ITEMS,
         ]);
     }
@@ -121,6 +123,7 @@ class MenuController extends Controller
             'target_section' => ['nullable', 'required_if:type,section', Rule::exists('portfolio_sections', 'key')],
             'target_project' => ['nullable', 'required_if:type,project', 'integer', Rule::exists('projects', 'id')],
             'target_page' => ['nullable', 'required_if:type,page', Rule::in(array_keys(MenuItem::PAGES))],
+            'target_custom_page' => ['nullable', 'required_if:type,custom_page', 'integer', Rule::exists('pages', 'id')->whereNull('deleted_at')],
             'target_url' => ['nullable', 'required_if:type,url', 'string', 'max:500'],
             'label' => ['nullable', 'required_if:type,url', 'string', 'max:60'],
         ], [

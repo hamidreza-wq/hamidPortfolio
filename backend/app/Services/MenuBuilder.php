@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MenuItem;
+use App\Models\Page;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
@@ -29,8 +30,9 @@ class MenuBuilder
         $sections = PortfolioSection::where('is_visible', true)->get()->keyBy('key');
         $projects = Project::where('is_published', true)->whereIn('id', $items->where('type', 'project')->pluck('target'))->get()->keyBy('id');
         $testimonialsOpen = (bool) PortfolioSetting::find(1)?->testimonial_submissions_open;
+        $pages = Page::live()->whereIn('id', $items->where('type', 'custom_page')->pluck('target'))->get()->keyBy('id');
 
-        return $items->map(fn (MenuItem $item) => $this->resolve($item, $sections, $projects, $testimonialsOpen))
+        return $items->map(fn (MenuItem $item) => $this->resolve($item, $sections, $projects, $testimonialsOpen, $pages))
             ->filter()->values()->all();
     }
 
@@ -50,6 +52,7 @@ class MenuBuilder
             'section' => 'Section: '.(PortfolioSection::where('key', $item->target)->value('title') ?? $item->target.' (deleted)'),
             'project' => 'Project: '.(Project::find($item->target)?->name ?? 'deleted project'),
             'page' => 'Page: '.(MenuItem::PAGES[$item->target] ?? $item->target),
+            'custom_page' => 'Page: '.(Page::withTrashed()->find($item->target)?->title ?? 'deleted page'),
             default => $item->target,
         };
     }
@@ -61,11 +64,12 @@ class MenuBuilder
             'section' => PortfolioSection::where('key', $item->target)->value('is_visible') ? null : 'Hidden: that section is not visible',
             'project' => Project::where('id', $item->target)->where('is_published', true)->exists() ? null : 'Hidden: that project is not published',
             'page' => $item->target === 'testimonials' && ! PortfolioSetting::find(1)?->testimonial_submissions_open ? 'Hidden: the testimonial form is closed' : null,
+            'custom_page' => Page::live()->whereKey($item->target)->exists() ? null : 'Hidden: that page is not published',
             default => null,
         };
     }
 
-    private function resolve(MenuItem $item, Collection $sections, Collection $projects, bool $testimonialsOpen): ?array
+    private function resolve(MenuItem $item, Collection $sections, Collection $projects, bool $testimonialsOpen, Collection $pages): ?array
     {
         [$href, $label] = match ($item->type) {
             'section' => ($section = $sections->get($item->target))
@@ -78,6 +82,7 @@ class MenuBuilder
                 'testimonials' => $testimonialsOpen ? ['/testimonials/new', 'Leave a testimonial'] : [null, null],
                 default => [null, null],
             },
+            'custom_page' => ($custom = $pages->get((int) $item->target)) ? ['/'.$custom->slug, $custom->title] : [null, null],
             'url' => MenuItem::isAllowedUrl($item->target) ? [$item->target, null] : [null, null],
             default => [null, null],
         };

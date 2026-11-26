@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ContactMessage;
 use App\Models\FontAsset;
 use App\Models\MediaAsset;
+use App\Models\Page;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
@@ -22,6 +23,7 @@ class AdminSearch
     public const TYPES = [
         'pages' => 'Dashboard pages',
         'projects' => 'Projects',
+        'site_pages' => 'Pages',
         'sections' => 'Sections',
         'settings' => 'Site settings',
         'skills' => 'Skills',
@@ -40,6 +42,7 @@ class AdminSearch
         ['Overview', 'admin.dashboard', 'home dashboard start summary recent changes'],
         ['Analytics', 'admin.analytics', 'traffic visitors pageviews google analytics search console clicks impressions'],
         ['Live site editor', 'admin.site-editor.edit', 'appearance colours colors typography fonts theme preset profile links seo title description canonical open graph sharing image maintenance publish'],
+        ['Pages', 'admin.pages.index', 'pages standalone page about services cv new page draft publish schedule trash'],
         ['Projects', 'admin.projects.index', 'portfolio work repository demo case study'],
         ['Sections', 'admin.sections.index', 'experience education services testimonials custom navigation'],
         ['Menus', 'admin.menus.index', 'menu navigation header footer links nav order button'],
@@ -104,6 +107,16 @@ class AdminSearch
                 'title' => $project->name,
                 'detail' => ($project->is_published ? 'Published' : 'Draft').' · '.$this->excerpt($project->description.' '.$project->details, $query),
                 'url' => route('admin.projects.index').'#project-'.$project->id.'-name',
+            ])->all();
+    }
+
+    private function site_pages(string $query, string $like, int $limit): array
+    {
+        return $this->matching(Page::query(), ['title', 'slug', 'summary', 'body'], $like, $limit)
+            ->map(fn (Page $page) => [
+                'title' => $page->title,
+                'detail' => $page->stateLabel().' · /'.$page->slug,
+                'url' => route('admin.pages.edit', $page),
             ])->all();
     }
 

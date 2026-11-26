@@ -8,7 +8,7 @@ class MenuItem extends Model
 {
     public const MENUS = ['header' => 'Header menu', 'footer' => 'Footer menu'];
 
-    public const TYPES = ['section' => 'A section of the home page', 'project' => 'A project page', 'page' => 'A site page', 'url' => 'Another website or email address'];
+    public const TYPES = ['section' => 'A section of the home page', 'project' => 'A project page', 'custom_page' => 'One of your pages', 'page' => 'A site page', 'url' => 'Another website or email address'];
 
     /** Site pages that can be linked, with their default labels. */
     public const PAGES = ['home' => 'Home (top of the page)', 'privacy' => 'Privacy notice', 'testimonials' => 'Testimonial form'];

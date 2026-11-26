@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Page;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
 use App\Services\FontLibrary;
@@ -48,6 +49,8 @@ class ProjectDetailController extends Controller
         return response()->view('portfolio.sitemap', [
             'settings' => $settings,
             'projects' => $projects,
+            'pages' => $settings->indexing_enabled && ! $settings->maintenance_mode
+                ? Page::live()->where('noindex', false)->orderBy('id')->get() : collect(),
             'baseUrl' => app(PortfolioSeo::class)->baseUrl($settings),
         ])->header('Content-Type', 'application/xml; charset=UTF-8');
     }

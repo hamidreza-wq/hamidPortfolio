@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\ContentRevision;
+use App\Models\Page;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
@@ -32,7 +33,24 @@ class ContentRevisionController extends Controller
         DB::transaction(function () use ($request, $contentRevision) {
             PortfolioSetting::query()->lockForUpdate()->findOrFail(1);
             $snapshot = $contentRevision->snapshot;
-            if ($contentRevision->scope === 'project') {
+            if ($contentRevision->scope === 'page') {
+                $page = Page::withTrashed()->lockForUpdate()->find($contentRevision->subject_id);
+                if ($page) {
+                    app(ContentHistory::class)->page($page, 'Before restoring page revision', $request->user()->id);
+                }
+                Validator::make($snapshot, [
+                    'slug' => [Rule::unique('pages')->ignore($contentRevision->subject_id)],
+                    'media_asset_id' => app(MediaLibrary::class)->selectionRules(),
+                ])->validate();
+                foreach (['created_by', 'updated_by'] as $userColumn) {
+                    if (! empty($snapshot[$userColumn]) && ! User::query()->whereKey($snapshot[$userColumn])->exists()) {
+                        $snapshot[$userColumn] = null;
+                    }
+                }
+                $page ??= new Page;
+                $page->id = $contentRevision->subject_id;
+                $page->forceFill(collect($snapshot)->except(['id', 'created_at', 'updated_at', 'deleted_at'])->all() + ['deleted_at' => null])->save();
+            } elseif ($contentRevision->scope === 'project') {
                 $project = Project::query()->lockForUpdate()->find($contentRevision->subject_id);
                 if ($project) {
                     app(ContentHistory::class)->project($project, 'Before restoring project revision', $request->user()->id);

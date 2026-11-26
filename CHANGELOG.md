@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+- Added a Pages manager (`/admin/pages`) for standalone pages at
+  `/your-page`, such as Services, CV or Now.
+  - Each page has a title, an address, a summary, Markdown content, a search
+    title and description, a featured and sharing image, and a "don't list in
+    search engines" option.
+  - Drafts, publishing, and scheduled publishing (a page appears at its
+    "publish at" time with no job needed).
+  - Admin preview of any page, with a banner. Duplicate, trash with restore,
+    and permanent delete with confirmation.
+  - Every save is kept in Content history and can be restored there.
+  - Content is safe Markdown: raw HTML is escaped, `javascript:` links are
+    dropped, images only from the media library, and links to other sites
+    open in a new tab.
+  - Addresses already used by the site (`/admin`, `/privacy`, `/up` and so on)
+    are reserved. The public route is registered last and excludes them.
+  - Pages can be added to the footer menu, or the custom header menu, from
+    the page itself. Menus gain a "One of your pages" link type, and links
+    disappear while a page isn't live.
+  - Published pages are added to the sitemap, and appear in dashboard search
+    and the Help centre.
+  - Fix: media used in Markdown (`![alt](/media/5)`) now counts as in use, so
+    it can't be deleted.
+- **Database schema 10 → 11** (additive: a `pages` table).
+
 - Notification centre upgrade:
   - **Seven categories**: security, site health, backups, updates, messages,
     SEO and GitHub. Health and backup notices move out of "updates".
