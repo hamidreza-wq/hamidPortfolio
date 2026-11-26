@@ -9,6 +9,7 @@ use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
 use App\Models\Skill;
+use App\Models\Testimonial;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
@@ -26,6 +27,7 @@ class AdminSearch
         'skills' => 'Skills',
         'media' => 'Media',
         'fonts' => 'Fonts',
+        'testimonials' => 'Testimonials',
         'messages' => 'Contact messages',
     ];
 
@@ -49,6 +51,7 @@ class AdminSearch
         ['Notifications', 'admin.platform.notifications', 'alerts warnings email digest preferences'],
         ['Security', 'admin.security', 'two-factor 2fa authenticator password sessions sign-in login failed attempts activity audit log'],
         ['Backups', 'admin.backups.index', 'backup restore recovery download archive'],
+        ['Testimonials', 'admin.testimonials.index', 'reviews praise quotes clients feedback moderation approve'],
     ];
 
     /**
@@ -165,6 +168,16 @@ class AdminSearch
                 'title' => $font->family,
                 'detail' => $font->weight.' '.$font->style.($font->is_active ? ' · active' : ' · inactive'),
                 'url' => route('admin.fonts.index'),
+            ])->all();
+    }
+
+    private function testimonials(string $query, string $like, int $limit): array
+    {
+        return $this->matching(Testimonial::query(), ['name', 'role', 'company', 'quote'], $like, $limit)
+            ->map(fn (Testimonial $testimonial) => [
+                'title' => $testimonial->name,
+                'detail' => (Testimonial::STATUSES[$testimonial->status] ?? $testimonial->status).' · '.$this->excerpt($testimonial->quote, $query),
+                'url' => route('admin.testimonials.index', ['status' => $testimonial->status]).'#testimonial-'.$testimonial->id,
             ])->all();
     }
 

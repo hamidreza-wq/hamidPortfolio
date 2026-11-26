@@ -24,6 +24,9 @@
     <h2>First-party pageview counts</h2>
     <p>The site separately counts successful public page loads to operate its own analytics dashboard. These counts include the page path and, when available, the external referrer hostname. Raw visitor IP addresses, user-agent strings and full referrer URLs are not stored in these pageview records.</p>
 
+    <h2>Testimonials</h2>
+    <p>If you send a testimonial through the testimonial form, your name, words and any role, company and rating you give are published on this site after the owner approves them, with your consent. Your email address is stored privately to confirm the testimonial is genuine and is never published. Ask through the contact form to have a testimonial changed or removed. Rejected submissions are deleted after 90 days.</p>
+
     <h2>Contact messages</h2>
     <p>If you submit the contact form, the information you provide is stored in the site's private inbox and emailed to the site owner through the site's email provider to respond to your message. It is not sent to Google Analytics.</p>
   </main>

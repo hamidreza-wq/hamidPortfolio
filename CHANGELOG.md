@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Added a Testimonials manager (`/admin/testimonials`): a review queue
+  (waiting, approved, rejected) with approve, reject, edit, feature, order and
+  delete, plus adding testimonials received elsewhere. Only approved
+  testimonials are published. They appear automatically, featured first, in
+  any visible section of type Testimonials, before that section's hand-written
+  items. The sidebar shows how many are waiting, and search finds them.
+- Added a shareable client form at `/testimonials/new`, closed by default
+  and opened from the Testimonials page. It asks for consent and keeps the
+  email private (stored only to confirm the testimonial is genuine). It is
+  protected like the contact form: a timed single-use token, a honeypot, a
+  limit of 3 posts per 10 minutes per IP and 2 per day per email. The page is
+  `noindex`. Rejected submissions are deleted after 90 days, and the privacy
+  notice now covers testimonials.
+- **Database schema 4 → 5** (additive: a `testimonials` table and a
+  `portfolio_settings.testimonial_submissions_open` flag defaulting to off).
+  Deploy it as a reviewed migration, like schema 4.
+
 - Added dashboard-wide search. Press Ctrl K (⌘ K) on any admin page, or use
   the new search button, for instant results grouped by type: dashboard pages
   (matched on everyday words such as "2fa" or "colours"), projects, sections,

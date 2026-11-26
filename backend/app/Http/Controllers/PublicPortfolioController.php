@@ -6,6 +6,7 @@ use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
 use App\Models\SkillCategory;
+use App\Models\Testimonial;
 use App\Services\ContactSubmissionGuard;
 use App\Services\FontLibrary;
 use App\Services\MediaLibrary;
@@ -182,7 +183,9 @@ class PublicPortfolioController extends Controller
                     'type' => $section->type,
                     'label' => $section->label,
                     'show_in_navigation' => $section->show_in_navigation,
-                    'items' => $section->items ?? [],
+                    'items' => $section->type === 'testimonials'
+                        ? [...Testimonial::published()->limit(20)->get()->map->toSectionItem()->all(), ...($section->items ?? [])]
+                        : ($section->items ?? []),
                     'image' => app(MediaLibrary::class)->publicPayload($section->image_media_id),
                     'background' => app(MediaLibrary::class)->publicPayload($section->background_media_id),
                     'background_effect' => $section->background_effect,
