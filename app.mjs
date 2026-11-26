@@ -138,6 +138,43 @@ function renderContact() {
   }
 }
 
+// Menu links come from the server already resolved; accept only same-page, site-relative, https or mailto targets.
+function menuHref(href) {
+  const value = String(href ?? "");
+  if (/^#[a-z0-9-]+$/.test(value) || /^\/(?!\/)[\w\-./]*$/.test(value) || /^mailto:[^\s"'<>]+$/i.test(value)) return value;
+  return safeURL(value).startsWith("https:") ? safeURL(value) : "#";
+}
+
+function renderMenus(data) {
+  document.querySelectorAll("[data-menu]").forEach((element) => element.remove());
+  const menuLink = (item, className) => {
+    const anchor = document.createElement("a");
+    if (className) anchor.className = className;
+    anchor.dataset.menu = "";
+    anchor.href = menuHref(item.href);
+    if (item.new_tab) {
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+    }
+    anchor.textContent = item.label;
+    return anchor;
+  };
+  const nav = document.querySelector(".primary-navigation");
+  if (nav && Array.isArray(data.menus?.header)) {
+    nav.replaceChildren(...data.menus.header.map((item) => menuLink(item, item.button ? "nav-contact" : "")));
+  }
+  const footerItems = Array.isArray(data.menus?.footer) ? data.menus.footer : [];
+  const privacy = document.querySelector(".site-footer .privacy-link");
+  if (footerItems.length && privacy) {
+    const list = document.createElement("nav");
+    list.className = "footer-menu";
+    list.dataset.menu = "";
+    list.setAttribute("aria-label", "Footer");
+    footerItems.forEach((item) => list.append(menuLink(item, "")));
+    privacy.before(list);
+  }
+}
+
 function renderSocial() {
   document.querySelectorAll("[data-social]").forEach((element) => element.remove());
   if (!social) return;
@@ -316,6 +353,7 @@ function applyPortfolioData(data) {
   renderProjects();
   renderCraft();
   renderContact();
+  renderMenus(data);
   renderSocial();
 }
 

@@ -298,7 +298,9 @@ button { color: inherit; }
 
 .site-footer { display: flex; min-height: 92px; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid rgba(255,255,255,0.07); }
 .site-footer p { color: #767485; font-size: 9px; }
-.footer-social { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.footer-social, .footer-menu { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.footer-menu a { color: #c3bfce; font-size: 9px; transition: color 180ms ease; }
+.footer-menu a:hover { color: #fff; }
 .footer-social a { color: #a7a3b6; font-size: 9px; transition: color 180ms ease; }
 .footer-social a:hover { color: #fff; }
 .primary-navigation .nav-social { color: #a7a3b6; }
