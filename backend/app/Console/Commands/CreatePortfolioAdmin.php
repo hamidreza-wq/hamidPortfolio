@@ -61,6 +61,7 @@ class CreatePortfolioAdmin extends Command
             $user->email = $email;
             $user->password = Hash::make($password);
             $user->is_admin = true;
+            $user->role = 'owner';
             $user->remember_token = null;
             $user->save();
             AuditLog::create([

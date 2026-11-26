@@ -98,6 +98,7 @@
 </head>
 <body>
 @if(auth()->check())
+@php($canOpen = fn (string $route) => auth()->user()->canOpenRoute($route))
 <div class="shell">
   <aside class="sidebar" id="admin-sidebar">
     <a class="brand" href="{{ route('admin.dashboard') }}">
@@ -105,34 +106,87 @@
       <span class="brand-copy"><strong>Hamid Portfolio</strong><small>CONTROL ROOM / 01</small></span>
     </a>
     <p class="nav-label">WORKSPACE</p>
+    @if($canOpen('admin.dashboard'))
     <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><span class="nav-icon">◈</span>Overview</a>
+    @endif
+    @if($canOpen('admin.analytics'))
     <a class="nav-link {{ request()->routeIs('admin.analytics*') ? 'active' : '' }}" href="{{ route('admin.analytics') }}"><span class="nav-icon">⌁</span>Analytics</a>
+    @endif
+    @if($canOpen('admin.site-editor.edit'))
     <a class="nav-link {{ request()->routeIs('admin.site-editor.*') ? 'active' : '' }}" href="{{ route('admin.site-editor.edit') }}"><span class="nav-icon">◉</span>Live site editor</a>
+    @endif
+    @if($canOpen('admin.pages.index'))
     <a class="nav-link {{ request()->routeIs('admin.pages.*') ? 'active' : '' }}" href="{{ route('admin.pages.index') }}"><span class="nav-icon">▭</span>Pages</a>
+    @endif
+    @if($canOpen('admin.projects.index'))
     <a class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}" href="{{ route('admin.projects.index') }}"><span class="nav-icon">▧</span>Projects</a>
+    @endif
+    @if($canOpen('admin.sections.index'))
     <a class="nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}" href="{{ route('admin.sections.index') }}"><span class="nav-icon">+</span>Sections</a>
+    @endif
+    @if($canOpen('admin.revisions.index'))
     <a class="nav-link {{ request()->routeIs('admin.revisions.*') ? 'active' : '' }}" href="{{ route('admin.revisions.index') }}"><span class="nav-icon">↶</span>Content history</a>
+    @endif
+    @if($canOpen('admin.themes.index') || $canOpen('admin.media.index') || $canOpen('admin.fonts.index') || $canOpen('admin.menus.index') || $canOpen('admin.social.index') || $canOpen('admin.testimonials.index') || $canOpen('admin.inbox.index'))
     <p class="nav-label">LIBRARY</p>
+    @endif
+    @if($canOpen('admin.themes.index'))
     <a class="nav-link {{ request()->routeIs('admin.themes.*') ? 'active' : '' }}" href="{{ route('admin.themes.index') }}"><span class="nav-icon">◐</span>Themes</a>
+    @endif
+    @if($canOpen('admin.media.index'))
     <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" href="{{ route('admin.media.index') }}"><span class="nav-icon">▤</span>Media library</a>
+    @endif
+    @if($canOpen('admin.fonts.index'))
     <a class="nav-link {{ request()->routeIs('admin.fonts.*') ? 'active' : '' }}" href="{{ route('admin.fonts.index') }}"><span class="nav-icon">Aa</span>Fonts</a>
+    @endif
+    @if($canOpen('admin.menus.index'))
     <a class="nav-link {{ request()->routeIs('admin.menus.*') ? 'active' : '' }}" href="{{ route('admin.menus.index') }}"><span class="nav-icon">≡</span>Menus</a>
+    @endif
+    @if($canOpen('admin.social.index'))
     <a class="nav-link {{ request()->routeIs('admin.social.*') ? 'active' : '' }}" href="{{ route('admin.social.index') }}"><span class="nav-icon">@</span>Social links</a>
+    @endif
+    @if($canOpen('admin.testimonials.index'))
     <a class="nav-link {{ request()->routeIs('admin.testimonials.*') ? 'active' : '' }}" href="{{ route('admin.testimonials.index') }}"><span class="nav-icon">❝</span>Testimonials @php($pendingTestimonials = \App\Models\Testimonial::where('status', 'pending')->count())@if($pendingTestimonials)<span aria-label="{{ $pendingTestimonials }} waiting for review">{{ $pendingTestimonials }}</span>@endif</a>
+    @endif
+    @if($canOpen('admin.inbox.index'))
     <a class="nav-link {{ request()->routeIs('admin.inbox.*') ? 'active' : '' }}" href="{{ route('admin.inbox.index') }}"><span class="nav-icon">✉</span>Contact inbox</a>
+    @endif
+    @if($canOpen('admin.platform.updates') || $canOpen('admin.platform.github') || $canOpen('admin.platform.seo') || $canOpen('admin.health') || $canOpen('admin.security') || $canOpen('admin.privacy') || $canOpen('admin.backups.index') || $canOpen('admin.platform.notifications'))
     <p class="nav-label">PLATFORM</p>
+    @endif
+    @if($canOpen('admin.platform.updates'))
     <a class="nav-link {{ request()->routeIs('admin.platform.updates') ? 'active' : '' }}" href="{{ route('admin.platform.updates') }}">Software updates</a>
+    @endif
+    @if($canOpen('admin.platform.github'))
     <a class="nav-link {{ request()->routeIs('admin.platform.github') ? 'active' : '' }}" href="{{ route('admin.platform.github') }}">GitHub projects</a>
+    @endif
+    @if($canOpen('admin.platform.seo'))
     <a class="nav-link {{ request()->routeIs('admin.platform.seo') ? 'active' : '' }}" href="{{ route('admin.platform.seo') }}">SEO monitoring</a>
+    @endif
+    @if($canOpen('admin.health'))
     <a class="nav-link {{ request()->routeIs('admin.health*') ? 'active' : '' }}" href="{{ route('admin.health') }}">Health</a>
+    @endif
+    @if($canOpen('admin.security'))
     <a class="nav-link {{ request()->routeIs('admin.security*') ? 'active' : '' }}" href="{{ route('admin.security') }}">Security</a>
+    @endif
+    @if($canOpen('admin.privacy'))
     <a class="nav-link {{ request()->routeIs('admin.privacy*') ? 'active' : '' }}" href="{{ route('admin.privacy') }}">Privacy</a>
+    @endif
+    @if($canOpen('admin.backups.index'))
     <a class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}" href="{{ route('admin.backups.index') }}">Backups</a>
+    @endif
+    @if($canOpen('admin.platform.notifications'))
     <a class="nav-link {{ request()->routeIs('admin.platform.notifications') ? 'active' : '' }}" href="{{ route('admin.platform.notifications') }}">Notifications <span aria-label="unread notifications">{{ \App\Models\PlatformNotice::visible()->whereNull('read_at')->whereIn('category', \App\Models\NotificationPreference::forUser(auth()->id())->categories)->count() }}</span></a>
+    @endif
     <div class="sidebar-bottom">
       <div class="sidebar-note"><strong>Private studio</strong><br>Changes publish to the live portfolio only when you choose to save them.</div>
       <p class="nav-label">ACCOUNT</p>
+      @if($canOpen('admin.users.index'))
+      <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}"><span class="nav-icon">☺</span>Users</a>
+      @endif
+      @if($canOpen('admin.help.index'))
       <a class="nav-link {{ request()->routeIs('admin.help.*') ? 'active' : '' }}" href="{{ route('admin.help.index') }}"><span class="nav-icon">?</span>Help centre</a>
+      @endif
       <form method="post" action="{{ route('admin.logout') }}">@csrf<button class="nav-link" type="submit" style="width:100%;text-align:left;background:none;cursor:pointer"><span class="nav-icon">↗</span>Sign out</button></form>
     </div>
   </aside>
@@ -144,7 +198,7 @@
         @php($helpTopic = app(\App\Services\HelpCentre::class)->topicForRoute(request()->route()?->getName()))
         <a class="button" href="{{ $helpTopic ? route('admin.help.show', $helpTopic) : route('admin.help.index') }}" @if($helpTopic) aria-label="Help with this page" @endif>? Help</a>
         <a class="button button-quiet" href="{{ route('portfolio.home') }}" target="_blank" rel="noreferrer">View live site <span aria-hidden="true">↗</span></a>
-        <a class="button" href="{{ route('admin.site-editor.edit') }}">Edit portfolio</a>
+        @can('content')<a class="button" href="{{ route('admin.site-editor.edit') }}">Edit portfolio</a>@endcan
       </div>
     </header>
     <main class="content">

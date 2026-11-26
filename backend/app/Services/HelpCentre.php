@@ -38,6 +38,7 @@ class HelpCentre
         'github-projects' => ['GitHub projects', 'Review public repositories found on your GitHub account.', 'Running the site', ['admin.platform.github']],
         'notifications' => ['Notifications', 'Alerts about updates, health, backups and SEO, and email digests.', 'Running the site', ['admin.platform.notifications']],
         'security' => ['Security', 'Two-factor sign-in, sessions, protection checks and the activity log.', 'Protection', ['admin.security']],
+        'users' => ['Users and roles', 'Give people access with the right role, and remove it.', 'Protection', ['admin.users.index']],
         'privacy' => ['Privacy', 'Personal data, retention, and answering data requests.', 'Protection', ['admin.privacy']],
     ];
 

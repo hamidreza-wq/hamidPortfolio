@@ -7,6 +7,7 @@
   <div><p class="eyebrow">STUDIO / PROTECTION</p><h1>Security</h1><p>What protects this dashboard right now, who has signed in, and every recorded admin action. These checks read the running configuration; they change nothing.</p></div>
 </div>
 
+@can('security')
 <div class="grid stats">
   @php($counts = collect($checks)->countBy('state'))
   <article class="stat-card"><div class="stat-top"><span>Checks passing</span><span class="stat-mark">✓</span></div><div class="stat-number">{{ $counts['ok'] ?? 0 }}<span style="color:#858294;font-size:13px;font-weight:400"> / {{ count($checks) }}</span></div><div class="stat-caption">{{ $counts['warning'] ?? 0 }} warning · {{ $counts['critical'] ?? 0 }} critical</div></article>
@@ -14,6 +15,8 @@
     <article class="stat-card"><div class="stat-top"><span>Failed sign-ins</span><span class="stat-mark">!</span></div><div class="stat-number">{{ $count }}</div><div class="stat-caption">Last {{ $window }}</div></article>
   @endforeach
 </div>
+
+@endcan
 
 <section class="panel" id="two-factor" aria-labelledby="two-factor-heading" style="margin-bottom:14px">
   <div class="panel-head"><h2 id="two-factor-heading">Two-factor sign-in</h2><span class="status-pill {{ $twoFactorEnabled ? '' : 'warn' }}">{{ $twoFactorEnabled ? 'On' : ($pendingSecret ? 'Waiting for confirmation' : 'Off') }}</span></div>
@@ -67,6 +70,7 @@
 </section>
 
 <div class="grid dashboard-columns" style="margin-bottom:14px">
+  @can('security')
   <section class="panel" aria-labelledby="checks-heading">
     <div class="panel-head"><h2 id="checks-heading">Protection checks</h2></div>
     <div class="activity-list">
@@ -75,6 +79,7 @@
       @endforeach
     </div>
   </section>
+  @endcan
 
   <div class="grid" style="align-content:start">
     <section class="panel" aria-labelledby="sessions-heading">
@@ -101,6 +106,7 @@
       </form>
     </section>
 
+    @can('security')
     <section class="panel" aria-labelledby="sources-heading">
       <div class="panel-head"><h2 id="sources-heading">Failed sign-in sources · 7 days</h2></div>
       @if($failedSources->isEmpty())
@@ -114,9 +120,11 @@
         <p class="card-help" style="margin:10px 0 0">Attempted email addresses are not recorded. Repeated attempts are already throttled.</p>
       @endif
     </section>
+      @endcan
   </div>
 </div>
 
+@can('security')
 <section class="panel" aria-labelledby="log-heading">
   <div class="panel-head"><h2 id="log-heading">Activity log</h2></div>
   <form method="get" action="{{ route('admin.security') }}" class="form-inline" style="align-items:end;margin-bottom:12px">
@@ -139,4 +147,5 @@
     @if($log->hasPages())<div class="pagination">{{ $log->links() }}</div>@endif
   @endif
 </section>
+@endcan
 @endsection

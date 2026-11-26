@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+- Admin roles and permissions.
+  - Five roles: Owner, Administrator (everything except users), Editor
+    (content, design, media), SEO manager (content, analytics, SEO) and
+    Support (inbox, testimonials).
+  - Permissions are enforced on every admin route through one map in
+    `App\Support\Roles`. A route missing from the map is owner-only, and a
+    test fails if any admin route is unmapped.
+  - The sidebar, top bar, overview links and dashboard search only show what
+    each role can open.
+  - Everyone keeps the overview, search, help, notifications, and their own
+    two-factor and sessions. The Security page's checks, failed sign-ins and
+    activity log need the security permission.
+  - A Users page (owners only):
+    - add someone with a one-time set-password link (stored hashed, expires
+      after 48 hours, so no password is ever sent)
+    - change roles
+    - issue a new link
+    - remove access, which signs the person out everywhere and keeps their
+      name in the activity log
+    - every action needs the owner's password; nobody can change themselves,
+      and there's always at least one owner
+  - Existing administrators become owners, and `portfolio:admin:create`
+    creates owners. A Users help article is added.
+- **Database schema 11 → 12** (additive: `users.role`, `setup_token_hash`,
+  `setup_expires_at`; existing admins set to owner).
+
 - Google Fonts integration on the Fonts page.
   - Search, see the specimen on Google Fonts, tick weights (400 and 700 by
     default) and normal or italic, then add the font to the library.

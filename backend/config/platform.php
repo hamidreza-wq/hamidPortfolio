@@ -2,7 +2,7 @@
 
 return [
     'release_public_key' => env('RELEASE_PUBLIC_KEY'),
-    'schema_version' => 11,
+    'schema_version' => 12,
     'seo_origin' => env('SEO_MONITOR_ORIGIN'),
     'deployment' => [
         'enabled' => (bool) env('UPDATE_DEPLOYMENT_ENABLED', false),
