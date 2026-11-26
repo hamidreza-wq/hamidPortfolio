@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PortfolioSetting;
 use App\Models\Project;
+use App\Models\SocialLink;
 
 class PortfolioSeo
 {
@@ -27,7 +28,7 @@ class PortfolioSeo
             'name' => $settings->name,
             'url' => $base,
             'jobTitle' => $settings->professional_title,
-            'sameAs' => array_values(array_filter([$settings->github_url, $settings->linkedin_url])),
+            'sameAs' => array_values(array_unique(array_filter([$settings->github_url, ...SocialLink::visible()->pluck('url')->all()]))),
         ];
         $website = [
             '@type' => 'WebSite',

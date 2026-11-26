@@ -8,6 +8,7 @@ use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
 use App\Models\SkillCategory;
+use App\Models\SocialLink;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -63,10 +64,12 @@ class ContentSeoTest extends TestCase
 
     public function test_homepage_links_profile_website_and_person_schema_with_unique_metadata(): void
     {
+        // Other profiles now come from Social links rather than the settings row.
+        SocialLink::query()->delete();
+        SocialLink::create(['platform' => 'linkedin', 'url' => 'https://www.linkedin.com/in/verified-builder']);
         PortfolioSetting::findOrFail(1)->update([
             'canonical_url' => 'https://portfolio.example/',
             'github_url' => 'https://github.com/verified-builder',
-            'linkedin_url' => 'https://www.linkedin.com/in/verified-builder',
             'site_description' => 'Laravel and React web applications and desktop tools.',
         ]);
         $response = $this->get('/')->assertOk()

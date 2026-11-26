@@ -7,6 +7,8 @@ import {
 let profile = window.portfolioPayload?.profile ?? fallbackProfile;
 let projects = window.portfolioPayload?.projects ?? fallbackProjects;
 let craft = window.portfolioPayload?.craft ?? fallbackCraft;
+// null means "no managed list" (static fallback page): keep the original GitHub/LinkedIn buttons.
+let social = Array.isArray(window.portfolioPayload?.social) ? window.portfolioPayload.social : null;
 const loadedFonts = new Set();
 
 function safeURL(value) {
@@ -101,12 +103,12 @@ function renderCraft() {
 function renderContact() {
   const contactActions = document.querySelector("#contact-actions");
   if (!contactActions) return;
+  const contactLinks = social
+    ? social.filter((link) => link.contact)
+    : [{ label: "Connect on GitHub", url: profile.github }, ...(profile.linkedin ? [{ label: "LinkedIn", url: profile.linkedin }] : [])];
   contactActions.innerHTML = `
     ${profile.email ? `<a class="button button-primary" href="mailto:${encodeURIComponent(profile.email)}">Email me <span aria-hidden="true">↗</span></a>` : ""}
-    <a class="button ${profile.email ? "button-quiet" : "button-primary"}" href="${escapeHTML(profile.github)}" target="_blank" rel="noreferrer">
-      Connect on GitHub <span aria-hidden="true">↗</span>
-    </a>
-    ${profile.linkedin ? `<a class="button button-quiet" href="${escapeHTML(profile.linkedin)}" target="_blank" rel="noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>` : ""}
+    ${contactLinks.map((link, index) => `<a class="button ${profile.email || index > 0 ? "button-quiet" : "button-primary"}" href="${escapeHTML(safeURL(link.url))}" target="_blank" rel="me noopener noreferrer">${escapeHTML(link.label)} <span aria-hidden="true">↗</span></a>`).join("")}
   `;
   const contactSlot = document.querySelector("#contact-form-slot");
   const actionUrl = window.portfolioPayload?.settings?.contact_action_url;
@@ -136,10 +138,38 @@ function renderContact() {
   }
 }
 
+function renderSocial() {
+  document.querySelectorAll("[data-social]").forEach((element) => element.remove());
+  if (!social) return;
+  const link = (item, className) => {
+    const anchor = document.createElement("a");
+    anchor.className = className;
+    anchor.dataset.social = "";
+    anchor.href = safeURL(item.url);
+    anchor.target = "_blank";
+    anchor.rel = "me noopener noreferrer";
+    anchor.textContent = item.label;
+    return anchor;
+  };
+  const nav = document.querySelector(".primary-navigation");
+  social.filter((item) => item.header).forEach((item) => nav?.append(link(item, "nav-social")));
+  const footerItems = social.filter((item) => item.footer);
+  const privacy = document.querySelector(".site-footer .privacy-link");
+  if (footerItems.length && privacy) {
+    const list = document.createElement("nav");
+    list.className = "footer-social";
+    list.dataset.social = "";
+    list.setAttribute("aria-label", "Social profiles");
+    footerItems.forEach((item) => list.append(link(item, "")));
+    privacy.before(list);
+  }
+}
+
 function applyPortfolioData(data) {
   profile = data.profile ?? profile;
   projects = data.projects ?? projects;
   craft = data.craft ?? craft;
+  if (Array.isArray(data.social)) social = data.social;
 
   const managedValues = {
     "profile.name": profile.name,
@@ -286,6 +316,7 @@ function applyPortfolioData(data) {
   renderProjects();
   renderCraft();
   renderContact();
+  renderSocial();
 }
 
 function showProject(project) {

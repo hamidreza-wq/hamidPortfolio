@@ -6,6 +6,7 @@ use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
 use App\Models\SkillCategory;
+use App\Models\SocialLink;
 use App\Models\Testimonial;
 use App\Services\ContactSubmissionGuard;
 use App\Services\FontLibrary;
@@ -146,6 +147,7 @@ class PublicPortfolioController extends Controller
                 'email' => $settings->email,
                 'linkedin' => $settings->linkedin_url,
             ],
+            'social' => SocialLink::visible()->get()->map->toPayload()->all(),
             'settings' => [
                 'footer_text' => $settings->footer_text,
                 'site_title' => $settings->site_title,

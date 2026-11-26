@@ -16,8 +16,8 @@
       <div class="field-grid">
         <div class="field"><label for="setting-name">Display name</label><input id="setting-name" name="settings[name]" value="{{ old('settings.name', $settings->name) }}" maxlength="120" required></div>
         <div class="field"><label for="setting-title">Professional title</label><input id="setting-title" name="settings[professional_title]" value="{{ old('settings.professional_title', $settings->professional_title) }}" maxlength="120" required></div>
-        <div class="field"><label for="setting-github">GitHub profile URL</label><input id="setting-github" name="settings[github_url]" type="url" value="{{ old('settings.github_url', $settings->github_url) }}" required></div>
-        <div class="field"><label for="setting-linkedin">LinkedIn URL</label><input id="setting-linkedin" name="settings[linkedin_url]" type="url" value="{{ old('settings.linkedin_url', $settings->linkedin_url) }}" placeholder="https://www.linkedin.com/in/…"></div>
+        <div class="field"><label for="setting-github">GitHub profile URL</label><input id="setting-github" name="settings[github_url]" type="url" value="{{ old('settings.github_url', $settings->github_url) }}" required><span class="field-hint">Used for project repository links. Where GitHub shows as a profile link is set on the Social links page.</span></div>
+        <div class="field"><span class="field-label">LinkedIn and other profiles</span><a class="button" href="{{ route('admin.social.index') }}">Manage social links →</a><span class="field-hint">Where each profile appears is set on the Social links page.</span></div>
         <div class="field"><label for="setting-email">Contact email</label><input id="setting-email" name="settings[email]" type="email" value="{{ old('settings.email', $settings->email) }}" placeholder="hello@example.com"></div>
         <div class="field"><label for="setting-footer">Footer note</label><input id="setting-footer" name="settings[footer_text]" value="{{ old('settings.footer_text', $settings->footer_text) }}" maxlength="255"></div>
       </div>
