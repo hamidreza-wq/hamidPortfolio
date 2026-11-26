@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContentRevisionController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -52,6 +53,11 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::get('/github-projects', [PlatformController::class, 'github'])->name('platform.github');
     Route::get('/seo-monitor', [PlatformController::class, 'seo'])->name('platform.seo');
     Route::get('/notifications', [PlatformController::class, 'notifications'])->name('platform.notifications');
+    Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+    Route::post('/backups', [BackupController::class, 'store'])->middleware('throttle:5,1')->name('backups.store');
+    Route::post('/backups/{name}/verify', [BackupController::class, 'verify'])->middleware('throttle:10,1')->name('backups.verify');
+    Route::post('/backups/{name}/download', [BackupController::class, 'download'])->middleware('throttle:5,1')->name('backups.download');
+    Route::delete('/backups/{name}', [BackupController::class, 'destroy'])->middleware('throttle:5,1')->name('backups.destroy');
     Route::get('/security', [SecurityController::class, 'index'])->name('security');
     Route::delete('/security/sessions', [SecurityController::class, 'logoutOtherSessions'])->middleware('throttle:5,1')->name('security.sessions.destroy');
     Route::post('/security/two-factor', [SecurityController::class, 'startTwoFactor'])->middleware('throttle:5,1')->name('security.two-factor.start');

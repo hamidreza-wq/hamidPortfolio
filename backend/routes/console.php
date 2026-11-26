@@ -17,6 +17,8 @@ foreach (['releases', 'github', 'seo'] as $kind) {
 }
 
 Schedule::command('platform:audit')->dailyAt('02:00')->withoutOverlapping(10)->onOneServer();
+Schedule::command('portfolio:backup:create', ['--trigger' => 'scheduled'])
+    ->cron(config('portfolio.backups.schedule'))->withoutOverlapping(30)->onOneServer();
 Schedule::command('platform:digest')->dailyAt('08:00')->withoutOverlapping(5)->onOneServer();
 Schedule::call(fn () => PageView::where('viewed_at', '<', now()->subDays(config('portfolio.analytics_retention_days')))->delete())
     ->weekly()->name('analytics:prune')->withoutOverlapping(10)->onOneServer();

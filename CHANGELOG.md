@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Added a Backups page (`/admin/backups`). Each backup is one ZIP in private
+  storage with every database table's rows (except sessions, cache and jobs)
+  and every uploaded image and font, plus a manifest of row counts and SHA-256
+  checksums. Every backup is verified by reading it back, and can be checked
+  again later. Backups run daily (`BACKUP_SCHEDULE`, default 03:15 UTC) and on
+  demand. The newest `BACKUP_KEEP` (default 14) are kept, and the newest
+  verified backup is never pruned or deleted. Downloading or deleting needs the
+  password. Failures raise a notification and are written to the activity log.
+- Restore runs from the server shell only:
+  `php artisan portfolio:backup:restore <file>`. It writes and verifies a
+  safety backup first, enables maintenance mode, restores the database in one
+  transaction that rolls back on error, then swaps in the uploaded files. It
+  refuses a backup from a different schema version or one with unsafe paths.
+  `php artisan portfolio:backup:create` creates one from the shell.
+  Backups do not include `.env`. Keep `APP_KEY`, which encrypted columns need.
+
 - Added a Security page (`/admin/security`): read-only protection checks
   (debug mode, environment, HTTPS, session cookie flags, lifetime, throttling,
   headers, two-factor status, admin count), failed sign-in counts and sources,
