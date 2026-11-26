@@ -104,7 +104,8 @@ class RequestSecurityTest extends TestCase
         foreach (['/.env', '/.git/config', '/composer.json', '/phpunit.xml'] as $path) {
             $this->get($path)->assertNotFound();
         }
-        $this->get('/storage/logs/laravel.log')->assertForbidden();
+        // No route exists at all since the private disk's signed-URL routes were switched off.
+        $this->get('/storage/logs/laravel.log')->assertNotFound();
     }
 
     public function test_csrf_is_enforced_when_test_bypass_is_disabled(): void

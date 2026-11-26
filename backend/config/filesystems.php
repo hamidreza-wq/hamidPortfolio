@@ -33,7 +33,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Off: the private disk holds backups, and nothing here uses temporary URLs.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

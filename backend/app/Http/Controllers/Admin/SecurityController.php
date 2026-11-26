@@ -206,6 +206,9 @@ class SecurityController extends Controller
             in_array($sameSite, ['lax', 'strict'], true)
                 ? ['label' => 'SameSite cookie', 'state' => 'ok', 'detail' => 'Set to "'.$sameSite.'", which limits cross-site request forgery.']
                 : ['label' => 'SameSite cookie', 'state' => 'warning', 'detail' => 'Set to "'.($sameSite ?: 'none').'". Use lax or strict.'],
+            config('session.encrypt')
+                ? ['label' => 'Session encryption', 'state' => 'ok', 'detail' => 'Session data is encrypted at rest.']
+                : ['label' => 'Session encryption', 'state' => 'warning', 'detail' => 'Session data is stored unencrypted. Set SESSION_ENCRYPT=true.'],
             $lifetime <= 120
                 ? ['label' => 'Session lifetime', 'state' => 'ok', 'detail' => "Idle sessions expire after {$lifetime} minutes."]
                 : ['label' => 'Session lifetime', 'state' => 'warning', 'detail' => "Idle sessions last {$lifetime} minutes. 120 or less is recommended for an admin area."],
