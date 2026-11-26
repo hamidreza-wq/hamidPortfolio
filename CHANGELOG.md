@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Added a Menus page (`/admin/menus`) for the header and footer.
+  - The header menu stays automatic (sections marked "Show in navigation")
+    until you choose "Customise", which starts from what it currently shows.
+    "Go back to automatic" returns to the old behaviour.
+  - Items can link to a home-page section, a project page, a site page (top
+    of the page, privacy notice, testimonial form) or another website (https
+    or mailto only). They can be relabelled, reordered, disabled, opened in a
+    new tab, and one header item can show as a button.
+  - Items pointing at a hidden section, an unpublished project or a closed
+    testimonial form are left out automatically, and the admin page says why.
+  - The footer menu sits beside the privacy link, which always stays.
+  - Both menus render in the server HTML and in the browser. Dropdowns are
+    not offered on purpose.
+- **Database schema 6 → 7** (additive: a `menu_items` table). With no rows,
+  menus behave exactly as before.
+
 - Media library upgrades:
   - Drag-and-drop or choose up to 10 images at once. The page uploads them
     one per request, so a big batch never exceeds the server's request size

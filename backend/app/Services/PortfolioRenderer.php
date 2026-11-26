@@ -133,13 +133,48 @@ class PortfolioRenderer
                         }
                         $main->appendChild($strip);
                     }
-                    if ($section['is_visible'] && $section['show_in_navigation']) {
+                    if ($section['is_visible'] && $section['show_in_navigation'] && ($payload['menus']['header'] ?? null) === null) {
                         $link = $document->createElement('a');
                         $link->setAttribute('href', '#'.$section['key']);
                         $link->textContent = $section['label'];
                         $nav->appendChild($link);
                     }
                 }
+            }
+            // Custom header menu and footer menu (managed on the Menus page).
+            $menuLink = function (array $item, string $class) use ($document) {
+                $anchor = $document->createElement('a');
+                if ($class !== '') {
+                    $anchor->setAttribute('class', $class);
+                }
+                $anchor->setAttribute('data-menu', '');
+                $anchor->setAttribute('href', $item['href']);
+                if ($item['new_tab']) {
+                    $anchor->setAttribute('target', '_blank');
+                    $anchor->setAttribute('rel', 'noopener noreferrer');
+                }
+                $anchor->textContent = $item['label'];
+
+                return $anchor;
+            };
+            $headerNav = $document->getElementById('primary-navigation');
+            if (is_array($payload['menus']['header'] ?? null) && $headerNav) {
+                $this->replaceHtml($document, $headerNav, '');
+                foreach ($payload['menus']['header'] as $item) {
+                    $headerNav->appendChild($menuLink($item, $item['button'] ? 'nav-contact' : ''));
+                }
+            }
+            $footerMenu = $payload['menus']['footer'] ?? [];
+            $privacyLink = $xpath->query('//footer//*[contains(concat(" ",normalize-space(@class)," ")," privacy-link ")]')->item(0);
+            if ($footerMenu && $privacyLink) {
+                $list = $document->createElement('nav');
+                $list->setAttribute('class', 'footer-menu');
+                $list->setAttribute('data-menu', '');
+                $list->setAttribute('aria-label', 'Footer');
+                foreach ($footerMenu as $item) {
+                    $list->appendChild($menuLink($item, ''));
+                }
+                $privacyLink->parentNode->insertBefore($list, $privacyLink);
             }
             // Social links in the header menu and footer, so they work without JavaScript.
             $social = $payload['social'] ?? [];

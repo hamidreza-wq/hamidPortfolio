@@ -11,6 +11,7 @@ use App\Models\Testimonial;
 use App\Services\ContactSubmissionGuard;
 use App\Services\FontLibrary;
 use App\Services\MediaLibrary;
+use App\Services\MenuBuilder;
 use App\Services\PortfolioRenderer;
 use App\Services\PortfolioSeo;
 use Illuminate\Http\Request;
@@ -148,6 +149,11 @@ class PublicPortfolioController extends Controller
                 'linkedin' => $settings->linkedin_url,
             ],
             'social' => SocialLink::visible()->get()->map->toPayload()->all(),
+            // null header = automatic (built from sections), as before.
+            'menus' => [
+                'header' => app(MenuBuilder::class)->isHeaderCustom() ? app(MenuBuilder::class)->links('header') : null,
+                'footer' => app(MenuBuilder::class)->links('footer'),
+            ],
             'settings' => [
                 'footer_text' => $settings->footer_text,
                 'site_title' => $settings->site_title,

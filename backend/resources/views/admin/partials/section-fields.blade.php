@@ -14,6 +14,6 @@
   @include('admin.partials.media-select', ['id' => $prefix.'-background', 'name' => 'background_media_id', 'value' => old('background_media_id', $section?->background_media_id), 'label' => 'Background image'])
   <div class="field full">
     <input type="hidden" name="is_visible" value="0"><label class="checkbox-row"><input type="checkbox" name="is_visible" value="1" @checked(old('is_visible', $section?->is_visible ?? false))> Publish this section</label>
-    <input type="hidden" name="show_in_navigation" value="0"><label class="checkbox-row"><input type="checkbox" name="show_in_navigation" value="1" @checked(old('show_in_navigation', $section?->show_in_navigation ?? true))> Show in navigation when published</label>
+    <input type="hidden" name="show_in_navigation" value="0"><label class="checkbox-row"><input type="checkbox" name="show_in_navigation" value="1" @checked(old('show_in_navigation', $section?->show_in_navigation ?? true))> Show in navigation when published</label><span class="field-hint">Applies while the header menu is automatic. A custom menu is edited on the <a href="{{ route('admin.menus.index') }}">Menus</a> page.</span>
   </div>
 </div>
