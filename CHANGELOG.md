@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- Added a Themes page (`/admin/themes`). A theme is the whole look: five
+  colours, body and heading fonts, content width, section spacing, card
+  corners, interface motion and the particle field.
+  - Eight ready-made themes: Cosmic (the original, used as "restore
+    default"), Midnight blue, Emerald, Ember, Graphite, Editorial, Terminal
+    and Rose.
+  - Each theme can be previewed live (nothing is published), applied,
+    duplicated to edit, exported as a JSON file, or imported.
+  - "Save as a theme" captures the live look.
+  - Applying a theme changes only the look, never content, and saves the
+    previous look to Content history first, so it can be restored there.
+  - Imported files are strict: only known keys are read, every value is
+    validated, and uploaded fonts must exist on this site.
+  - All ready-made themes are dark on purpose: the public stylesheet
+    hard-codes about 300 light-on-dark colours, so a light background would
+    make text unreadable until the stylesheet uses colour variables.
+  - Existing colour-only presets still work, keeping the current fonts and
+    layout when applied.
+- **Database schema 7 → 8** (additive: a nullable `theme_presets.settings`
+  column).
+
 - Added a Menus page (`/admin/menus`) for the header and footer.
   - The header menu stays automatic (sections marked "Show in navigation")
     until you choose "Customise", which starts from what it currently shows.

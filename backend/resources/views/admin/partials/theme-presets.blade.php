@@ -1,6 +1,6 @@
 <section class="editor-card" style="margin-bottom:16px">
   <h2>Color presets</h2>
-  <p class="card-help">Load a saved palette into the editor draft. Only Publish changes updates the public site. Saving a preset records the current draft colors.</p>
+  <p class="card-help">Whole-site themes (fonts, layout and motion too) are on the <a href="{{ route('admin.themes.index') }}">Themes</a> page. Load a saved palette into the editor draft. Only Publish changes updates the public site. Saving a preset records the current draft colors.</p>
   <div class="grid" style="gap:8px;margin-bottom:12px">
     @foreach(\App\Models\ThemePreset::orderBy('name')->get() as $preset)
       <div style="display:flex;gap:8px;flex-wrap:wrap">

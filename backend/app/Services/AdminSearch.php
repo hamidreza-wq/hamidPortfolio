@@ -44,6 +44,7 @@ class AdminSearch
         ['Menus', 'admin.menus.index', 'menu navigation header footer links nav order button'],
         ['Content history', 'admin.revisions.index', 'revisions restore undo previous version history'],
         ['Media library', 'admin.media.index', 'images uploads pictures alt text gallery'],
+        ['Themes', 'admin.themes.index', 'theme design colours colors palette dark look style restore default import export preset'],
         ['Fonts', 'admin.fonts.index', 'typography typeface woff upload licence license'],
         ['Contact inbox', 'admin.inbox.index', 'messages email enquiries contact form'],
         ['Software updates', 'admin.platform.updates', 'release version upgrade deploy laravel php dependencies'],

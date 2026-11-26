@@ -43,6 +43,6 @@ class ThemePresetController extends Controller
             $themePreset->delete();
         });
 
-        return redirect()->route('admin.site-editor.edit')->with('status', 'Preset removed. Published colors have not changed.');
+        return back()->with('status', 'Theme removed. The published look has not changed.');
     }
 }

@@ -112,6 +112,7 @@
     <a class="nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}" href="{{ route('admin.sections.index') }}"><span class="nav-icon">+</span>Sections</a>
     <a class="nav-link {{ request()->routeIs('admin.revisions.*') ? 'active' : '' }}" href="{{ route('admin.revisions.index') }}"><span class="nav-icon">↶</span>Content history</a>
     <p class="nav-label">LIBRARY</p>
+    <a class="nav-link {{ request()->routeIs('admin.themes.*') ? 'active' : '' }}" href="{{ route('admin.themes.index') }}"><span class="nav-icon">◐</span>Themes</a>
     <a class="nav-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}" href="{{ route('admin.media.index') }}"><span class="nav-icon">▤</span>Media library</a>
     <a class="nav-link {{ request()->routeIs('admin.fonts.*') ? 'active' : '' }}" href="{{ route('admin.fonts.index') }}"><span class="nav-icon">Aa</span>Fonts</a>
     <a class="nav-link {{ request()->routeIs('admin.menus.*') ? 'active' : '' }}" href="{{ route('admin.menus.index') }}"><span class="nav-icon">≡</span>Menus</a>
