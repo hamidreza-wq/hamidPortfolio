@@ -45,6 +45,17 @@ class PageManagerTest extends TestCase
         $this->get('/sitemap.xml')->assertSee('http://localhost/services');
     }
 
+    public function test_pages_follow_the_active_theme_including_light_themes(): void
+    {
+        $this->create();
+        $this->actingAs($this->admin)->post('/admin/themes/apply', ['source' => 'built-in:daylight'])->assertSessionHas('status');
+
+        $html = $this->get('/services')->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('~<html lang="[^"]*"[^>]*data-scheme="light"~', $html, 'themed on <html> like the other public pages');
+        $this->assertStringContainsString('<body class="project-detail-page">', $html, 'no stale per-page colour overrides');
+        $this->assertStringNotContainsString('#c9c5d4', $html, 'no hard-coded light-on-dark text colour');
+    }
+
     public function test_drafts_and_scheduled_pages_are_hidden_but_previewable(): void
     {
         $this->create(['title' => 'Draft one', 'status' => 'draft']);
