@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\FontController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\Admin\SiteEditorController;
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::get('/github-projects', [PlatformController::class, 'github'])->name('platform.github');
     Route::get('/seo-monitor', [PlatformController::class, 'seo'])->name('platform.seo');
     Route::get('/notifications', [PlatformController::class, 'notifications'])->name('platform.notifications');
+    Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:admin-search')->name('search');
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/backups', [BackupController::class, 'store'])->middleware('throttle:5,1')->name('backups.store');
     Route::post('/backups/{name}/verify', [BackupController::class, 'verify'])->middleware('throttle:10,1')->name('backups.verify');
