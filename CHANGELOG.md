@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Security review of the dashboard stack, written up in `SECURITY-REVIEW.md`.
+  Fixes:
+  - Symfony 7.4.23 → 7.4.24 (http-kernel, routing and mailer advisories).
+  - Switched off the private disk's unused signed-URL `/storage/{path}` routes.
+  - Session data is encrypted by default (`SESSION_ENCRYPT=true`), and the
+    Security page reports it.
+  - `Cross-Origin-Opener-Policy: same-origin` on every response.
+  - Opt-in `HSTS_INCLUDE_SUBDOMAINS`.
+  - The report lists the open risks and the steps to take after deploying.
+
 - Added a Privacy page (`/admin/privacy`).
   - **Inventory** of the personal data the site holds (contact messages,
     testimonials, activity-log IP addresses, admin sessions, pageview counts,
