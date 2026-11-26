@@ -133,7 +133,7 @@ class PlatformIntegrationTest extends TestCase
 
     public function test_update_action_requires_password_verified_bytes_and_rejects_double_dispatch(): void
     {
-        $candidate = $this->signedCandidate(['schema_to' => 3]);
+        $candidate = $this->signedCandidate(['schema_to' => config('platform.schema_version')]);
         app(Releases::class)->prepare($candidate);
         $admin = User::factory()->create(['is_admin' => true, 'password' => 'Valid-admin-password!']);
         $this->actingAs($admin);
@@ -161,7 +161,7 @@ class PlatformIntegrationTest extends TestCase
 
     public function test_unconfigured_update_does_not_change_verified_candidate_state(): void
     {
-        $candidate = $this->signedCandidate(['schema_to' => 3]);
+        $candidate = $this->signedCandidate(['schema_to' => config('platform.schema_version')]);
         app(Releases::class)->prepare($candidate);
         $this->actingAs(User::factory()->create(['is_admin' => true, 'password' => 'Valid-admin-password!']));
         config(['platform.deployment.enabled' => false]);
@@ -174,7 +174,7 @@ class PlatformIntegrationTest extends TestCase
     #[DataProvider('deploymentOutcomes')]
     public function test_deployment_refresh_records_terminal_outcomes_once(string $conclusion, string $state, string $runStatus): void
     {
-        $candidate = $this->signedCandidate(['schema_to' => 3]);
+        $candidate = $this->signedCandidate(['schema_to' => config('platform.schema_version')]);
         $candidate->update(['status' => 'deployment_requested', 'inspection' => [
             'deployment_request' => ['request_id' => 'dd32f6b2-e9c2-42d8-921c-cd21f31b61af'],
         ]]);
@@ -832,7 +832,7 @@ class PlatformIntegrationTest extends TestCase
             'notes' => 'Trusted release notes', 'released_at' => '2026-11-01T00:00:00Z',
             'asset' => ['name' => 'portfolio.zip', 'sha256' => hash('sha256', $artifact)],
             'minimum_php' => '8.3.0', 'required_extensions' => ['pdo_mysql'],
-            'mysql_min' => '8.0.0', 'mysql_max_exclusive' => '100.0.0', 'schema_from' => 3, 'schema_to' => 4,
+            'mysql_min' => '8.0.0', 'mysql_max_exclusive' => '100.0.0', 'schema_from' => config('platform.schema_version'), 'schema_to' => config('platform.schema_version') + 1,
             'database_engine' => str_contains(strtolower(DB::selectOne('SELECT VERSION() AS version')->version), 'mariadb') ? 'mariadb' : 'mysql',
             ...$overrides,
         ];

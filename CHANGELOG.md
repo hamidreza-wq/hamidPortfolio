@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+- Added a Security page (`/admin/security`): read-only protection checks
+  (debug mode, environment, HTTPS, session cookie flags, lifetime, throttling,
+  headers, two-factor status, admin count), failed sign-in counts and sources,
+  your signed-in sessions with password-confirmed "sign out other sessions",
+  and a filterable, paginated activity log.
+- Added optional two-factor sign-in (TOTP, works with any authenticator app):
+  QR or manual-key setup confirmed with a code, 8 single-use recovery codes,
+  replay protection, a 5-minute challenge window, throttled attempts, and
+  disabling requires the password plus a current code. The secret and recovery
+  codes are encrypted at rest. Lockout recovery from the server shell:
+  `php artisan portfolio:two-factor:reset <email>`.
+- Overview: "Review SEO" now opens SEO monitoring, and repeated actions in
+  Recent changes are grouped (for example "Media Updated × 8").
+- New dependency: `bacon/bacon-qr-code` (server-side QR rendering, so the
+  secret is never sent to a third party).
+- **Database schema 3 → 4** (additive, nullable `users` columns). The one-click
+  updater refuses schema-changing releases by design, so this release must be
+  deployed as a reviewed migration: back up the database, deploy the code, then
+  `php artisan migrate:status` and `php artisan migrate --force`. The release
+  packaging scripts (`scripts/package-release.py`, `scripts/verify-release.mjs`)
+  still hard-code schema 3 and need updating before a signed 3 → 4 release.
+
 ## 0.3.2 - 2026-11-23
 
 - Project cards on the home page now link straight to each project page, with

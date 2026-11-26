@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\Admin\SiteEditorController;
 use App\Http\Controllers\Admin\ThemePresetController;
 use App\Http\Controllers\ProjectDetailController;
@@ -36,6 +37,8 @@ Route::get('/{asset}', [PublicPortfolioController::class, 'asset'])
 Route::middleware('guest')->group(function () {
     Route::get('/admin/login', [AuthController::class, 'create'])->name('login');
     Route::post('/admin/login', [AuthController::class, 'store'])->middleware('throttle:5,1')->name('admin.login');
+    Route::get('/admin/login/two-factor', [AuthController::class, 'challenge'])->name('admin.two-factor');
+    Route::post('/admin/login/two-factor', [AuthController::class, 'verifyChallenge'])->middleware('throttle:10,1')->name('admin.two-factor.verify');
 });
 
 Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -49,6 +52,12 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::get('/github-projects', [PlatformController::class, 'github'])->name('platform.github');
     Route::get('/seo-monitor', [PlatformController::class, 'seo'])->name('platform.seo');
     Route::get('/notifications', [PlatformController::class, 'notifications'])->name('platform.notifications');
+    Route::get('/security', [SecurityController::class, 'index'])->name('security');
+    Route::delete('/security/sessions', [SecurityController::class, 'logoutOtherSessions'])->middleware('throttle:5,1')->name('security.sessions.destroy');
+    Route::post('/security/two-factor', [SecurityController::class, 'startTwoFactor'])->middleware('throttle:5,1')->name('security.two-factor.start');
+    Route::post('/security/two-factor/confirm', [SecurityController::class, 'confirmTwoFactor'])->middleware('throttle:5,1')->name('security.two-factor.confirm');
+    Route::post('/security/two-factor/recovery-codes', [SecurityController::class, 'regenerateRecoveryCodes'])->middleware('throttle:5,1')->name('security.two-factor.recovery');
+    Route::delete('/security/two-factor', [SecurityController::class, 'disableTwoFactor'])->middleware('throttle:5,1')->name('security.two-factor.disable');
     Route::put('/notification-preferences', [PlatformController::class, 'preferences'])->name('platform.preferences');
     Route::post('/platform/check/{kind}', [PlatformController::class, 'scan'])->middleware('throttle:6,1')->name('platform.scan');
     Route::post('/updates/{releaseCandidate}/verify', [PlatformController::class, 'prepare'])->middleware('throttle:3,1')->name('platform.prepare');

@@ -62,7 +62,7 @@ class DeploymentTest extends TestCase
     public function test_schema_changing_releases_are_not_dispatched(): void
     {
         $candidate = $this->candidate();
-        $candidate->manifest = ['schema_from' => 3, 'schema_to' => 4];
+        $candidate->manifest = ['schema_from' => config('platform.schema_version'), 'schema_to' => config('platform.schema_version') + 1];
         try {
             app(Deployment::class)->dispatch($candidate);
             $this->fail('Schema-changing deployment accepted');
@@ -133,7 +133,7 @@ class DeploymentTest extends TestCase
     private function candidate(): ReleaseCandidate
     {
         return new ReleaseCandidate(['tag' => 'v1.0.0', 'artifact_sha256' => str_repeat('a', 64),
-            'manifest' => ['schema_from' => 3, 'schema_to' => 3]]);
+            'manifest' => ['schema_from' => config('platform.schema_version'), 'schema_to' => config('platform.schema_version')]]);
     }
 
     private function fakeGithub(bool $protected = true): void
