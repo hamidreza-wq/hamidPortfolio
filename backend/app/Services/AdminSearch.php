@@ -20,6 +20,12 @@ use Illuminate\Support\Str;
  */
 class AdminSearch
 {
+    /** The permission each result type needs; null means everyone. */
+    private const NEEDS = [
+        'pages' => null, 'projects' => 'content', 'site_pages' => 'content', 'sections' => 'content', 'settings' => 'content',
+        'skills' => 'content', 'testimonials' => 'messages', 'media' => 'media', 'fonts' => 'design', 'messages' => 'messages', 'help' => null,
+    ];
+
     public const TYPES = [
         'pages' => 'Dashboard pages',
         'projects' => 'Projects',
@@ -78,6 +84,10 @@ class AdminSearch
             if ($only !== null && $only !== $type) {
                 continue;
             }
+            $needs = array_key_exists($type, self::NEEDS) ? self::NEEDS[$type] : 'owner-only';
+            if ($needs !== null && ! auth()->user()?->hasPermission($needs)) {
+                continue;
+            }
             $items = $this->{$type}($query, $like, $perType);
             if ($items) {
                 $results[$type] = $items;
@@ -92,7 +102,7 @@ class AdminSearch
         $needle = Str::lower($query);
         $matches = [];
         foreach (self::PAGES as [$title, $route, $keywords]) {
-            if (str_contains(Str::lower($title.' '.$keywords), $needle)) {
+            if (str_contains(Str::lower($title.' '.$keywords), $needle) && auth()->user()?->canOpenRoute($route)) {
                 $matches[] = ['title' => $title, 'detail' => 'Dashboard page', 'url' => route($route)];
             }
         }

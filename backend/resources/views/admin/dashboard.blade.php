@@ -4,7 +4,7 @@
 @section('content')
 <div class="page-head">
   <div><p class="eyebrow">YOUR DIGITAL UNIVERSE / OVERVIEW</p><h1>Good to see you, {{ auth()->user()->name }}.</h1><p>A clear snapshot of your portfolio, publishing status, and recent activity.</p></div>
-  <a class="button button-primary" href="{{ route('admin.site-editor.edit') }}">Open live editor <span aria-hidden="true">↗</span></a>
+  @can('content')<a class="button button-primary" href="{{ route('admin.site-editor.edit') }}">Open live editor <span aria-hidden="true">↗</span></a>@endcan
 </div>
 <div class="grid stats">
   <article class="stat-card"><div class="stat-top"><span>All projects</span><span class="stat-mark">▧</span></div><div class="stat-number">{{ $projectCount }}</div><div class="stat-caption">{{ $publishedCount }} published · {{ $draftCount }} draft</div></article>
@@ -14,7 +14,7 @@
 </div>
 <div class="grid dashboard-columns">
   <section class="panel">
-    <div class="panel-head"><h2>Recent changes</h2><a href="{{ route('admin.security') }}">Full activity log →</a></div>
+    <div class="panel-head"><h2>Recent changes</h2>@can('security')<a href="{{ route('admin.security') }}">Full activity log →</a>@endcan</div>
     @if($activity->isEmpty())
       <div class="activity-row"><span class="activity-dot"></span><div class="activity-copy"><strong>Your studio is ready</strong><p>Save your first content update from the live site editor to start the audit trail.</p></div></div>
     @else
@@ -28,13 +28,13 @@
   <section class="panel">
     <div class="panel-head"><h2>Quick actions</h2><span class="status-pill {{ $settings->maintenance_mode ? 'off' : '' }}">{{ $settings->maintenance_mode ? 'Maintenance' : 'Live site' }}</span></div>
     <div class="quick-actions">
-      <a class="quick-action" href="{{ route('admin.site-editor.edit') }}">Edit site appearance<span>Copy, layout, color and typography</span></a>
-      <a class="quick-action" href="{{ route('admin.projects.index') }}">Manage projects<span>Featured work and repository details</span></a>
-      <a class="quick-action" href="{{ route('admin.media.index') }}">Upload an image<span>Manage approved portfolio media</span></a>
-      <a class="quick-action" href="{{ route('admin.inbox.index') }}">Check your inbox<span>{{ $unreadMessages }} unread messages</span></a>
+      @if(auth()->user()->canOpenRoute('admin.site-editor.edit'))<a class="quick-action" href="{{ route('admin.site-editor.edit') }}">Edit site appearance<span>Copy, layout, color and typography</span></a>@endif
+      @if(auth()->user()->canOpenRoute('admin.projects.index'))<a class="quick-action" href="{{ route('admin.projects.index') }}">Manage projects<span>Featured work and repository details</span></a>@endif
+      @if(auth()->user()->canOpenRoute('admin.media.index'))<a class="quick-action" href="{{ route('admin.media.index') }}">Upload an image<span>Manage approved portfolio media</span></a>@endif
+      @if(auth()->user()->canOpenRoute('admin.inbox.index'))<a class="quick-action" href="{{ route('admin.inbox.index') }}">Check your inbox<span>{{ $unreadMessages }} unread messages</span></a>@endif
     </div>
     <div style="margin-top:17px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
-      <div class="panel-head" style="margin-bottom:7px"><h2>Search visibility</h2><a href="{{ route('admin.platform.seo') }}">Review SEO →</a></div>
+      <div class="panel-head" style="margin-bottom:7px"><h2>Search visibility</h2>@can('insight')<a href="{{ route('admin.platform.seo') }}">Review SEO →</a>@endcan</div>
       @if($seoIssues)
         <ul style="padding-left:16px;color:#c3bfce;font-size:10px;line-height:1.75">
           @foreach($seoIssues as $issue)<li>{{ $issue }}</li>@endforeach
@@ -42,7 +42,7 @@
       @else
         <p style="color:#99d9bd;font-size:10px">Basic metadata checks passed. This does not guarantee search engine indexing or rankings.</p>
       @endif
-      <p style="margin:0;color:#9290a2;font-size:9px;line-height:1.75">{{ number_format($pageViews) }} first-party pageviews in the last 30 days. <a href="{{ route('admin.analytics') }}" style="color:#b69bff">View traffic analytics →</a></p>
+      <p style="margin:0;color:#9290a2;font-size:9px;line-height:1.75">{{ number_format($pageViews) }} first-party pageviews in the last 30 days. @can('insight')<a href="{{ route('admin.analytics') }}" style="color:#b69bff">View traffic analytics →</a>@endcan</p>
     </div>
   </section>
 </div>

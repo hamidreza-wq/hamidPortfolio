@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureAdminPermission;
 use App\Http\Middleware\RecordPageView;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecurityHeaders::class);
         $middleware->alias([
             'admin' => EnsureAdmin::class,
+            'admin.permission' => EnsureAdminPermission::class,
             'record.pageview' => RecordPageView::class,
         ]);
     })

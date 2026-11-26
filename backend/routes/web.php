@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AccountSetupController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BackupController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Admin\SocialLinkController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\ThemePresetController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\PublicContactController;
 use App\Http\Controllers\PublicPageController;
@@ -54,10 +56,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/admin/login', [AuthController::class, 'create'])->name('login');
     Route::post('/admin/login', [AuthController::class, 'store'])->middleware('throttle:5,1')->name('admin.login');
     Route::get('/admin/login/two-factor', [AuthController::class, 'challenge'])->name('admin.two-factor');
+    Route::get('/admin/setup/{token}', [AccountSetupController::class, 'show'])->name('admin.setup');
+    Route::post('/admin/setup/{token}', [AccountSetupController::class, 'store'])->middleware('throttle:10,1')->name('admin.setup.store');
     Route::post('/admin/login/two-factor', [AuthController::class, 'verifyChallenge'])->middleware('throttle:10,1')->name('admin.two-factor.verify');
 });
 
-Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'auth.session', 'admin', 'admin.permission'])->prefix('admin')->name('admin.')->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
@@ -156,6 +160,11 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::delete('/pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
     Route::post('/pages/{page}/restore', [PageController::class, 'restore'])->whereNumber('page')->name('pages.restore');
     Route::delete('/pages/{page}/permanently', [PageController::class, 'forceDestroy'])->whereNumber('page')->name('pages.force-destroy');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->middleware('throttle:10,1')->name('users.store');
+    Route::put('/users/{user}/role', [UserController::class, 'updateRole'])->middleware('throttle:10,1')->name('users.role');
+    Route::post('/users/{user}/link', [UserController::class, 'link'])->middleware('throttle:10,1')->name('users.link');
+    Route::delete('/users/{user}', [UserController::class, 'revoke'])->middleware('throttle:10,1')->name('users.revoke');
     Route::get('/inbox', [ContactMessageController::class, 'index'])->name('inbox.index');
     Route::patch('/inbox/{contactMessage}', [ContactMessageController::class, 'update'])->name('inbox.update');
     Route::delete('/inbox/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('inbox.destroy');

@@ -8,7 +8,8 @@
       <span class="brand-copy"><strong>Hamid Portfolio</strong><small>PRIVATE ADMINISTRATION</small></span>
     </a>
     <h1 id="login-title">Welcome back.</h1>
-    <p>Sign in to manage your portfolio. Administrator accounts are created from the server command line.</p>
+    <p>Sign in to manage your portfolio. Accounts are created by the site owner.</p>
+    @if(session('status'))<div class="flash" role="status">{{ session('status') }}</div>@endif
     @if($errors->any())<div class="error-box" role="alert">{{ $errors->first() }}</div>@endif
     <form method="post" action="{{ route('admin.login') }}">
       @csrf
