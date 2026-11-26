@@ -10,6 +10,32 @@ let craft = window.portfolioPayload?.craft ?? fallbackCraft;
 // null means "no managed list" (static fallback page): keep the original GitHub/LinkedIn buttons.
 let social = Array.isArray(window.portfolioPayload?.social) ? window.portfolioPayload.social : null;
 const loadedFonts = new Set();
+let particleColor = [212, 202, 255];
+
+/** WCAG relative luminance of a #rrggbb colour. */
+function relativeLuminance(hex) {
+  const [r, g, b] = [1, 3, 5].map((index) => {
+    const channel = parseInt(hex.slice(index, index + 2), 16) / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Resolves a CSS colour (tokens and color-mix included) to [r, g, b] for canvas drawing. */
+function resolveColor(value) {
+  const probe = document.createElement("span");
+  probe.style.color = value;
+  probe.hidden = true;
+  document.body.append(probe);
+  const resolved = getComputedStyle(probe).color;
+  probe.remove();
+  const swatch = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+  if (!swatch) return particleColor;
+  swatch.fillStyle = resolved;
+  swatch.fillRect(0, 0, 1, 1);
+  const [r, g, b, a] = swatch.getImageData(0, 0, 1, 1).data;
+  return a === 0 ? particleColor : [r, g, b];
+}
 
 function safeURL(value) {
   try {
@@ -278,6 +304,13 @@ function applyPortfolioData(data) {
   Object.entries(colorProperties).forEach(([key, property]) => {
     if (/^#[0-9a-f]{6}$/i.test(theme[key] ?? "")) root.style.setProperty(property, theme[key]);
   });
+  // styles.css derives every other colour from these five; a light background switches
+  // the text ramp to its dark-on-light settings. Must match PortfolioRenderer::colorScheme().
+  if (/^#[0-9a-f]{6}$/i.test(theme.background ?? "")) {
+    if (relativeLuminance(theme.background) > 0.4) root.dataset.scheme = "light";
+    else delete root.dataset.scheme;
+  }
+  particleColor = resolveColor("var(--accent-pale)");
   if (/^[\w ,_-]{1,60}$/.test(theme.font_body ?? "")) root.style.setProperty("--sans", `${theme.font_body}, system-ui, sans-serif`);
   if (/^[\w ,_-]{1,60}$/.test(theme.font_heading ?? "")) root.style.setProperty("--heading", `${theme.font_heading}, system-ui, sans-serif`);
   if (Number.isFinite(Number(theme.max_width))) root.style.setProperty("--content-width", `${Math.min(1600, Math.max(720, Number(theme.max_width)))}px`);
@@ -509,7 +542,7 @@ function drawParticles(time) {
     if (particle.y > height + 2) particle.y = -2;
     if (particle.y < -2) particle.y = height + 2;
     context.beginPath();
-    context.fillStyle = `rgba(212, 202, 255, ${particle.alpha * shimmer})`;
+    context.fillStyle = `rgba(${particleColor.join(", ")}, ${particle.alpha * shimmer})`;
     context.arc(particle.x + shiftX, particle.y + shiftY, particle.radius, 0, Math.PI * 2);
     context.fill();
   });

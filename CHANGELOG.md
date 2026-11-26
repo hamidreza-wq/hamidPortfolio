@@ -22,6 +22,25 @@
   and how backups affect it, and adds a "Your rights" section.
 - **Database schema 8 → 9** (additive: two nullable retention columns on
   `portfolio_settings`, defaulting to keep).
+- Light themes are now possible. The public stylesheet derives every colour
+  from a theme's five colours instead of hard-coding about 300 light-on-dark
+  values, so a theme with a light background stays readable.
+  - Text, surfaces, borders, glows, overlays and shadows are CSS custom
+    properties computed with `color-mix()`. A light background (WCAG
+    luminance above 0.4) sets `data-scheme="light"`, which darkens the text
+    ramp, lifts cards towards white and softens shadows.
+  - Three light ready-made themes: Daylight, Paper and Arctic. Every
+    built-in theme passes WCAG AA for body text, muted text, links and
+    buttons, and a test keeps it that way.
+  - The server now writes the theme on `<html>` for the home, project,
+    privacy and testimonial pages, so they are themed before JavaScript
+    runs. Before, the privacy and testimonial pages were always Cosmic.
+  - Cosmic looks the same as before (checked by screenshot at 1440 and
+    390 px). The hero planet, project thumbnails and contact orb keep their
+    fixed illustration colours in every theme.
+  - The testimonial form's error message and the particle field follow the
+    theme too.
+  - No schema change.
 
 - Added a Themes page (`/admin/themes`). A theme is the whole look: five
   colours, body and heading fonts, content width, section spacing, card
@@ -36,9 +55,8 @@
     previous look to Content history first, so it can be restored there.
   - Imported files are strict: only known keys are read, every value is
     validated, and uploaded fonts must exist on this site.
-  - All ready-made themes are dark on purpose: the public stylesheet
-    hard-codes about 300 light-on-dark colours, so a light background would
-    make text unreadable until the stylesheet uses colour variables.
+  - The first eight ready-made themes are dark; light ones follow in the
+    colour-token change below.
   - Existing colour-only presets still work, keeping the current fonts and
     layout when applied.
 - **Database schema 7 → 8** (additive: a nullable `theme_presets.settings`

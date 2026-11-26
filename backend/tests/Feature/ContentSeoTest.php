@@ -35,7 +35,7 @@ class ContentSeoTest extends TestCase
             'details' => 'Detailed verified content <script>alert(1)</script>',
         ]);
         $response = $this->get('/projects/'.$project->slug)->assertOk()
-            ->assertSee('<html lang="fa-IR">', false)
+            ->assertSee('<html lang="fa-IR" style="--night:', false)
             ->assertSee('<title>Verified project title</title>', false)
             ->assertSee('name="description" content="Verified project description."', false)
             ->assertSee('rel="canonical" href="https://portfolio.example/projects/'.$project->slug.'"', false)

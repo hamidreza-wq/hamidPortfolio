@@ -3,12 +3,22 @@
 namespace App\Services;
 
 use App\Models\PortfolioSection;
+use App\Models\PortfolioSetting;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
 
 class PortfolioRenderer
 {
+    /** The five theme colours and the CSS custom properties styles.css reads them from. */
+    public const COLOR_PROPERTIES = [
+        '--night' => 'color_background',
+        '--ink' => 'color_foreground',
+        '--violet' => 'color_primary',
+        '--accent' => 'color_accent',
+        '--cyan' => 'color_cyan',
+    ];
+
     public function render(string $html, array $payload): string
     {
         $document = new DOMDocument('1.0', 'UTF-8');
@@ -217,6 +227,58 @@ class PortfolioRenderer
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
         }
+    }
+
+    /**
+     * The theme as attributes for the <html> tag, so pages are themed before any JavaScript runs.
+     * styles.css derives every other colour token from the five colours set here; data-scheme
+     * switches its text ramp to dark-on-light settings. app.mjs sets the same values.
+     */
+    public function themeAttributes(?PortfolioSetting $settings = null): string
+    {
+        $settings ??= PortfolioSetting::query()->find(1);
+        if (! $settings) {
+            return '';
+        }
+        $properties = [];
+        foreach (self::COLOR_PROPERTIES as $property => $field) {
+            $value = (string) $settings->getAttribute($field);
+            if (preg_match('/^#[0-9a-f]{6}$/i', $value)) {
+                $properties[] = $property.':'.strtolower($value);
+            }
+        }
+        foreach (['--sans' => 'font_body', '--heading' => 'font_heading'] as $property => $field) {
+            $value = (string) $settings->getAttribute($field);
+            if (preg_match('/^[\w ,_-]{1,60}$/', $value)) {
+                $properties[] = $property.':'.$value.', system-ui, sans-serif';
+            }
+        }
+        foreach (['--content-width' => ['max_width', 720, 1600], '--section-spacing' => ['section_spacing', 48, 240], '--card-radius' => ['border_radius', 0, 32]] as $property => [$field, $min, $max]) {
+            if (is_numeric($settings->getAttribute($field))) {
+                $properties[] = $property.':'.min($max, max($min, (int) $settings->getAttribute($field))).'px';
+            }
+        }
+        $attributes = ' style="'.e(implode(';', $properties)).'"';
+        if (self::colorScheme((string) $settings->color_background) === 'light') {
+            $attributes .= ' data-scheme="light"';
+        }
+
+        return $attributes;
+    }
+
+    /** "light" when a background needs dark text (WCAG relative luminance above 0.4). Must match app.mjs. */
+    public static function colorScheme(string $background): string
+    {
+        if (! preg_match('/^#[0-9a-f]{6}$/i', $background)) {
+            return 'dark';
+        }
+        $channels = array_map(function (string $pair) {
+            $channel = hexdec($pair) / 255;
+
+            return $channel <= 0.03928 ? $channel / 12.92 : (($channel + 0.055) / 1.055) ** 2.4;
+        }, str_split(substr($background, 1), 2));
+
+        return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2] > 0.4 ? 'light' : 'dark';
     }
 
     public function githubRepositoriesUrl(string $profileUrl): ?string
