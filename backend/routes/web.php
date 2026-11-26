@@ -14,10 +14,12 @@ use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\Admin\SiteEditorController;
+use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\ThemePresetController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\PublicContactController;
 use App\Http\Controllers\PublicPortfolioController;
+use App\Http\Controllers\PublicTestimonialController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicPortfolioController::class, 'index'])->middleware('record.pageview')->name('portfolio.home');
@@ -30,6 +32,10 @@ Route::get('/media/{mediaAsset}', [MediaController::class, 'show'])->name('media
 Route::post('/contact', [PublicContactController::class, 'store'])
     ->middleware('throttle:3,10')
     ->name('contact.store');
+Route::get('/testimonials/new', [PublicTestimonialController::class, 'create'])->name('testimonials.create');
+Route::post('/testimonials', [PublicTestimonialController::class, 'store'])
+    ->middleware('throttle:3,10')
+    ->name('testimonials.store');
 Route::get('/preview', [PublicPortfolioController::class, 'preview'])
     ->middleware(['auth', 'auth.session', 'admin'])
     ->name('portfolio.preview');
@@ -96,6 +102,12 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::post('/fonts', [FontController::class, 'store'])->name('fonts.store');
     Route::put('/fonts/{fontAsset}', [FontController::class, 'update'])->name('fonts.update');
     Route::delete('/fonts/{fontAsset}', [FontController::class, 'destroy'])->name('fonts.destroy');
+    Route::get('/testimonials', [TestimonialController::class, 'index'])->name('testimonials.index');
+    Route::post('/testimonials', [TestimonialController::class, 'store'])->name('testimonials.store');
+    Route::put('/testimonials/{testimonial}', [TestimonialController::class, 'update'])->name('testimonials.update');
+    Route::patch('/testimonials/{testimonial}/status', [TestimonialController::class, 'moderate'])->name('testimonials.moderate');
+    Route::delete('/testimonials/{testimonial}', [TestimonialController::class, 'destroy'])->name('testimonials.destroy');
+    Route::post('/testimonials/submissions', [TestimonialController::class, 'submissions'])->name('testimonials.submissions');
     Route::get('/inbox', [ContactMessageController::class, 'index'])->name('inbox.index');
     Route::patch('/inbox/{contactMessage}', [ContactMessageController::class, 'update'])->name('inbox.update');
     Route::delete('/inbox/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('inbox.destroy');

@@ -2,6 +2,7 @@
 
 use App\Jobs\RunPlatformMonitor;
 use App\Models\PageView;
+use App\Models\Testimonial;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -20,5 +21,7 @@ Schedule::command('platform:audit')->dailyAt('02:00')->withoutOverlapping(10)->o
 Schedule::command('portfolio:backup:create', ['--trigger' => 'scheduled'])
     ->cron(config('portfolio.backups.schedule'))->withoutOverlapping(30)->onOneServer();
 Schedule::command('platform:digest')->dailyAt('08:00')->withoutOverlapping(5)->onOneServer();
+Schedule::call(fn () => Testimonial::where('status', 'rejected')->where('updated_at', '<', now()->subDays(90))->delete())
+    ->daily()->name('testimonials:prune-rejected')->withoutOverlapping(10)->onOneServer();
 Schedule::call(fn () => PageView::where('viewed_at', '<', now()->subDays(config('portfolio.analytics_retention_days')))->delete())
     ->weekly()->name('analytics:prune')->withoutOverlapping(10)->onOneServer();

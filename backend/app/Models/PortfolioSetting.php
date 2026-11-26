@@ -25,6 +25,7 @@ class PortfolioSetting extends Model
             'animations_enabled' => 'boolean',
             'particles_enabled' => 'boolean',
             'maintenance_mode' => 'boolean',
+            'testimonial_submissions_open' => 'boolean',
             'indexing_enabled' => 'boolean',
             'robots_follow' => 'boolean',
             'max_width' => 'integer',
