@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ContentRevisionController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FontController;
+use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\ProjectController;
@@ -61,6 +62,8 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::get('/seo-monitor', [PlatformController::class, 'seo'])->name('platform.seo');
     Route::get('/notifications', [PlatformController::class, 'notifications'])->name('platform.notifications');
     Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:admin-search')->name('search');
+    Route::get('/health', [HealthController::class, 'index'])->name('health');
+    Route::post('/health/check', [HealthController::class, 'check'])->middleware('throttle:5,1')->name('health.check');
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/backups', [BackupController::class, 'store'])->middleware('throttle:5,1')->name('backups.store');
     Route::post('/backups/{name}/verify', [BackupController::class, 'verify'])->middleware('throttle:10,1')->name('backups.verify');
