@@ -62,6 +62,7 @@ class AdminSearch
         ['SEO monitoring', 'admin.platform.seo', 'search engine optimisation optimization sitemap robots scan findings'],
         ['Notifications', 'admin.platform.notifications', 'alerts warnings email digest preferences'],
         ['Security', 'admin.security', 'two-factor 2fa authenticator password sessions sign-in login failed attempts activity audit log'],
+        ['Self-test', 'admin.self-test', 'self test diagnostics broken links check everything works test site'],
         ['Backups', 'admin.backups.index', 'backup restore recovery download archive'],
         ['Privacy', 'admin.privacy', 'gdpr data protection personal data subject access request export erase delete retention cookies consent'],
         ['Health', 'admin.health', 'status uptime errors logs disk space scheduler cron queue ssl certificate https database'],

@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SecurityController;
+use App\Http\Controllers\Admin\SelfTestController;
 use App\Http\Controllers\Admin\SiteEditorController;
 use App\Http\Controllers\Admin\SocialLinkController;
 use App\Http\Controllers\Admin\TestimonialController;
@@ -76,6 +77,8 @@ Route::middleware(['auth', 'auth.session', 'admin', 'admin.permission'])->prefix
     Route::get('/help/{topic}', [HelpController::class, 'show'])->where('topic', '[a-z]+(?:-[a-z]+)*')->name('help.show');
     Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:admin-search')->name('search');
     Route::get('/health', [HealthController::class, 'index'])->name('health');
+    Route::get('/self-test', [SelfTestController::class, 'index'])->name('self-test');
+    Route::post('/self-test/run', [SelfTestController::class, 'run'])->middleware('throttle:5,10')->name('self-test.run');
     Route::post('/health/check', [HealthController::class, 'check'])->middleware('throttle:5,1')->name('health.check');
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/backups', [BackupController::class, 'store'])->middleware('throttle:5,1')->name('backups.store');

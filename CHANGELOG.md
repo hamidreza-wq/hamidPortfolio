@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+- Added a Self-test page (`/admin/self-test`, the operations permission),
+  plus `php artisan portfolio:self-test`, run every Monday at 04:30.
+  - **Public site crawl**: only `SEO_MONITOR_ORIGIN`, at a pinned IP,
+    without following redirects, and at most 60 addresses. It checks the
+    home page, every published project and page, links and images on the
+    home page, `#section` links, the privacy notice, `/up`, and that
+    `styles.css` and `app.mjs` are served with the right types.
+  - **SEO**: the sitemap and robots.txt, published items missing from the
+    sitemap, missing title, description, canonical or viewport, and images
+    without alt text.
+  - **Forms**: the contact form's address and tokens, and the open
+    testimonial form.
+  - **Uploads**: a generated image is re-encoded, a test font is checked,
+    and a PHP file named `.png` is refused, all in memory and never saved.
+  - **Database**: a test write and read, rolled back.
+  - **Dashboard**: search runs, every admin route has a permission, an owner
+    exists, and who has two-factor on. Plus the mail transport, and every
+    Health check.
+  - **Report**: each result shows where, what happened, severity and what to
+    do, filterable by status. Failures raise a notification that clears when
+    a run passes.
+  - **Not tested, and labelled as such**: JavaScript errors and phone
+    layouts need a browser (`npm run test:browser`), and email delivery isn't
+    tested, to avoid sending real email.
+
 - Admin roles and permissions.
   - Five roles: Owner, Administrator (everything except users), Editor
     (content, design, media), SEO manager (content, analytics, SEO) and
