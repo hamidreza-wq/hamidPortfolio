@@ -51,6 +51,7 @@ class AdminSearch
         ['Notifications', 'admin.platform.notifications', 'alerts warnings email digest preferences'],
         ['Security', 'admin.security', 'two-factor 2fa authenticator password sessions sign-in login failed attempts activity audit log'],
         ['Backups', 'admin.backups.index', 'backup restore recovery download archive'],
+        ['Health', 'admin.health', 'status uptime errors logs disk space scheduler cron queue ssl certificate https database'],
         ['Testimonials', 'admin.testimonials.index', 'reviews praise quotes clients feedback moderation approve'],
     ];
 

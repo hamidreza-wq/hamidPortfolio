@@ -3,8 +3,10 @@
 use App\Jobs\RunPlatformMonitor;
 use App\Models\PageView;
 use App\Models\Testimonial;
+use App\Services\Health\HealthMonitor;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -17,6 +19,10 @@ foreach (['releases', 'github', 'seo'] as $kind) {
         ->withoutOverlapping(5)->onOneServer();
 }
 
+// Lets the Health page tell whether the server cron job is running.
+Schedule::call(fn () => Cache::forever(HealthMonitor::HEARTBEAT_KEY, now()->utc()->toIso8601String()))
+    ->everyMinute()->name('health:heartbeat')->onOneServer();
+Schedule::command('portfolio:health:check')->hourlyAt(7)->withoutOverlapping(10)->onOneServer();
 Schedule::command('platform:audit')->dailyAt('02:00')->withoutOverlapping(10)->onOneServer();
 Schedule::command('portfolio:backup:create', ['--trigger' => 'scheduled'])
     ->cron(config('portfolio.backups.schedule'))->withoutOverlapping(30)->onOneServer();

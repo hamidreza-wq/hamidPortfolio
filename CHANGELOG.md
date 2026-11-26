@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Added a Health page (`/admin/health`) showing healthy, warning or critical
+  for each check.
+  - Server checks run on every page view: database connection and speed,
+    unapplied migrations, PHP version and extensions, errors logged in the last
+    24 hours, writable storage, disk space, cache, scheduler (a once-a-minute
+    heartbeat shows whether the cron job is installed), queue backlog and failed
+    jobs, and the age of the newest verified backup.
+  - Public-site checks run hourly or on demand: HTTP status and response time
+    for the home page, privacy notice, sitemap, robots.txt, `/up` and up to five
+    project pages; HTTPS certificate validity and days to expiry; security
+    headers; and whether the live site serves this installation's version.
+    They only request `SEO_MONITOR_ORIGIN`, at a pinned public IP, without
+    following redirects.
+  - Critical results raise a notification that clears when the check passes.
+    `php artisan portfolio:health:check` runs everything from the shell.
+- Fixed a search test that wrote real backup files into local storage.
+
 - Added a Testimonials manager (`/admin/testimonials`): a review queue
   (waiting, approved, rejected) with approve, reject, edit, feature, order and
   delete, plus adding testimonials received elsewhere. Only approved

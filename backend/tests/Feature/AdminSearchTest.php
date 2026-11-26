@@ -8,6 +8,7 @@ use App\Models\PortfolioSection;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminSearchTest extends TestCase
@@ -17,6 +18,9 @@ class AdminSearchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // One test posts a backup; keep it off the real storage folder.
+        Storage::fake('local');
+        Storage::fake('public');
         $this->seed();
     }
 

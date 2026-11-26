@@ -120,6 +120,7 @@
     <a class="nav-link {{ request()->routeIs('admin.platform.updates') ? 'active' : '' }}" href="{{ route('admin.platform.updates') }}">Software updates</a>
     <a class="nav-link {{ request()->routeIs('admin.platform.github') ? 'active' : '' }}" href="{{ route('admin.platform.github') }}">GitHub projects</a>
     <a class="nav-link {{ request()->routeIs('admin.platform.seo') ? 'active' : '' }}" href="{{ route('admin.platform.seo') }}">SEO monitoring</a>
+    <a class="nav-link {{ request()->routeIs('admin.health*') ? 'active' : '' }}" href="{{ route('admin.health') }}">Health</a>
     <a class="nav-link {{ request()->routeIs('admin.security*') ? 'active' : '' }}" href="{{ route('admin.security') }}">Security</a>
     <a class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}" href="{{ route('admin.backups.index') }}">Backups</a>
     <a class="nav-link {{ request()->routeIs('admin.platform.notifications') ? 'active' : '' }}" href="{{ route('admin.platform.notifications') }}">Notifications <span aria-label="unread notifications">{{ \App\Models\PlatformNotice::visible()->whereNull('read_at')->whereIn('category', \App\Models\NotificationPreference::forUser(auth()->id())->categories)->count() }}</span></a>
