@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Alerts;
 use App\Services\Security\TwoFactor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,6 +47,7 @@ class AuthController extends Controller
                 'action' => 'authentication.failed',
                 'ip_address' => $request->ip(),
             ]);
+            app(Alerts::class)->failedSignIn();
 
             return back()
                 ->withErrors(['email' => 'Those administrator credentials were not accepted.'])
@@ -103,6 +105,7 @@ class AuthController extends Controller
                     'details' => ['remaining' => count($remaining)],
                 ]);
                 RateLimiter::clear($key);
+                app(Alerts::class)->recoveryCodeUsed(count($remaining));
 
                 return $this->completeLogin($request, $user, 'recovery code');
             }
@@ -122,6 +125,7 @@ class AuthController extends Controller
             'action' => 'authentication.two_factor_failed',
             'ip_address' => $request->ip(),
         ]);
+        app(Alerts::class)->failedSignIn();
 
         return back()->withErrors(['code' => 'That code was not accepted. Codes change every 30 seconds.']);
     }

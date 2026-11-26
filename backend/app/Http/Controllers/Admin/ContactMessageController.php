@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\ContactMessage;
+use App\Services\Alerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +53,8 @@ class ContactMessageController extends Controller
             ]);
         });
 
+        app(Alerts::class)->inboxChanged();
+
         return back()->with('status', 'Message updated.');
     }
 
@@ -67,6 +70,8 @@ class ContactMessageController extends Controller
             ]);
             $contactMessage->delete();
         });
+
+        app(Alerts::class)->inboxChanged();
 
         return back()->with('status', 'Message deleted.');
     }

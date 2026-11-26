@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Alerts;
 use App\Services\Security\TwoFactor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -124,6 +125,7 @@ class SecurityController extends Controller
             'two_factor_recovery_codes' => $codes['hashed'],
         ])->save();
         $this->audit($request, 'security.two_factor_enabled');
+        app(Alerts::class)->twoFactorEnabled();
 
         return redirect()->to(route('admin.security').'#two-factor')
             ->with('status', 'Two-factor sign-in is on. Save your recovery codes now; they will not be shown again.')
@@ -165,6 +167,7 @@ class SecurityController extends Controller
             'two_factor_last_step' => null,
         ])->save();
         $this->audit($request, 'security.two_factor_disabled');
+        app(Alerts::class)->twoFactorDisabled('from the Security page by '.$request->user()->name);
 
         return redirect()->route('admin.security')
             ->with('status', 'Two-factor sign-in is off. Only your password protects this dashboard now.');

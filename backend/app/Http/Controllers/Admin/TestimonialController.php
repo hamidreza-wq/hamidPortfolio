@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Testimonial;
+use App\Services\Alerts;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -61,6 +62,7 @@ class TestimonialController extends Controller
             'is_featured' => $validated['status'] === 'approved' && $testimonial->is_featured,
         ])->save();
         $this->audit($request, 'testimonial.'.$validated['status'], $testimonial);
+        app(Alerts::class)->testimonialsChanged();
 
         return back()->with('status', match ($validated['status']) {
             'approved' => "{$testimonial->name}'s testimonial is now published.",
@@ -73,6 +75,7 @@ class TestimonialController extends Controller
     {
         $this->audit($request, 'testimonial.deleted', $testimonial);
         $testimonial->delete();
+        app(Alerts::class)->testimonialsChanged();
 
         return back()->with('status', 'Testimonial deleted, including any private email address it held.');
     }

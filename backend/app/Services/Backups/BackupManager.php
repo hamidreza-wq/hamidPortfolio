@@ -163,7 +163,7 @@ class BackupManager
         } catch (Throwable $exception) {
             @unlink($partial);
             AuditLog::create(['user_id' => $userId, 'action' => 'backup.failed', 'details' => ['trigger' => $trigger, 'error' => $exception->getMessage()]]);
-            $this->notices->put(self::NOTICE_KEY, 'updates', 'high', 'Backup failed',
+            $this->notices->put(self::NOTICE_KEY, 'backups', 'high', 'Backup failed',
                 'The '.$trigger.' backup did not complete: '.$exception->getMessage(), 'admin.backups.index');
 
             throw $exception;
