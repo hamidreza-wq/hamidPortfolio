@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ContentRevisionController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FontController;
 use App\Http\Controllers\Admin\HealthController;
+use App\Http\Controllers\Admin\HelpController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PlatformController;
@@ -65,6 +66,8 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::get('/github-projects', [PlatformController::class, 'github'])->name('platform.github');
     Route::get('/seo-monitor', [PlatformController::class, 'seo'])->name('platform.seo');
     Route::get('/notifications', [PlatformController::class, 'notifications'])->name('platform.notifications');
+    Route::get('/help', [HelpController::class, 'index'])->name('help.index');
+    Route::get('/help/{topic}', [HelpController::class, 'show'])->where('topic', '[a-z]+(?:-[a-z]+)*')->name('help.show');
     Route::get('/search', [SearchController::class, 'index'])->middleware('throttle:admin-search')->name('search');
     Route::get('/health', [HealthController::class, 'index'])->name('health');
     Route::post('/health/check', [HealthController::class, 'check'])->middleware('throttle:5,1')->name('health.check');
