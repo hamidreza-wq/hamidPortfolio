@@ -2,7 +2,7 @@
 @section('title', 'Content history')
 @section('breadcrumb', 'Content history')
 @section('content')
-<div class="page-head"><div><p class="eyebrow">REVISION HISTORY / EXPLICIT RESTORATION</p><h1>Content history</h1><p>Site revisions include profile, SEO, theme, sections and skills. Project revisions include the full project. Restoring publishes that snapshot immediately, and preserves the replaced content as a new revision. Media files are referenced, never copied or deleted.</p></div></div>
+<div class="page-head"><div><p class="eyebrow">REVISION HISTORY / EXPLICIT RESTORATION</p><h1>Content history</h1><p>Site revisions include profile, SEO, theme, sections and skills. Project and page revisions include the whole project or page. Restoring publishes that snapshot immediately, and preserves the replaced content as a new revision. Media files are referenced, never copied or deleted.</p></div></div>
 @forelse($revisions as $revision)
 <section class="editor-card">
   <h2>{{ $revision->label }}</h2><p>{{ $revision->created_at->format('Y-m-d H:i:s') }} · {{ ucfirst($revision->scope) }} · Revision #{{ $revision->id }}</p>

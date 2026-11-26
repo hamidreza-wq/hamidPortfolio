@@ -23,7 +23,7 @@ class AssetUsage
             }
 
             return is_string($value) && (str_contains($value, $asset->path)
-                || preg_match('~/media/'.preg_quote((string) $asset->id, '~').'(?:[/?#\s"\'<>]|$)~', $value));
+                || preg_match('~/media/'.preg_quote((string) $asset->id, '~').'(?:[/?#\s"\'<>)]|$)~', $value)); // ")" ends a Markdown image in a page body
         });
     }
 
@@ -35,7 +35,7 @@ class AssetUsage
     private function find(callable $matches): array
     {
         $usage = [];
-        foreach (['portfolio_settings', 'projects', 'portfolio_sections', 'theme_presets', 'content_revisions'] as $table) {
+        foreach (['portfolio_settings', 'projects', 'portfolio_sections', 'theme_presets', 'content_revisions', 'pages'] as $table) {
             if (! Schema::hasTable($table)) {
                 continue;
             }

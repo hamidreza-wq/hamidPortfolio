@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\HelpController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MenuController;
+use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\PrivacyController;
 use App\Http\Controllers\Admin\ProjectController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\ThemePresetController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\PublicContactController;
+use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\PublicPortfolioController;
 use App\Http\Controllers\PublicTestimonialController;
 use Illuminate\Support\Facades\Route;
@@ -143,7 +145,24 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::put('/social/{socialLink}', [SocialLinkController::class, 'update'])->name('social.update');
     Route::patch('/social/{socialLink}/move', [SocialLinkController::class, 'move'])->name('social.move');
     Route::delete('/social/{socialLink}', [SocialLinkController::class, 'destroy'])->name('social.destroy');
+    Route::get('/pages', [PageController::class, 'index'])->name('pages.index');
+    Route::get('/pages/create', [PageController::class, 'create'])->name('pages.create');
+    Route::post('/pages', [PageController::class, 'store'])->name('pages.store');
+    Route::get('/pages/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
+    Route::get('/pages/{page}/preview', [PageController::class, 'preview'])->name('pages.preview');
+    Route::put('/pages/{page}', [PageController::class, 'update'])->name('pages.update');
+    Route::post('/pages/{page}/duplicate', [PageController::class, 'duplicate'])->name('pages.duplicate');
+    Route::delete('/pages/{page}', [PageController::class, 'destroy'])->name('pages.destroy');
+    Route::post('/pages/{page}/restore', [PageController::class, 'restore'])->whereNumber('page')->name('pages.restore');
+    Route::delete('/pages/{page}/permanently', [PageController::class, 'forceDestroy'])->whereNumber('page')->name('pages.force-destroy');
     Route::get('/inbox', [ContactMessageController::class, 'index'])->name('inbox.index');
     Route::patch('/inbox/{contactMessage}', [ContactMessageController::class, 'update'])->name('inbox.update');
     Route::delete('/inbox/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('inbox.destroy');
 });
+
+// Standalone pages live at the top level. Registered last, and the pattern
+// excludes every reserved address, so a page can never hide an existing route.
+Route::get('/{pageSlug}', [PublicPageController::class, 'show'])
+    ->where('pageSlug', '(?!(?:admin|api|app|contact|favicon|fonts|home|index|login|logout|media|pages|preview|privacy|projects|robots|sitemap|storage|styles|testimonials|up|portfolio-data|build|vendor|assets|public)$)[a-z0-9]+(?:-[a-z0-9]+)*')
+    ->middleware('record.pageview')
+    ->name('portfolio.pages.show');

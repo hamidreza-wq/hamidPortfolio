@@ -108,6 +108,7 @@
     <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><span class="nav-icon">◈</span>Overview</a>
     <a class="nav-link {{ request()->routeIs('admin.analytics*') ? 'active' : '' }}" href="{{ route('admin.analytics') }}"><span class="nav-icon">⌁</span>Analytics</a>
     <a class="nav-link {{ request()->routeIs('admin.site-editor.*') ? 'active' : '' }}" href="{{ route('admin.site-editor.edit') }}"><span class="nav-icon">◉</span>Live site editor</a>
+    <a class="nav-link {{ request()->routeIs('admin.pages.*') ? 'active' : '' }}" href="{{ route('admin.pages.index') }}"><span class="nav-icon">▭</span>Pages</a>
     <a class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}" href="{{ route('admin.projects.index') }}"><span class="nav-icon">▧</span>Projects</a>
     <a class="nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}" href="{{ route('admin.sections.index') }}"><span class="nav-icon">+</span>Sections</a>
     <a class="nav-link {{ request()->routeIs('admin.revisions.*') ? 'active' : '' }}" href="{{ route('admin.revisions.index') }}"><span class="nav-icon">↶</span>Content history</a>

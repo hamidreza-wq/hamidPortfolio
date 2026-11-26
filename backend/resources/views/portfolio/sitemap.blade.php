@@ -5,5 +5,8 @@
 @foreach($projects as $project)
 <url><loc>{{ $baseUrl }}/projects/{{ $project->slug }}</loc><lastmod>{{ $project->updated_at->toAtomString() }}</lastmod></url>
 @endforeach
+@foreach($pages as $page)
+<url><loc>{{ $baseUrl }}/{{ $page->slug }}</loc><lastmod>{{ $page->updated_at->toAtomString() }}</lastmod></url>
+@endforeach
 @endif
 </urlset>

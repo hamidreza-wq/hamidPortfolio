@@ -19,6 +19,7 @@ class HelpCentre
         'getting-started' => ['Getting started', 'A tour of the dashboard and the first things to set up.', 'Start here', ['admin.dashboard']],
         'search' => ['Searching the dashboard', 'Find any page, project, image or message with Ctrl K.', 'Start here', ['admin.search']],
         'live-editor' => ['Live site editor', 'Change text, section order, colours, fonts and search details with a live preview.', 'Your site', ['admin.site-editor.edit']],
+        'pages' => ['Pages', 'Write standalone pages, schedule them, and add them to a menu.', 'Your site', ['admin.pages.index', 'admin.pages.create', 'admin.pages.edit', 'admin.pages.preview']],
         'projects' => ['Projects', 'Add, edit, publish and order the work shown on your portfolio.', 'Your site', ['admin.projects.index']],
         'sections' => ['Sections', 'Add experience, education, services, testimonials or custom sections.', 'Your site', ['admin.sections.index']],
         'menus' => ['Menus', 'Choose the links in the header and footer.', 'Your site', ['admin.menus.index']],
