@@ -1,11 +1,18 @@
 import { createHash, createPublicKey, verify } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const [directory, tag, digest, installed] = process.argv.slice(2);
 if (!/^v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(tag)
     || !/^[a-f0-9]{64}$/.test(digest)) {
   throw new Error('Invalid release identity');
 }
+// One-click deployment only accepts schema-preserving releases at the schema of
+// the trusted checkout running this script (the application's own constant).
+const config = readFileSync(fileURLToPath(new URL('../backend/config/platform.php', import.meta.url)), 'utf8');
+const schemaMatch = config.match(/'schema_version'\s*=>\s*(\d+)\s*,/);
+if (!schemaMatch) throw new Error('platform.schema_version not found');
+const schema = Number(schemaMatch[1]);
 const raw = readFileSync(`${directory}/portfolio-manifest.json`);
 const signature = Buffer.from(readFileSync(`${directory}/portfolio-manifest.sig`, 'utf8').trim(), 'base64');
 const publicBytes = Buffer.from(process.env.RELEASE_PUBLIC_KEY ?? '', 'base64');
@@ -18,7 +25,7 @@ const manifest = JSON.parse(raw);
 if (manifest.repository !== 'hamidreza-wq/hamidPortfolio' || manifest.tag !== tag
     || manifest.version !== tag.slice(1) || manifest.asset?.sha256 !== digest
     || manifest.asset?.name !== 'portfolio.zip'
-    || manifest.schema_from !== 3 || manifest.schema_to !== 3
+    || manifest.schema_from !== schema || manifest.schema_to !== schema
     || typeof manifest.minimum_php !== 'string'
     || !Array.isArray(manifest.required_extensions)
     || !['mysql', 'mariadb'].includes(manifest.database_engine)) {

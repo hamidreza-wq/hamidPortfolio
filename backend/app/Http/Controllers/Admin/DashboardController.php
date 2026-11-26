@@ -10,6 +10,7 @@ use App\Models\PageView;
 use App\Models\PortfolioSection;
 use App\Models\PortfolioSetting;
 use App\Models\Project;
+use Illuminate\Support\Collection;
 
 class DashboardController extends Controller
 {
@@ -49,7 +50,32 @@ class DashboardController extends Controller
             'settings' => $settings,
             'seoIssues' => $seoIssues,
             'recentMessages' => ContactMessage::latest()->limit(5)->get(),
-            'activity' => AuditLog::with('user')->latest()->limit(8)->get(),
+            'activity' => $this->groupedActivity(),
         ]);
+    }
+
+    /**
+     * Collapse runs of the same action by the same user (for example eight
+     * consecutive media saves) into one row, so the overview stays readable.
+     *
+     * @return Collection<int, array{item: AuditLog, count: int}>
+     */
+    private function groupedActivity(int $groups = 8)
+    {
+        $grouped = collect();
+        foreach (AuditLog::with('user')->latest()->latest('id')->limit(60)->get() as $item) {
+            $last = $grouped->last();
+            if ($last && $last['item']->action === $item->action && $last['item']->user_id === $item->user_id) {
+                $grouped->put($grouped->count() - 1, ['item' => $last['item'], 'count' => $last['count'] + 1]);
+
+                continue;
+            }
+            if ($grouped->count() === $groups) {
+                break;
+            }
+            $grouped->push(['item' => $item, 'count' => 1]);
+        }
+
+        return $grouped;
     }
 }

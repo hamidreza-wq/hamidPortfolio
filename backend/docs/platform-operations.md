@@ -375,6 +375,14 @@ python scripts\package-release.py C:\private\release mysql 8.0.0 9.0.0
 php scripts\sign-release.php C:\private\release C:\private\release-signing.private
 ```
 
+The manifest's `schema_to` is read from `platform.schema_version` in
+`backend/config/platform.php`. For a release that adds migrations, pass the
+previous schema as a fifth argument, for example `... mysql 8.0.0 9.0.0 3` for a
+3 → 4 release. Such a release is listed for review but never dispatched by the
+one-click updater; deploy it as a reviewed migration (backup, deploy, then
+`php artisan migrate --force`). `scripts/verify-release.mjs` likewise reads the
+schema from the trusted checkout and only accepts schema-preserving releases.
+
 Select actual database-family bounds, not the illustrative MySQL bounds above.
 The signing key file contains a base64 Ed25519 secret key and stays outside the
 application and production host. Publish the ZIP, exact manifest and signature

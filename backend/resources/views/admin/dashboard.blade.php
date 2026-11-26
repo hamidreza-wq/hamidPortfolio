@@ -14,13 +14,13 @@
 </div>
 <div class="grid dashboard-columns">
   <section class="panel">
-    <div class="panel-head"><h2>Recent changes</h2><a href="{{ route('admin.site-editor.edit') }}">Open editor →</a></div>
+    <div class="panel-head"><h2>Recent changes</h2><a href="{{ route('admin.security') }}">Full activity log →</a></div>
     @if($activity->isEmpty())
       <div class="activity-row"><span class="activity-dot"></span><div class="activity-copy"><strong>Your studio is ready</strong><p>Save your first content update from the live site editor to start the audit trail.</p></div></div>
     @else
       <div class="activity-list">
-        @foreach($activity as $item)
-          <div class="activity-row"><span class="activity-dot"></span><div class="activity-copy"><strong>{{ str($item->action)->replace('.', ' ')->headline() }}</strong><p>{{ $item->user?->name ?? 'System' }}@if($item->details && isset($item->details['name'])) · {{ $item->details['name'] }}@endif</p></div><time class="activity-time">{{ $item->created_at->diffForHumans() }}</time></div>
+        @foreach($activity as ['item' => $item, 'count' => $count])
+          <div class="activity-row"><span class="activity-dot"></span><div class="activity-copy"><strong>{{ str($item->action)->replace('.', ' ')->headline() }}@if($count > 1) <span style="color:#858294;font-weight:400">× {{ $count }}</span>@endif</strong><p>{{ $item->user?->name ?? 'System' }}@if($item->details && isset($item->details['name'])) · {{ $item->details['name'] }}@endif</p></div><time class="activity-time">{{ $item->created_at->diffForHumans() }}</time></div>
         @endforeach
       </div>
     @endif
@@ -34,7 +34,7 @@
       <a class="quick-action" href="{{ route('admin.inbox.index') }}">Check your inbox<span>{{ $unreadMessages }} unread messages</span></a>
     </div>
     <div style="margin-top:17px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
-      <div class="panel-head" style="margin-bottom:7px"><h2>Search visibility</h2><a href="{{ route('admin.site-editor.edit') }}">Review SEO →</a></div>
+      <div class="panel-head" style="margin-bottom:7px"><h2>Search visibility</h2><a href="{{ route('admin.platform.seo') }}">Review SEO →</a></div>
       @if($seoIssues)
         <ul style="padding-left:16px;color:#c3bfce;font-size:10px;line-height:1.75">
           @foreach($seoIssues as $issue)<li>{{ $issue }}</li>@endforeach
