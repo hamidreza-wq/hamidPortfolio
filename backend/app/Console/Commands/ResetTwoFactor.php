@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Alerts;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -36,6 +37,7 @@ class ResetTwoFactor extends Command
             'two_factor_last_step' => null,
         ])->save();
         AuditLog::create(['user_id' => $user->id, 'action' => 'security.two_factor_reset_cli']);
+        app(Alerts::class)->twoFactorDisabled('from the server command line');
         $this->info('Two-factor sign-in is off. Sign in with the password and set it up again from the Security page.');
 
         return self::SUCCESS;

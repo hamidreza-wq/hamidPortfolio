@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PortfolioSetting;
 use App\Models\Testimonial;
+use App\Services\Alerts;
 use App\Services\ContactSubmissionGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -80,6 +81,8 @@ class PublicTestimonialController extends Controller
             'given_on' => now()->toDateString(),
             'ip_hash' => hash_hmac('sha256', $request->ip() ?? 'unknown', (string) config('app.key')),
         ]);
+
+        app(Alerts::class)->testimonialsChanged();
 
         return redirect()->route('testimonials.create')->with('testimonial_sent', true);
     }

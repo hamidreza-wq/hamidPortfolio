@@ -58,22 +58,51 @@ class PlatformController extends Controller
 
     public function notifications(Request $request)
     {
+        $filters = $request->validate([
+            'category' => ['nullable', 'in:'.implode(',', array_keys(NotificationPreference::CATEGORIES))],
+            'show' => ['nullable', 'in:open,unread,all'],
+        ]);
+        $show = $filters['show'] ?? 'open';
+        $notices = PlatformNotice::query()
+            ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category', $category))
+            ->when($show === 'open', fn ($query) => $query->whereNull('resolved_at')->whereNull('dismissed_at'))
+            ->when($show === 'unread', fn ($query) => $query->visible()->whereNull('read_at'))
+            ->orderByRaw('resolved_at IS NULL DESC')
+            ->orderByRaw("FIELD(priority, 'high', 'medium', 'low')")
+            ->latest('last_seen_at')
+            ->paginate(25)->withQueryString();
+
         return view('admin.platform.notifications', [
-            'notices' => PlatformNotice::latest('last_seen_at')->paginate(25),
+            'notices' => $notices,
+            'filters' => ['category' => $filters['category'] ?? null, 'show' => $show],
+            'categories' => NotificationPreference::CATEGORIES,
+            'unreadCounts' => PlatformNotice::visible()->whereNull('read_at')->selectRaw('category, count(*) as total')->groupBy('category')->pluck('total', 'category'),
             'preferences' => NotificationPreference::forUser($request->user()->id),
             'runs' => PlatformRun::where('kind', 'digest')->latest('id')->limit(10)->get(),
         ]);
     }
 
+    public function readAll(Request $request)
+    {
+        $category = $request->validate(['category' => ['nullable', 'in:'.implode(',', array_keys(NotificationPreference::CATEGORIES))]])['category'] ?? null;
+        $count = PlatformNotice::visible()->whereNull('read_at')
+            ->when($category, fn ($query) => $query->where('category', $category))
+            ->update(['read_at' => now()]);
+
+        return back()->with('status', "Marked {$count} notification(s) as read.");
+    }
+
     public function preferences(Request $request)
     {
         $data = $request->validate([
-            'categories' => ['sometimes', 'array', 'max:3'],
-            'categories.*' => ['required', 'in:updates,github,seo', 'distinct'],
+            'categories' => ['sometimes', 'array', 'max:'.count(NotificationPreference::CATEGORIES)],
+            'categories.*' => ['required', 'in:'.implode(',', array_keys(NotificationPreference::CATEGORIES)), 'distinct'],
             'digest_frequency' => ['required', 'in:never,daily,weekly'],
+            'instant_alerts' => ['nullable', 'boolean'],
         ]);
         NotificationPreference::updateOrCreate(['user_id' => $request->user()->id], [
-            'categories' => $data['categories'] ?? [], 'digest_frequency' => $data['digest_frequency'],
+            'categories' => array_values($data['categories'] ?? []), 'digest_frequency' => $data['digest_frequency'],
+            'instant_alerts' => $request->boolean('instant_alerts'),
         ]);
         $this->audit($request, 'notifications.preferences_changed', (string) $request->user()->id);
 

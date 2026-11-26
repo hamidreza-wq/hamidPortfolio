@@ -27,6 +27,7 @@ Schedule::command('portfolio:health:check')->hourlyAt(7)->withoutOverlapping(10)
 Schedule::command('platform:audit')->dailyAt('02:00')->withoutOverlapping(10)->onOneServer();
 Schedule::command('portfolio:backup:create', ['--trigger' => 'scheduled'])
     ->cron(config('portfolio.backups.schedule'))->withoutOverlapping(30)->onOneServer();
+Schedule::command('platform:alerts')->everyMinute()->withoutOverlapping(5)->onOneServer();
 Schedule::command('platform:digest')->dailyAt('08:00')->withoutOverlapping(5)->onOneServer();
 Schedule::call(fn () => Testimonial::where('status', 'rejected')->where('updated_at', '<', now()->subDays(90))->delete())
     ->daily()->name('testimonials:prune-rejected')->withoutOverlapping(10)->onOneServer();

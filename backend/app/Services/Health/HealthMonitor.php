@@ -82,7 +82,7 @@ class HealthMonitor
             foreach ($checks as $check) {
                 $key = 'health:'.Str::slug($group.' '.$check['label']);
                 if ($check['state'] === 'critical') {
-                    $this->notices->put($key, 'updates', 'high', 'Health: '.$check['label'], $check['detail'], 'admin.health');
+                    $this->notices->put($key, 'health', 'high', 'Health: '.$check['label'], $check['detail'], 'admin.health');
                 } elseif ($check['state'] === 'ok') {
                     $this->notices->resolve($key);
                 }

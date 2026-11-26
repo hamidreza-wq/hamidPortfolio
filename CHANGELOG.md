@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Notification centre upgrade:
+  - **Seven categories**: security, site health, backups, updates, messages,
+    SEO and GitHub. Health and backup notices move out of "updates".
+  - **New alerts**:
+    - new contact messages and testimonials waiting for review (counts
+      only; they clear themselves once read or reviewed)
+    - 10 or more failed sign-ins in an hour
+    - two-factor sign-in turned off, from the page or the command line
+    - a recovery code being used
+  - **Immediate email** for high-priority alerts (opt in). The
+    every-minute scheduler sends it (`platform:alerts`), so no queue worker
+    is needed. Alerts are batched to at most one email every 15 minutes,
+    and only new or returning problems email you, not reworded ones.
+  - **Page**: category and status filters with unread counts, "Mark all
+    read", readable category names, and high priorities first.
+  - The Notifications help article is updated.
+- **Database schema 9 → 10** (additive): `notification_preferences.instant_alerts`
+  and `platform_notices.alerted_at`. The migration adds the new categories to
+  existing preferences, keeping existing choices.
+
 - Added a Help centre (`/admin/help`) with 22 articles, one for every
   dashboard page plus "Getting started" and "Searching the dashboard".
   - Each article covers what the page is for, step-by-step instructions,

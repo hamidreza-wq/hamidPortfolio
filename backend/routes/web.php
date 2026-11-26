@@ -88,6 +88,7 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::post('/security/two-factor/recovery-codes', [SecurityController::class, 'regenerateRecoveryCodes'])->middleware('throttle:5,1')->name('security.two-factor.recovery');
     Route::delete('/security/two-factor', [SecurityController::class, 'disableTwoFactor'])->middleware('throttle:5,1')->name('security.two-factor.disable');
     Route::put('/notification-preferences', [PlatformController::class, 'preferences'])->name('platform.preferences');
+    Route::post('/notifications/read-all', [PlatformController::class, 'readAll'])->name('platform.notices.read-all');
     Route::post('/platform/check/{kind}', [PlatformController::class, 'scan'])->middleware('throttle:6,1')->name('platform.scan');
     Route::post('/updates/{releaseCandidate}/verify', [PlatformController::class, 'prepare'])->middleware('throttle:3,1')->name('platform.prepare');
     Route::post('/updates/{releaseCandidate}/approve', [PlatformController::class, 'approve'])->middleware('throttle:3,1')->name('platform.approve');

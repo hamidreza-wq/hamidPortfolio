@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactMessageReceived;
 use App\Models\ContactMessage;
+use App\Services\Alerts;
 use App\Services\ContactSubmissionGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,6 +55,8 @@ class PublicContactController extends Controller
             'status' => 'unread',
             'ip_hash' => hash_hmac('sha256', $request->ip() ?? 'unknown', (string) config('app.key')),
         ]);
+
+        app(Alerts::class)->inboxChanged();
 
         $recipient = config('portfolio.contact_recipient');
         if ($recipient) {
