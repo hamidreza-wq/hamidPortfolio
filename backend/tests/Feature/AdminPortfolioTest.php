@@ -71,7 +71,7 @@ class AdminPortfolioTest extends TestCase
 
         $this->actingAs($admin)->get('/admin/media')
             ->assertOk()
-            ->assertSee('Upload an image');
+            ->assertSee('Upload images');
 
         $this->actingAs($admin)->get('/admin/inbox')
             ->assertOk()
