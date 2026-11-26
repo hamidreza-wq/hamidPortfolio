@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Added dashboard-wide search. Press Ctrl K (⌘ K) on any admin page, or use
+  the new search button, for instant results grouped by type: dashboard pages
+  (matched on everyday words such as "2fa" or "colours"), projects, sections,
+  site settings, skills, media, fonts and contact messages. Each result opens
+  the place where that item is edited. `/admin/search` shows full results with
+  a type filter. Wildcards are matched literally, results are rendered as text
+  only, and search has its own rate limit (120 a minute) so typing never uses
+  up the limit shared by other admin actions.
+
 - Added a Backups page (`/admin/backups`). Each backup is one ZIP in private
   storage with every database table's rows (except sessions, cache and jobs)
   and every uploaded image and font, plus a manifest of row counts and SHA-256

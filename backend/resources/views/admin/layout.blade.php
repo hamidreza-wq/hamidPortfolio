@@ -21,6 +21,20 @@
     .platform-card summary{cursor:pointer;color:var(--violet)}
     .platform-card .field-grid{margin:14px 0}
     @media(max-width:900px){.platform-stack{grid-template-columns:minmax(0,1fr)}}
+    .search-trigger{display:inline-flex;min-height:34px;min-width:190px;align-items:center;gap:8px;padding:0 10px;border:1px solid rgba(196,180,244,.17);border-radius:6px;color:#8f8ba0;background:rgba(255,255,255,.025);cursor:pointer;font-size:10px}
+    .search-trigger:hover{border-color:rgba(190,164,255,.4);color:#d9d4e6}
+    .search-trigger kbd{margin-left:auto;padding:1px 5px;border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:8px}
+    .quick-search{width:min(620px,calc(100vw - 32px));max-height:min(560px,calc(100vh - 80px));margin:9vh auto auto;padding:0;border:1px solid var(--line);border-radius:10px;color:var(--text);background:#12121e;box-shadow:0 30px 100px rgba(0,0,0,.55)}
+    .quick-search::backdrop{background:rgba(5,5,12,.62)}
+    .quick-search input{width:100%;padding:16px 18px;border:0;border-bottom:1px solid var(--line);color:#ece7f6;background:transparent;font-size:13px;outline:0}
+    .quick-search-results{max-height:min(430px,calc(100vh - 200px));overflow:auto;padding:6px}
+    .quick-search-group{margin:8px 10px 4px;color:#696779;font-family:var(--mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase}
+    .quick-search-item{display:block;padding:9px 10px;border-radius:6px;color:#dbd8e6;font-size:11px}
+    .quick-search-item small{display:block;margin-top:3px;overflow:hidden;color:#848194;font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+    .quick-search-item[aria-selected="true"]{background:rgba(184,158,255,.12)}
+    .quick-search-footer{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;border-top:1px solid var(--line);color:#777487;font-size:9px}
+    .quick-search-footer a{color:#b69bff}
+    @media(max-width:520px){.search-trigger{min-width:0}.search-trigger span,.search-trigger kbd{display:none}.quick-search-footer span{display:none}}
   </style>
   <style>
     .field input[type="checkbox"],
@@ -118,6 +132,7 @@
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:12px"><button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open dashboard navigation" aria-controls="admin-sidebar" aria-expanded="false">☰</button><div class="breadcrumbs">Studio <span aria-hidden="true">/</span> <strong>@yield('breadcrumb', 'Overview')</strong></div></div>
       <div class="top-actions">
+        <button class="search-trigger" id="search-trigger" type="button" aria-haspopup="dialog" aria-controls="quick-search">⌕ <span>Search the dashboard</span><kbd>Ctrl K</kbd></button>
         <a class="button button-quiet" href="{{ route('portfolio.home') }}" target="_blank" rel="noreferrer">View live site <span aria-hidden="true">↗</span></a>
         <a class="button" href="{{ route('admin.site-editor.edit') }}">Edit portfolio</a>
       </div>
@@ -127,12 +142,105 @@
       @if($errors->any())<div class="error-box" role="alert">{{ $errors->first() }}</div>@endif
       @yield('content')
     </main>
+    <dialog class="quick-search" id="quick-search" aria-label="Search the dashboard">
+      <form method="get" action="{{ route('admin.search') }}" role="search">
+        <input id="quick-search-input" name="q" type="search" maxlength="100" autocomplete="off" placeholder="Search pages, projects, media, messages…" role="combobox" aria-expanded="false" aria-controls="quick-search-results" aria-autocomplete="list" aria-label="Search the dashboard">
+      </form>
+      <div class="quick-search-results" id="quick-search-results" role="listbox" aria-label="Results"></div>
+      <div class="quick-search-footer"><span>↑ ↓ to move · Enter to open · Esc to close</span><a id="quick-search-all" href="{{ route('admin.search') }}">All results →</a></div>
+    </dialog>
   </div>
 </div>
 @else
   @yield('content')
 @endif
 <script>
+  (() => {
+    const dialog = document.querySelector('#quick-search');
+    const trigger = document.querySelector('#search-trigger');
+    if (!dialog || !trigger) return;
+    const input = dialog.querySelector('#quick-search-input');
+    const list = dialog.querySelector('#quick-search-results');
+    const all = dialog.querySelector('#quick-search-all');
+    const endpoint = @json(route('admin.search'));
+    let timer = null;
+    let controller = null;
+    let active = -1;
+
+    const items = () => [...list.querySelectorAll('.quick-search-item')];
+    const select = (index) => {
+      const options = items();
+      active = options.length ? (index + options.length) % options.length : -1;
+      options.forEach((option, i) => option.setAttribute('aria-selected', String(i === active)));
+      if (active >= 0) {
+        options[active].scrollIntoView({ block: 'nearest' });
+        input.setAttribute('aria-activedescendant', options[active].id);
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
+    };
+    const message = (text) => {
+      list.replaceChildren(Object.assign(document.createElement('p'), { className: 'quick-search-group', textContent: text }));
+      input.setAttribute('aria-expanded', 'false');
+      active = -1;
+    };
+    // Results are built with textContent only, never innerHTML.
+    const render = (groups) => {
+      if (!groups.length) return message('No matches');
+      const nodes = [];
+      let n = 0;
+      for (const group of groups) {
+        nodes.push(Object.assign(document.createElement('p'), { className: 'quick-search-group', textContent: group.label }));
+        for (const item of group.items) {
+          const link = Object.assign(document.createElement('a'), { className: 'quick-search-item', href: item.url, id: 'quick-search-option-' + n++ });
+          link.setAttribute('role', 'option');
+          link.append(document.createTextNode(item.title), Object.assign(document.createElement('small'), { textContent: item.detail }));
+          nodes.push(link);
+        }
+      }
+      list.replaceChildren(...nodes);
+      input.setAttribute('aria-expanded', 'true');
+      select(0);
+    };
+    const search = () => {
+      const query = input.value.trim();
+      all.href = endpoint + (query ? '?q=' + encodeURIComponent(query) : '');
+      controller?.abort();
+      if (query.length < 2) return message('Type at least two characters');
+      controller = new AbortController();
+      fetch(endpoint + '?q=' + encodeURIComponent(query), { headers: { Accept: 'application/json' }, signal: controller.signal, credentials: 'same-origin' })
+        .then((response) => response.ok ? response.json() : Promise.reject(response.status))
+        .then((data) => render(data.groups))
+        .catch((error) => { if (error?.name !== 'AbortError') message(error === 429 ? 'Too many searches. Wait a moment.' : 'Search is unavailable right now'); });
+    };
+    const open = () => {
+      if (dialog.open) return;
+      dialog.showModal();
+      input.select();
+      search();
+    };
+
+    trigger.addEventListener('click', open);
+    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(search, 160); });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        select(active + (event.key === 'ArrowDown' ? 1 : -1));
+      } else if (event.key === 'Enter' && active >= 0) {
+        event.preventDefault();
+        window.location.assign(items()[active].href);
+      }
+    });
+    dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener('close', () => trigger.focus());
+    document.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        open();
+      }
+    });
+  })();
+
   const menuToggle = document.querySelector('#menu-toggle');
   const sidebar = document.querySelector('#admin-sidebar');
   const mobileNavigation = window.matchMedia('(max-width: 800px)');
