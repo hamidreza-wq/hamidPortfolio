@@ -79,7 +79,10 @@
       <p><a href="{{ route('admin.sections.index') }}">Add or manage structured sections</a> · <a href="{{ route('admin.revisions.index') }}">Restore content history</a></p>
       @foreach($sections as $section)
         <div class="section-editor" data-section-key="{{ $section->key }}">
-          <div class="section-editor-head"><strong>{{ $section->label }}</strong><small>{{ $section->key }}</small></div>
+          <div class="section-editor-head">
+            <div style="display:flex;align-items:center;gap:8px"><span class="drag-handle" draggable="true" title="Drag to reorder" aria-hidden="true">⠿</span><strong>{{ $section->label }}</strong><small>{{ $section->key }}</small></div>
+            <div class="form-inline"><button class="button section-move" type="button" data-move="up" aria-label="Move {{ $section->label }} up">↑</button><button class="button section-move" type="button" data-move="down" aria-label="Move {{ $section->label }} down">↓</button></div>
+          </div>
           <div class="field-grid">
             <div class="field"><label for="section-{{ $section->key }}-label">Navigation label</label><input id="section-{{ $section->key }}-label" name="sections[{{ $section->key }}][label]" value="{{ old('sections.'.$section->key.'.label', $section->label) }}" maxlength="60" required></div>
             <div class="field"><input type="hidden" name="sections[{{ $section->key }}][show_in_navigation]" value="0"><label class="checkbox-row"><input type="checkbox" name="sections[{{ $section->key }}][show_in_navigation]" value="1" @checked(old('sections.'.$section->key.'.show_in_navigation', $section->show_in_navigation))> Show in navigation</label><span class="field-hint">While the header menu is automatic. <a href="{{ route('admin.menus.index') }}">Menus</a></span></div>
@@ -119,15 +122,35 @@
       <input type="hidden" name="settings[maintenance_mode]" value="0">
       <label class="checkbox-row"><input type="checkbox" name="settings[maintenance_mode]" value="1" @checked(old('settings.maintenance_mode', $settings->maintenance_mode))> Put the public site in maintenance mode when these changes are published</label>
     </section>
-    <div class="editor-actions"><a class="button" href="{{ route('portfolio.home') }}" target="_blank" rel="noreferrer">Open published site ↗</a><button class="button button-primary" type="submit">Publish changes <span aria-hidden="true">↗</span></button></div>
+    <div class="editor-actions"><span class="draft-status" id="draft-status" role="status" aria-live="polite">No unpublished changes</span><button class="button" type="button" id="draft-undo" disabled title="Undo (Ctrl+Z outside a text box)">↶ Undo</button><button class="button" type="button" id="draft-redo" disabled title="Redo (Ctrl+Shift+Z)">↷ Redo</button><a class="button" href="{{ route('portfolio.home') }}" target="_blank" rel="noreferrer">Open published site ↗</a><button class="button button-primary" type="submit">Publish changes <span aria-hidden="true">↗</span></button></div>
   </form>
   <aside class="panel preview-card" aria-label="Live portfolio preview">
     <div class="preview-head"><strong>Live website preview</strong><span>ACTUAL PORTFOLIO / DRAFT</span></div>
-    <iframe class="preview-frame" id="portfolio-preview" src="{{ route('portfolio.preview') }}" title="Live preview of the portfolio website"></iframe>
+    <div class="preview-toolbar" role="toolbar" aria-label="Preview options">
+      <div class="form-inline" role="group" aria-label="Preview size">
+        @foreach(['desktop' => 'Desktop', 'tablet' => 'Tablet', 'phone' => 'Phone'] as $device => $label)<button class="button preview-device" type="button" data-device="{{ $device }}" aria-pressed="{{ $device === 'desktop' ? 'true' : 'false' }}">{{ $label }}</button>@endforeach
+      </div>
+      <label class="checkbox-row"><input type="checkbox" id="click-to-edit" checked> Click text to edit it</label>
+    </div>
+    <div class="preview-stage"><iframe class="preview-frame" id="portfolio-preview" src="{{ route('portfolio.preview') }}" title="Live preview of the portfolio website"></iframe></div>
   </aside>
 </div>
 @endsection
 @push('scripts')
+<style>
+  .preview-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line)}
+  .preview-device[aria-pressed="true"]{border-color:rgba(194,173,255,.5);background:rgba(180,153,255,.14)}
+  .preview-stage{display:flex;justify-content:center;overflow:auto;background:#05060c}
+  .preview-stage .preview-frame{flex:0 0 auto;transition:width .2s ease}
+  .drag-handle{cursor:grab;color:#858294;font-size:14px;user-select:none}
+  .section-editor.dragging{opacity:.45}
+  .section-editor.drop-before{box-shadow:0 -3px 0 #b69bff}
+  .section-editor.drop-after{box-shadow:0 3px 0 #b69bff}
+  .edit-flash{animation:edit-flash 1.6s ease}
+  @keyframes edit-flash{0%,40%{box-shadow:0 0 0 3px rgba(196,177,255,.7)}100%{box-shadow:none}}
+  .draft-status{margin-right:auto;align-self:center;color:#858294;font-size:9px}
+  .draft-status.dirty{color:#e8cf9b}
+</style>
 <script>
   const editorForm = document.querySelector('#site-editor-form');
   const previewFrame = document.querySelector('#portfolio-preview');
@@ -205,5 +228,160 @@
   previewFrame.addEventListener('load', sendPreview);
   editorForm.addEventListener('input', sendPreview);
   editorForm.addEventListener('change', sendPreview);
+
+  // ---- Live editor: click-to-edit, device sizes, section order, undo/redo ----
+  (() => {
+    const fieldFor = (key) => {
+      const ids = { 'profile.name': 'setting-name', 'profile.title': 'setting-title', 'profile.footer': 'setting-footer' };
+      if (ids[key]) return document.getElementById(ids[key]);
+      let match = key.match(/^section\.([a-z0-9-]+)\.(title|subtitle|body)$/);
+      if (match) return document.getElementById(`section-${match[1]}-${match[2]}`);
+      match = key.match(/^section:([a-z0-9-]+)$/);
+      if (match) return document.querySelector(`.section-editor[data-section-key="${CSS.escape(match[1])}"]`)?.querySelector('input, textarea');
+      return null;
+    };
+    window.addEventListener('message', (event) => {
+      if (event.source !== previewFrame.contentWindow || event.origin !== window.location.origin || event.data?.type !== 'portfolio:edit') return;
+      const field = fieldFor(String(event.data.key ?? ''));
+      if (!field) return;
+      field.closest('details')?.setAttribute('open', '');
+      const block = field.closest('.section-editor, .editor-card') ?? field;
+      block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      field.focus({ preventScroll: true });
+      block.classList.remove('edit-flash');
+      void block.offsetWidth;
+      block.classList.add('edit-flash');
+    });
+    const clickToEdit = document.getElementById('click-to-edit');
+    const sendMode = () => previewFrame.contentWindow?.postMessage({ type: 'portfolio:edit-mode', on: clickToEdit.checked }, window.location.origin);
+    clickToEdit.addEventListener('change', sendMode);
+    previewFrame.addEventListener('load', sendMode);
+
+    const widths = { desktop: '100%', tablet: '768px', phone: '390px' };
+    document.querySelectorAll('.preview-device').forEach((button) => button.addEventListener('click', () => {
+      document.querySelectorAll('.preview-device').forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+      previewFrame.style.width = widths[button.dataset.device];
+    }));
+
+    // Section order follows the order of the blocks; display order numbers are kept in step.
+    const sectionBlocks = () => [...editorForm.querySelectorAll('.section-editor[data-section-key]')];
+    const renumber = () => {
+      sectionBlocks().forEach((block, index) => {
+        const order = document.getElementById(`section-${block.dataset.sectionKey}-order`);
+        if (order) order.value = index;
+      });
+      editorForm.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    const sortBlocksByOrder = () => {
+      const blocks = sectionBlocks();
+      const parent = blocks[0]?.parentNode;
+      blocks.sort((a, b) => Number(document.getElementById(`section-${a.dataset.sectionKey}-order`)?.value ?? 0)
+        - Number(document.getElementById(`section-${b.dataset.sectionKey}-order`)?.value ?? 0))
+        .forEach((block) => parent.appendChild(block));
+    };
+    sortBlocksByOrder();
+    editorForm.querySelectorAll('.section-move').forEach((button) => button.addEventListener('click', () => {
+      const block = button.closest('.section-editor');
+      const sibling = button.dataset.move === 'up' ? block.previousElementSibling : block.nextElementSibling;
+      if (!sibling?.matches('.section-editor[data-section-key]')) return;
+      button.dataset.move === 'up' ? sibling.before(block) : sibling.after(block);
+      renumber();
+      button.focus();
+    }));
+    let dragged = null;
+    editorForm.querySelectorAll('.drag-handle').forEach((handle) => {
+      handle.addEventListener('dragstart', (event) => {
+        dragged = handle.closest('.section-editor');
+        dragged.classList.add('dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', dragged.dataset.sectionKey);
+        event.dataTransfer.setDragImage(dragged, 20, 20);
+      });
+      handle.addEventListener('dragend', () => {
+        dragged?.classList.remove('dragging');
+        sectionBlocks().forEach((block) => block.classList.remove('drop-before', 'drop-after'));
+        dragged = null;
+      });
+    });
+    sectionBlocks().forEach((block) => {
+      block.addEventListener('dragover', (event) => {
+        if (!dragged || block === dragged) return;
+        event.preventDefault();
+        const after = event.clientY > block.getBoundingClientRect().top + block.offsetHeight / 2;
+        block.classList.toggle('drop-after', after);
+        block.classList.toggle('drop-before', !after);
+      });
+      block.addEventListener('dragleave', () => block.classList.remove('drop-before', 'drop-after'));
+      block.addEventListener('drop', (event) => {
+        if (!dragged || block === dragged) return;
+        event.preventDefault();
+        block.classList.contains('drop-after') ? block.after(dragged) : block.before(dragged);
+        block.classList.remove('drop-before', 'drop-after');
+        renumber();
+      });
+    });
+
+    // Undo and redo cover the whole draft. Inside a text box, Ctrl+Z still undoes typing as usual.
+    const undoButton = document.getElementById('draft-undo');
+    const redoButton = document.getElementById('draft-redo');
+    const status = document.getElementById('draft-status');
+    const capture = () => JSON.stringify([...editorForm.elements].filter((field) => field.name && field.type !== 'hidden' && field.name !== '_token')
+      .map((field) => [field.id || field.name, field.type === 'checkbox' ? field.checked : field.value]));
+    const initial = capture();
+    const history = [initial];
+    let position = 0;
+    let restoring = false;
+    const refresh = () => {
+      undoButton.disabled = position === 0;
+      redoButton.disabled = position === history.length - 1;
+      const dirty = history[position] !== initial;
+      status.textContent = dirty ? 'Unpublished changes' : 'No unpublished changes';
+      status.classList.toggle('dirty', dirty);
+    };
+    const record = () => {
+      if (restoring) return;
+      const snapshot = capture();
+      if (snapshot === history[position]) return;
+      history.splice(position + 1);
+      history.push(snapshot);
+      if (history.length > 100) history.shift();
+      position = history.length - 1;
+      refresh();
+    };
+    const restore = (snapshot) => {
+      restoring = true;
+      const values = new Map(JSON.parse(snapshot));
+      [...editorForm.elements].forEach((field) => {
+        const key = field.id || field.name;
+        if (!values.has(key) || field.type === 'hidden') return;
+        field.type === 'checkbox' ? (field.checked = values.get(key)) : (field.value = values.get(key));
+      });
+      sortBlocksByOrder();
+      sendPreview();
+      restoring = false;
+      refresh();
+    };
+    let typingTimer = null;
+    editorForm.addEventListener('input', () => { clearTimeout(typingTimer); typingTimer = setTimeout(record, 500); });
+    editorForm.addEventListener('change', () => { clearTimeout(typingTimer); record(); });
+    undoButton.addEventListener('click', () => { if (position > 0) restore(history[--position]); });
+    redoButton.addEventListener('click', () => { if (position < history.length - 1) restore(history[++position]); });
+    document.addEventListener('keydown', (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z' && event.key.toLowerCase() !== 'y') return;
+      if (event.target.closest?.('input[type="text"], input:not([type]), input[type="url"], input[type="email"], textarea')) return;
+      event.preventDefault();
+      (event.shiftKey || event.key.toLowerCase() === 'y') ? redoButton.click() : undoButton.click();
+    });
+
+    // Warn before leaving with unpublished changes.
+    let submitting = false;
+    editorForm.addEventListener('submit', () => { submitting = true; });
+    window.addEventListener('beforeunload', (event) => {
+      if (submitting || history[position] === initial) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+    refresh();
+  })();
 </script>
 @endpush

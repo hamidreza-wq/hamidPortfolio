@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Live site editor upgrades:
+  - **Click to edit**: clicking text in the preview opens and highlights the
+    field that changes it. Clicking a section opens its settings. This can
+    be switched off.
+  - **Device preview**: Desktop, Tablet (768 px) and Phone (390 px).
+  - **Drag and drop** sections by a handle, or use the ↑/↓ buttons, which
+    work by keyboard. Display order numbers renumber themselves.
+  - **Undo and redo** for the whole draft (buttons, plus Ctrl Z or Ctrl
+    Shift Z outside text boxes), an "Unpublished changes" indicator, and a
+    warning before leaving with unpublished changes.
+  - The preview reports clicks only inside the editor's preview frame,
+    only to the same origin, and highlights with inline styles so the CSP
+    is unchanged. Publishing works exactly as before.
+  - A new test syntax-checks the editor's inline script and `app.mjs` with
+    Node.
+
 - Added a Pages manager (`/admin/pages`) for standalone pages at
   `/your-page`, such as Services, CV or Now.
   - Each page has a title, an address, a summary, Markdown content, a search

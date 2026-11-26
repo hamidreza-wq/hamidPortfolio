@@ -15,6 +15,21 @@ The live site editor changes the text and look of your portfolio with a preview 
 2. When it looks right, press **Publish changes**. Only then do visitors see it.
 3. If you change your mind before publishing, reload the page to discard the draft.
 
+## Editing straight from the preview
+
+- **Click any text in the preview**, such as a heading, a sentence or your name, to jump to the field that changes it. The field is highlighted and ready to type in. Click a section's background to jump to that section's settings. Untick **Click text to edit it** above the preview to use links in the preview normally.
+- **Desktop**, **Tablet** and **Phone** above the preview show the draft at those widths.
+
+## Reordering sections
+
+Drag a section by its **⠿** handle and drop it above or below another one. You can also use the **↑** and **↓** buttons, which work with the keyboard too. The preview follows the new order straight away, and the display order numbers update themselves.
+
+## Undo and redo
+
+**↶ Undo** and **↷ Redo** by the Publish button step back and forward through everything you've changed in this draft, including section moves. Outside a text box, **Ctrl Z** undoes and **Ctrl Shift Z** redoes. Inside a text box, Ctrl Z undoes your typing as usual.
+
+The status beside the buttons shows whether you have **unpublished changes**. If you try to leave the page with unpublished changes, your browser asks you to confirm first.
+
 ## Colour presets
 
 **Color presets** at the top load a saved palette into the draft. **Save draft palette as preset** stores the current colours. For whole-site looks (fonts, spacing and motion too), use [Themes](/admin/themes).

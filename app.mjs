@@ -448,8 +448,49 @@ else {
 }
 
 if (window.portfolioPreview === true) {
+  // Click-to-edit: in the editor's preview, clicking text tells the editor which field to open.
+  // Highlights use inline styles only (the page's CSP doesn't allow injected <style> elements).
+  let editMode = true;
+  let highlighted = null;
+  const target = (node) => {
+    const managed = node.closest?.("[data-managed]");
+    if (managed) return { element: managed, key: managed.dataset.managed };
+    const section = node.closest?.("main > section[id], #main > section[id]");
+    return section ? { element: section, key: `section:${section.id}` } : null;
+  };
+  const highlight = (element) => {
+    if (highlighted && highlighted !== element) {
+      highlighted.style.outline = "";
+      highlighted.style.outlineOffset = "";
+      highlighted.style.cursor = "";
+    }
+    highlighted = element;
+    if (element) {
+      element.style.outline = "2px dashed rgba(196, 177, 255, 0.85)";
+      element.style.outlineOffset = "4px";
+      element.style.cursor = "pointer";
+    }
+  };
+  document.addEventListener("mouseover", (event) => {
+    if (editMode) highlight(target(event.target)?.element ?? null);
+  });
+  document.addEventListener("mouseleave", () => highlight(null));
+  document.addEventListener("click", (event) => {
+    if (!editMode) return;
+    const found = target(event.target);
+    if (!found) return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.parent.postMessage({ type: "portfolio:edit", key: found.key }, window.location.origin);
+  }, true);
+
   window.addEventListener("message", (event) => {
     if (event.source !== window.parent || event.origin !== window.location.origin) return;
+    if (event.data?.type === "portfolio:edit-mode") {
+      editMode = event.data.on === true;
+      if (!editMode) highlight(null);
+      return;
+    }
     if (event.data?.type !== "portfolio:preview" || !event.data.payload) return;
     applyPortfolioData(event.data.payload);
   });
