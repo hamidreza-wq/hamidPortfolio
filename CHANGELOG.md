@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Media library upgrades:
+  - Drag-and-drop or choose up to 10 images at once. The page uploads them
+    one per request, so a big batch never exceeds the server's request size
+    limit, and shows each file's result. Labels default to the file name.
+    Without JavaScript, the same form uploads them together.
+  - Filters for usage (used or unused), missing alt text and type, plus
+    sorting (newest, oldest, largest, label). Search treats `%` and `_`
+    literally.
+  - Each card has Copy URL, Download (the stored file under its original
+    name), the uploader and date, and a "Missing alt text" marker.
+  - Not added on purpose: video, PDF and SVG uploads (nothing on the site
+    shows them, and SVG can carry scripts), captions and tags (no public use),
+    and thumbnails (images are already re-encoded, typically 20–30 KB).
+
 - Added a Social links page (`/admin/social`) for up to 20 profiles: GitHub,
   LinkedIn, X, Bluesky, Mastodon, Instagram, Facebook, YouTube, TikTok,
   Dribbble, Behance, Stack Overflow, Medium, DEV, a website, or other. Each

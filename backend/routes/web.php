@@ -100,6 +100,7 @@ Route::middleware(['auth', 'auth.session', 'admin'])->prefix('admin')->name('adm
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::get('/media', [MediaController::class, 'index'])->name('media.index');
     Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+    Route::get('/media/{mediaAsset}/download', [MediaController::class, 'download'])->name('media.download');
     Route::put('/media/{mediaAsset}', [MediaController::class, 'update'])->name('media.update');
     Route::delete('/media/{mediaAsset}', [MediaController::class, 'destroy'])->name('media.destroy');
     Route::get('/fonts', [FontController::class, 'index'])->name('fonts.index');
