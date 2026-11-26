@@ -50,7 +50,7 @@ final class Roles
         'admin.media.*' => 'media',
         'admin.inbox.*' => 'messages', 'admin.testimonials.*' => 'messages',
         'admin.analytics' => 'insight', 'admin.analytics.*' => 'insight', 'admin.platform.seo' => 'insight',
-        'admin.health' => 'operations', 'admin.health.*' => 'operations', 'admin.platform.updates' => 'operations',
+        'admin.health' => 'operations', 'admin.health.*' => 'operations', 'admin.self-test' => 'operations', 'admin.self-test.*' => 'operations', 'admin.platform.updates' => 'operations',
         'admin.platform.prepare' => 'operations', 'admin.platform.approve' => 'operations', 'admin.platform.deploy' => 'operations',
         'admin.platform.deployment-status' => 'operations', 'admin.platform.github' => 'operations',
         'admin.platform.review' => 'operations', 'admin.platform.scan' => 'operations',

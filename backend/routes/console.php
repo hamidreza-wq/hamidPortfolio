@@ -23,6 +23,7 @@ foreach (['releases', 'github', 'seo'] as $kind) {
 // Lets the Health page tell whether the server cron job is running.
 Schedule::call(fn () => Cache::forever(HealthMonitor::HEARTBEAT_KEY, now()->utc()->toIso8601String()))
     ->everyMinute()->name('health:heartbeat')->onOneServer();
+Schedule::command('portfolio:self-test')->weeklyOn(1, '04:30')->withoutOverlapping(30)->onOneServer();
 Schedule::command('portfolio:health:check')->hourlyAt(7)->withoutOverlapping(10)->onOneServer();
 Schedule::command('platform:audit')->dailyAt('02:00')->withoutOverlapping(10)->onOneServer();
 Schedule::command('portfolio:backup:create', ['--trigger' => 'scheduled'])

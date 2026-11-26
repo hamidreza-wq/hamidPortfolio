@@ -166,6 +166,9 @@
     @if($canOpen('admin.health'))
     <a class="nav-link {{ request()->routeIs('admin.health*') ? 'active' : '' }}" href="{{ route('admin.health') }}">Health</a>
     @endif
+    @if($canOpen('admin.self-test'))
+    <a class="nav-link {{ request()->routeIs('admin.self-test*') ? 'active' : '' }}" href="{{ route('admin.self-test') }}">Self-test</a>
+    @endif
     @if($canOpen('admin.security'))
     <a class="nav-link {{ request()->routeIs('admin.security*') ? 'active' : '' }}" href="{{ route('admin.security') }}">Security</a>
     @endif

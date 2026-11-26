@@ -33,6 +33,7 @@ class HelpCentre
         'analytics' => ['Analytics', 'Visits, popular pages and Google Search Console results.', 'Insight', ['admin.analytics']],
         'seo' => ['SEO monitoring', 'Technical checks that help search engines read your site.', 'Insight', ['admin.platform.seo']],
         'health' => ['Health', 'Whether the site, server and background jobs are working.', 'Running the site', ['admin.health']],
+        'self-test' => ['Self-test', 'Check every page, link, form and upload still works, with fixes for anything broken.', 'Running the site', ['admin.self-test']],
         'backups' => ['Backups', 'Create, check, download and restore backups.', 'Running the site', ['admin.backups.index']],
         'updates' => ['Software updates', 'Check for and install signed releases safely.', 'Running the site', ['admin.platform.updates']],
         'github-projects' => ['GitHub projects', 'Review public repositories found on your GitHub account.', 'Running the site', ['admin.platform.github']],
