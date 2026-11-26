@@ -29,6 +29,11 @@
 
     <h2>Contact messages</h2>
     <p>If you submit the contact form, the information you provide is stored in the site's private inbox and emailed to the site owner through the site's email provider to respond to your message. It is not sent to Google Analytics.</p>
+    @php($retention = \App\Models\PortfolioSetting::find(1)?->contact_retention_days)
+    <p>{{ $retention ? 'Messages are deleted from the inbox '.$retention.' days after they arrive.' : 'Messages are kept in the inbox until the site owner deletes them.' }} Backups of the site may hold copies for a short time after that, until they are replaced by newer backups (about {{ config('portfolio.backups.keep') }} days with daily backups).</p>
+
+    <h2>Your rights</h2>
+    <p>You can ask for a copy of the personal information this site holds about you, or for it to be corrected or deleted. Send the request through the contact form from the email address you used, so it can be matched to your records. Page-view counts are not linked to any person, so there is nothing to retrieve from them.</p>
   </main>
   @include('portfolio.analytics-consent', ['measurementId' => config('services.google_analytics.measurement_id')])
 </body>
